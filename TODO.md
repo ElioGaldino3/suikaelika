@@ -82,14 +82,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-002 — Materializar contratos estáveis entre componentes
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P0`
 - Depends: `SE-001`
 - Writes: `suika_elika/contracts/**; tests/contracts/**`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; pyproject.toml; suika_elika/__init__.py; suika_elika/game/__init__.py; suika_elika/input/__init__.py; suika_elika/rendering/__init__.py; suika_elika/scenes/__init__.py; tests/conftest.py; tests/test_imports.py; docs/DEVELOPMENT.md; .gitignore`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se002`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
@@ -102,15 +102,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-003 — Criar diagnóstico portável e roteiro de coleta do alvo
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P0`
 - Depends: `SE-001`
 - Writes: `tools/diagnostics.py; tests/tools/test_diagnostics.py; docs/BATOCERA-ENVIRONMENT.md`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; pyproject.toml; suika_elika/__init__.py; suika_elika/game/__init__.py; suika_elika/input/__init__.py; suika_elika/rendering/__init__.py; suika_elika/scenes/__init__.py; tests/conftest.py; tests/test_imports.py; docs/DEVELOPMENT.md; .gitignore`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Coletor stdlib apresenta runtime/arquitetura, disponibilidade e versões de pacotes e estados de probes sem importar Pygame ou ler ambiente; guia mantém dados do Batocera como pendentes. Na venv Python 3.14.7: `python -m pytest tests/tools/test_diagnostics.py` passou (5 testes), `python -m ruff check tools/diagnostics.py tests/tools/test_diagnostics.py` passou, `python -m mypy --strict tools/diagnostics.py` passou e `python tools/diagnostics.py --format json` produziu relatório funcional, com Pygame/Pymunk ausentes e probes não executados. Ruff configurado ainda não inclui `tools/`; lint explícito aprovado, expansão de cobertura será integrada após leituras compartilhadas. Nenhum dado do aparelho foi inferido.
 - Blocker: `none`
 
 **Objetivo:** Coletar versões, arquitetura e capacidades sem exigir que todas as dependências estejam instaladas.
