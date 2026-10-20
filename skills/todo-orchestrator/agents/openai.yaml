@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orquestrador de TODO"
+  short_description: "Execute tarefas paralelas com revisão e commits"
+  default_prompt: "Use $todo-orchestrator para executar as tarefas prontas do TODO.md, respeitando dependências, até quatro subagentes, verificações e commits."
