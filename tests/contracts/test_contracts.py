@@ -8,6 +8,7 @@ import pytest
 
 from suika_elika.contracts import (
     AudioPort,
+    ControllerProfileData,
     DomainEvent,
     EventType,
     FruitDefinition,
@@ -17,9 +18,11 @@ from suika_elika.contracts import (
     InputEdgeQueue,
     InputFrame,
     Pose,
+    RecordData,
     RoundState,
     SessionSnapshot,
     SettingsData,
+    StatisticsData,
     Vector2,
 )
 
@@ -90,9 +93,19 @@ def test_input_edges_are_consumed_once_and_invalid_commands_do_not_remain_queued
     assert queue.consume_for_step() == ()
 
 
+def test_input_frame_carries_vertical_navigation_and_directional_actions() -> None:
+    navigation = InputEdge(1, InputAction.NAV_UP)
+    frame = InputFrame(move_y=-0.6, edges=(navigation,))
+
+    assert frame.move_y == -0.6
+    assert frame.edges == (navigation,)
+
+
 def test_input_contract_rejects_non_normalized_motion_and_duplicate_edges() -> None:
     with pytest.raises(ValueError, match="normalized"):
         InputFrame(move_x=1.1)
+    with pytest.raises(ValueError, match="move_y"):
+        InputFrame(move_y=-1.1)
     edge = InputEdge(sequence=3, action=InputAction.CONFIRM)
     with pytest.raises(ValueError, match="unique"):
         InputFrame(edges=(edge, edge))
@@ -147,3 +160,38 @@ def test_settings_data_validates_persisted_gain_range() -> None:
     assert SettingsData().master_gain == 0.8
     with pytest.raises(ValueError, match="between 0 and 1"):
         SettingsData(master_gain=1.1)
+    with pytest.raises(ValueError, match="safe area"):
+        SettingsData(safe_area_fraction=0.3)
+    with pytest.raises(ValueError, match="safe area"):
+        SettingsData(safe_area_fraction=True)  # type: ignore[arg-type]
+    assert SettingsData(fullscreen=False, safe_area_fraction=0.1).safe_area_fraction == 0.1
+
+
+def test_record_data_keeps_mode_and_duration_and_validates_both() -> None:
+    record = RecordData("classic-v1", 10, 4, 1, mode="classic", duration_seconds=42.5)
+    assert (record.mode, record.duration_seconds) == ("classic", 42.5)
+    with pytest.raises(ValueError, match="duration"):
+        RecordData("classic-v1", 10, 4, 1, duration_seconds=float("nan"))
+
+
+def test_profile_and_statistics_contracts_validate_stable_data() -> None:
+    profile = ControllerProfileData(
+        profile_id="pad",
+        name="Gamepad",
+        backend="controller",
+        bindings=(("drop", "south"),),
+        platform="linux",
+        guid="guid-1",
+        axes=(("move_x", 0),),
+        inverted_axes=("move_x",),
+        deadzone=0.2,
+        sensitivity=1.3,
+    )
+    assert profile.axes == (("move_x", 0),)
+    assert StatisticsData(sessions_played=2).sessions_played == 2
+    with pytest.raises(ValueError, match="deadzone"):
+        ControllerProfileData("pad", "Gamepad", "controller", (), deadzone=1.0)
+    with pytest.raises(ValueError, match="deadzone"):
+        ControllerProfileData("pad", "Gamepad", "controller", (), deadzone=True)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="non-negative integers"):
+        StatisticsData(merges=-1)

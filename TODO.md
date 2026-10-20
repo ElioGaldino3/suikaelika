@@ -90,7 +90,7 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; pyproject.toml; suika_elika/__init__.py; suika_elika/game/__init__.py; suika_elika/input/__init__.py; suika_elika/rendering/__init__.py; suika_elika/scenes/__init__.py; tests/conftest.py; tests/test_imports.py; docs/DEVELOPMENT.md; .gitignore`
 - Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Modelos e protocolos imutáveis para ações, eventos, snapshots, física, áudio, persistência e cenas entregues; bordas de entrada usam fila de consumo único e eventos/snapshots carregam apenas valores copiados. Na venv Python 3.14.7, `python -m pytest` passou (14 testes), `python -m ruff check .` passou e `python -m mypy` passou (10 arquivos); `python -m mypy --strict tools/diagnostics.py` passou. Testes confirmam invariantes, imutabilidade e importação sem Pygame/Pymunk. Ruff agora inclui `tools/**/*.py`.
+- Evidence: Modelos e protocolos imutáveis para ações, eventos, snapshots, física, áudio, persistência e cenas entregues; bordas de entrada usam fila de consumo único e eventos/snapshots carregam apenas valores copiados. Na revisão, o orquestrador completou o contrato com navegação vertical (`move_y`, `NAV_UP/DOWN`), protocolos de perfil/estatísticas e modelos de configurações/recordes alinhados ao PROJECT. Na venv Python 3.14.7, `python -m pytest` passou (42 testes), `python -m ruff check .` passou e `python -m mypy` passou (14 arquivos). Testes confirmam invariantes, imutabilidade e importação sem Pygame/Pymunk. Ruff inclui `tools/**/*.py`.
 - Blocker: `none`
 
 **Objetivo:** Definir modelos tipados e interfaces de ações, snapshot, eventos, física, áudio, persistência e cenas.
@@ -169,7 +169,7 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Writes: `suika_elika/input/actions.py; suika_elika/input/manager.py; tests/input/test_actions.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
 - Owner: `se006`
-- Attempts: `1`
+- Attempts: `2`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
@@ -222,15 +222,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-009 — Implementar persistência e diretórios da plataforma
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002`
 - Writes: `suika_elika/persistence.py; suika_elika/platform.py; tests/services/test_persistence.py; tests/services/test_platform.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
-- Owner: `se009`
+- Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Ainda não executada.
+- Evidence: Persistência JSON com schema v2 guarda opções de áudio/vídeo/acessibilidade/área segura, perfis com plataforma/GUID/eixos/inversões/calibração, recordes por modo + ruleset com duração e estatísticas. Escritas usam arquivo temporário/substituição atômica; JSON inválido fica preservado em cópia de recuperação; falhas ficam em `last_error` e valores permanecem acessíveis em memória. Caminhos Windows/Linux/Batocera e overrides cobertos. Na venv Python 3.14.7, `python -m pytest` passou (42 testes), `python -m ruff check .` passou, `python -m mypy` passou (14 arquivos) e `git diff --check` passou. Sem save de sessão física ou rede.
 - Blocker: `none`
 
 **Objetivo:** Salvar configurações, perfis, recordes por ruleset e estatísticas de forma recuperável.

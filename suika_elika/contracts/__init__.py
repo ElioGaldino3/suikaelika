@@ -15,12 +15,14 @@ from .ports import (
     BodySnapshot,
     CanvasPort,
     ContactSnapshot,
+    ControllerProfileData,
     PersistencePort,
     PhysicsPort,
     RecordData,
     Scene,
     SceneTransition,
     SettingsData,
+    StatisticsData,
 )
 
 __all__ = [
@@ -28,6 +30,7 @@ __all__ = [
     "BodySnapshot",
     "CanvasPort",
     "ContactSnapshot",
+    "ControllerProfileData",
     "DomainEvent",
     "EventType",
     "EventValue",
@@ -46,6 +49,7 @@ __all__ = [
     "SceneTransition",
     "SessionSnapshot",
     "SettingsData",
+    "StatisticsData",
     "Vector2",
     "make_event",
 ]

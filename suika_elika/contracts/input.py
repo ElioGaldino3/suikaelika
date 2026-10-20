@@ -13,6 +13,8 @@ class InputAction(str, Enum):
     CONFIRM = "confirm"
     CANCEL = "cancel"
     PAUSE = "pause"
+    NAV_UP = "nav_up"
+    NAV_DOWN = "nav_down"
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,15 +31,23 @@ class InputEdge:
 
 @dataclass(frozen=True, slots=True)
 class InputFrame:
-    """Per-render-frame semantic input, with no SDL/device references."""
+    """Per-render-frame semantic input, with no SDL/device references.
+
+    ``move_y`` is the normalized vertical axis used by menu navigation. Discrete
+    navigation actions are emitted as edges by the input manager's UI-time
+    threshold, hysteresis, and repeat logic.
+    """
 
     move_x: float = 0.0
     fine_adjust: bool = False
     edges: tuple[InputEdge, ...] = ()
+    move_y: float = 0.0
 
     def __post_init__(self) -> None:
         if not isfinite(self.move_x) or not -1.0 <= self.move_x <= 1.0:
             raise ValueError("move_x must be finite and normalized to [-1, 1]")
+        if not isfinite(self.move_y) or not -1.0 <= self.move_y <= 1.0:
+            raise ValueError("move_y must be finite and normalized to [-1, 1]")
         if not isinstance(self.edges, tuple):
             raise TypeError("edges must be an immutable tuple")
         if any(not isinstance(edge, InputEdge) for edge in self.edges):

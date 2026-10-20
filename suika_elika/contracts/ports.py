@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -60,7 +61,7 @@ class AudioPort(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class SettingsData:
-    """Persistable user preferences with no live device or mixer references."""
+    """Persistable audio, video, accessibility, and layout preferences."""
 
     master_gain: float = 0.8
     effects_gain: float = 0.75
@@ -68,29 +69,137 @@ class SettingsData:
     effects_reduced: bool = False
     vibration_enabled: bool = False
     control_profile_id: str = "default"
+    fullscreen: bool = True
+    safe_area_fraction: float = 0.05
 
     def __post_init__(self) -> None:
         for gain in (self.master_gain, self.effects_gain, self.music_gain):
-            if not 0 <= gain <= 1:
+            if (
+                type(gain) not in (int, float)
+                or not math.isfinite(gain)
+                or not 0 <= gain <= 1
+            ):
                 raise ValueError("audio gains must be between 0 and 1")
-        if not self.control_profile_id:
-            raise ValueError("control profile id must not be empty")
+        if (
+            not self.control_profile_id
+            or type(self.effects_reduced) is not bool
+            or type(self.vibration_enabled) is not bool
+            or type(self.fullscreen) is not bool
+        ):
+            raise ValueError("settings flags and control profile id are invalid")
+        if (
+            type(self.safe_area_fraction) not in (int, float)
+            or not math.isfinite(self.safe_area_fraction)
+            or not 0 <= self.safe_area_fraction <= 0.25
+        ):
+            raise ValueError("safe area fraction must be between 0 and 0.25")
 
 
 @dataclass(frozen=True, slots=True)
 class RecordData:
-    """Validated local score record identified by its ruleset version."""
+    """Validated local record identified by game mode and ruleset version."""
 
     ruleset_version: str
     score: int
     best_fruit_level: int
     watermelons: int
+    mode: str = "classic"
+    duration_seconds: float = 0.0
 
     def __post_init__(self) -> None:
-        if not self.ruleset_version:
-            raise ValueError("ruleset version must not be empty")
-        if min(self.score, self.best_fruit_level, self.watermelons) < 0:
+        if not self.ruleset_version or not self.mode:
+            raise ValueError("mode and ruleset version must not be empty")
+        counters = (self.score, self.best_fruit_level, self.watermelons)
+        if any(type(value) is not int or value < 0 for value in counters):
             raise ValueError("record values must be non-negative")
+        if (
+            type(self.duration_seconds) not in (int, float)
+            or not math.isfinite(self.duration_seconds)
+            or self.duration_seconds < 0
+        ):
+            raise ValueError("record duration must be finite and non-negative")
+
+
+@dataclass(frozen=True, slots=True)
+class ControllerProfileData:
+    """Persistable semantic bindings and calibration for one stable device profile."""
+
+    profile_id: str
+    name: str
+    backend: str
+    bindings: tuple[tuple[str, str], ...]
+    platform: str = "unknown"
+    guid: str | None = None
+    axes: tuple[tuple[str, int], ...] = ()
+    inverted_axes: tuple[str, ...] = ()
+    deadzone: float = 0.2
+    sensitivity: float = 1.0
+
+    def __post_init__(self) -> None:
+        if not self.profile_id or not self.name or not self.backend or not self.platform:
+            raise ValueError("profile id, name, backend, and platform must not be empty")
+        if self.guid is not None and (not isinstance(self.guid, str) or not self.guid):
+            raise ValueError("profile guid must be non-empty text or None")
+        if not isinstance(self.bindings, tuple) or not isinstance(self.axes, tuple):
+            raise TypeError("profile bindings and axes must be immutable tuples")
+        if not isinstance(self.inverted_axes, tuple):
+            raise TypeError("profile axis inversions must be an immutable tuple")
+        if any(
+            not isinstance(binding, tuple)
+            or len(binding) != 2
+            or not all(isinstance(value, str) and value for value in binding)
+            for binding in self.bindings
+        ):
+            raise TypeError("profile bindings must contain non-empty string pairs")
+        actions = [action for action, _ in self.bindings]
+        if len(actions) != len(set(actions)):
+            raise ValueError("profile actions must be unique")
+        if any(
+            not isinstance(axis, tuple)
+            or len(axis) != 2
+            or not isinstance(axis[0], str)
+            or not axis[0]
+            or type(axis[1]) is not int
+            or axis[1] < 0
+            for axis in self.axes
+        ):
+            raise TypeError("profile axes must contain non-empty names and non-negative indices")
+        axis_names = [axis_name for axis_name, _ in self.axes]
+        if len(axis_names) != len(set(axis_names)):
+            raise ValueError("profile axis names must be unique")
+        if any(not isinstance(name, str) or name not in axis_names for name in self.inverted_axes):
+            raise ValueError("inverted axes must reference configured axes")
+        if len(self.inverted_axes) != len(set(self.inverted_axes)):
+            raise ValueError("inverted axes must be unique")
+        if (
+            type(self.deadzone) not in (int, float)
+            or not math.isfinite(self.deadzone)
+            or not 0 <= self.deadzone < 1
+            or type(self.sensitivity) not in (int, float)
+            or not math.isfinite(self.sensitivity)
+            or self.sensitivity <= 0
+        ):
+            raise ValueError("profile deadzone and sensitivity are invalid")
+
+
+@dataclass(frozen=True, slots=True)
+class StatisticsData:
+    """Accumulated local counters; no live or physical session state is stored."""
+
+    sessions_played: int = 0
+    merges: int = 0
+    best_fruit_level: int = 0
+    watermelons: int = 0
+
+    def __post_init__(self) -> None:
+        values = (
+            self.sessions_played,
+            self.merges,
+            self.best_fruit_level,
+            self.watermelons,
+        )
+        if any(type(value) is not int or value < 0 for value in values):
+            raise ValueError("statistics must be non-negative integers")
 
 
 class PersistencePort(Protocol):
@@ -103,6 +212,14 @@ class PersistencePort(Protocol):
     def load_records(self) -> tuple[RecordData, ...]: ...
 
     def save_record(self, record: RecordData) -> None: ...
+
+    def load_profiles(self) -> tuple[ControllerProfileData, ...]: ...
+
+    def save_profiles(self, profiles: tuple[ControllerProfileData, ...]) -> None: ...
+
+    def load_statistics(self) -> StatisticsData: ...
+
+    def save_statistics(self, statistics: StatisticsData) -> None: ...
 
 
 @dataclass(frozen=True, slots=True)

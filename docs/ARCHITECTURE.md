@@ -45,7 +45,7 @@ A tarefa SE-002 cria os modelos e interfaces em `suika_elika/contracts/`, com ti
 
 | Contrato | Dados e operações mínimas |
 |---|---|
-| `InputFrame` | `move_x` normalizado, ação de ajuste fino e bordas de `drop`, `confirm`, `cancel`, `pause`; sem referências SDL |
+| `InputFrame` | `move_x` e `move_y` normalizados, ajuste fino e bordas de `drop`, `confirm`, `cancel`, `pause`, `nav_up`, `nav_down`; sem referências SDL |
 | `DomainEvent` | Tipo, passo de simulação, IDs relevantes, posição e payload tipado/copied; sem `Arbiter` |
 | `FruitDefinition` | ID, nível, raio, massa, pontos de criação e chave visual |
 | `FruitSnapshot` | ID, tipo, pose anterior/atual e estado visual de perigo; sem corpo mutável |
@@ -53,9 +53,10 @@ A tarefa SE-002 cria os modelos e interfaces em `suika_elika/contracts/`, com ti
 | `PhysicsPort` | Criar/remover corpo, avançar passo, consultar contatos, sobreposição e poses; exclusividade de mutação pelo mundo físico |
 | `AudioPort` | Consumir eventos, ajustar ganhos, pausar e encerrar; implementação silenciosa equivalente |
 | `PersistencePort` | Carregar/salvar modelos validados e comunicar falha de persistência |
+| `SettingsData` / `ControllerProfileData` / `RecordData` / `StatisticsData` | Preferências de áudio, vídeo, acessibilidade e área segura; perfil por plataforma/GUID com bindings e calibração; recorde por modo e ruleset com duração; estatísticas acumuladas |
 | `Scene` | Entrar/sair, receber ações, atualizar interface e desenhar; retorno de transição explícito |
 
-`InputFrame` é um snapshot por quadro de entrada. Bordas para gameplay são enfileiradas com número de sequência e consumidas uma vez no primeiro passo elegível; nenhum subpasso repete uma soltura. Ações inválidas são descartadas segundo as regras do lançador, sem fila oculta para uma queda posterior.
+`InputFrame` é um snapshot por quadro de entrada. Bordas para gameplay são enfileiradas com número de sequência e consumidas uma vez no primeiro passo elegível; nenhum subpasso repete uma soltura. Ações inválidas são descartadas segundo as regras do lançador, sem fila oculta para uma queda posterior. A navegação em menus usa `move_y` normalizado e gera `nav_up`/`nav_down` com limiar, histerese e repetição medidos pelo relógio da interface.
 
 Eventos pertencem ao passo que os produziu. O `Renderer` recebe snapshots e eventos de apresentação; não modifica entidades. Uma UI que precisa de configuração envia um comando à aplicação. Não altera silenciosamente as regras da sessão ativa.
 
