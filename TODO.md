@@ -82,15 +82,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-002 — Materializar contratos estáveis entre componentes
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P0`
 - Depends: `SE-001`
 - Writes: `suika_elika/contracts/**; tests/contracts/**`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; pyproject.toml; suika_elika/__init__.py; suika_elika/game/__init__.py; suika_elika/input/__init__.py; suika_elika/rendering/__init__.py; suika_elika/scenes/__init__.py; tests/conftest.py; tests/test_imports.py; docs/DEVELOPMENT.md; .gitignore`
-- Owner: `se002`
+- Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Ainda não executada.
+- Evidence: Modelos e protocolos imutáveis para ações, eventos, snapshots, física, áudio, persistência e cenas entregues; bordas de entrada usam fila de consumo único e eventos/snapshots carregam apenas valores copiados. Na venv Python 3.14.7, `python -m pytest` passou (14 testes), `python -m ruff check .` passou e `python -m mypy` passou (10 arquivos); `python -m mypy --strict tools/diagnostics.py` passou. Testes confirmam invariantes, imutabilidade e importação sem Pygame/Pymunk. Ruff agora inclui `tools/**/*.py`.
 - Blocker: `none`
 
 **Objetivo:** Definir modelos tipados e interfaces de ações, snapshot, eventos, física, áudio, persistência e cenas.
@@ -110,7 +110,7 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; pyproject.toml; suika_elika/__init__.py; suika_elika/game/__init__.py; suika_elika/input/__init__.py; suika_elika/rendering/__init__.py; suika_elika/scenes/__init__.py; tests/conftest.py; tests/test_imports.py; docs/DEVELOPMENT.md; .gitignore`
 - Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Coletor stdlib apresenta runtime/arquitetura, disponibilidade e versões de pacotes e estados de probes sem importar Pygame ou ler ambiente; guia mantém dados do Batocera como pendentes. Na venv Python 3.14.7: `python -m pytest tests/tools/test_diagnostics.py` passou (5 testes), `python -m ruff check tools/diagnostics.py tests/tools/test_diagnostics.py` passou, `python -m mypy --strict tools/diagnostics.py` passou e `python tools/diagnostics.py --format json` produziu relatório funcional, com Pygame/Pymunk ausentes e probes não executados. Ruff configurado ainda não inclui `tools/`; lint explícito aprovado, expansão de cobertura será integrada após leituras compartilhadas. Nenhum dado do aparelho foi inferido.
+- Evidence: Coletor stdlib apresenta runtime/arquitetura, disponibilidade e versões de pacotes e estados de probes sem importar Pygame ou ler ambiente; guia mantém dados do Batocera como pendentes. Na venv Python 3.14.7, `python -m pytest` passou na suíte (14 testes), `python -m ruff check .` passou com `tools/**/*.py` incluído, `python -m mypy` passou (10 arquivos), e `python -m mypy --strict tools/diagnostics.py` passou. `python tools/diagnostics.py --format json` produziu relatório funcional, com Pygame/Pymunk ausentes e probes não executados. Nenhum dado do aparelho foi inferido.
 - Blocker: `none`
 
 **Objetivo:** Coletar versões, arquitetura e capacidades sem exigir que todas as dependências estejam instaladas.
