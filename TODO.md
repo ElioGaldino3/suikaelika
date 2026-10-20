@@ -142,15 +142,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-005 — Implementar catálogo e sorteio isolado
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002`
 - Writes: `suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Catálogo versionado de 11 frutas valida IDs, ordem, raios, massas, pontos, cores e pesos; RNG privado com seed mantém sequência estável e só avança após soltura aceita. Na venv Python 3.14.7, `python -m pytest tests/game/test_catalog.py tests/game/test_randomizer.py` passou (17 testes), `python -m ruff check` nos quatro arquivos da tarefa passou e `python -m mypy` nos dois módulos passou. Não foi afirmada validação de balanceamento em hardware.
 - Blocker: `none`
 
 **Objetivo:** Representar as onze frutas e a sequência de lançamento do modo clássico.
@@ -162,14 +162,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-006 — Implementar ações e normalização de entrada
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002`
 - Writes: `suika_elika/input/actions.py; suika_elika/input/manager.py; tests/input/test_actions.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se006`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
@@ -222,14 +222,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-009 — Implementar persistência e diretórios da plataforma
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002`
 - Writes: `suika_elika/persistence.py; suika_elika/platform.py; tests/services/test_persistence.py; tests/services/test_platform.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se009`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
