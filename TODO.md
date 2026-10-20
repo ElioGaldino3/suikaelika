@@ -62,15 +62,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-001 — Criar base Python e ferramentas de qualidade
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P0`
 - Depends: `SE-000`
 - Writes: `pyproject.toml; suika_elika/__init__.py; suika_elika/game/__init__.py; suika_elika/input/__init__.py; suika_elika/rendering/__init__.py; suika_elika/scenes/__init__.py; tests/conftest.py; tests/test_imports.py; docs/DEVELOPMENT.md; .gitignore`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Pacote Python >=3.10, dependências runtime separadas do extra dev, namespaces sem inicialização e guia de desenvolvimento entregues. Na venv local Python 3.14.7, `python -m pytest` passou (1 teste), `python -m ruff check .` passou e `python -m mypy` passou (5 arquivos); a importação em subprocess limpo não carrega Pygame nem implementações. A instalação completa `.[dev]` não terminou porque não havia wheel Pygame 2.6.1 para Python 3.14 e a compilação foi interrompida; `pip check` confirma que Pygame/Pymunk não estão instalados no ambiente parcial. Context7 consultado para pygame, packaging, pytest, Ruff e mypy. Compatibilidade do Batocera não alegada.
 - Blocker: `none`
 
 **Objetivo:** Preparar pacote importável e comandos reais de testes, lint e tipos em ambiente de desenvolvimento isolado.
