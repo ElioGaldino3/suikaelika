@@ -167,15 +167,15 @@ A validação com drivers simulados não homologa controles físicos nem Batocer
 
 ### SE-042 — Gerar APK instalável para Android TV
 
-- Status: `in_review`
+- Status: `done`
 - Scope: `android-tv`
 - Priority: `P1`
 - Depends: `none`
 - Writes: `buildozer.spec; packaging/android/; raw_assets/icons/android/; suika_elika/platform.py; tests/services/test_platform.py; README.md; docs/ANDROID-TV.md; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/validation/android-tv.md; TODO.md`
 - Reads: `pyproject.toml; raw_assets/icons/android/; docs/PROJECT.md; docs/ARCHITECTURE.md`
 - Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Configuração, receitas Android, manifesto Leanback, ícones adaptativos, banner do launcher e persistência privada implementados; build Android e verificações aguardando conclusão neste lote.
+- Attempts: `13`
+- Evidence: APK debug gerado por `powershell -ExecutionPolicy Bypass -File packaging/android/build.ps1` em Docker: `dist/android/suikaelika-0.1.0-arm64-v8a_armeabi-v7a-debug.apk` (48.334.127 bytes). `aapt2 dump xmltree` confirmou pacote `com.suikaelika`, minSdk 23, targetSdk 35, paisagem, `LEANBACK_LAUNCHER`, banner e recursos opcionais de Leanback/touchscreen. ZIP contém ABIs arm64-v8a e armeabi-v7a, ícone adaptativo e banner; distribuição P4A inclui pygame-ce/Pymunk. Testes Android relacionados: 9 passaram; Ruff geral e das receitas e mypy aprovados. A suíte completa teve 296 aprovados e 1 falha preexistente em `tests/rendering/test_assets.py`, causada por comparar sprites empacotados em 5× a resolução nativa da folha. Evidências e limites em `docs/validation/android-tv.md`; TV física continua em SE-043.
 - Blocker: `none`
 
 **Aceitação:**
