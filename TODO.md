@@ -422,15 +422,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-019 — Compor partida, HUD e efeitos visuais
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-008, SE-016, SE-017`
 - Writes: `suika_elika/rendering/renderer.py; suika_elika/rendering/hud.py; suika_elika/rendering/effects.py; suika_elika/scenes/play.py; tests/rendering/test_composition.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/rendering/procedural.py; tests/rendering/test_procedural.py; suika_elika/game/session.py; tests/game/test_session.py; suika_elika/rendering/viewport.py; tests/rendering/test_viewport.py`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Renderer compõe snapshots em viewport lógico, interpolando posição/ângulo e mantendo frutas acima da boca visíveis; HUD recebe estado/counters, mira é estática, efeitos têm RNG privado, deduplicação e cap, e PlayScene separa passos fixos do relógio visual. `safe_area_fraction` afeta retângulo de apresentação. Com CPython 3.13.16, `python -m pytest tests/rendering/test_composition.py -q` passou (9 testes); suíte global, Ruff/mypy globais e diff-check registrados neste lote.
 - Blocker: `none`
 
 **Objetivo:** Renderizar snapshot e eventos com frutas, mira, placar, prévia, evolução e perigo.
