@@ -69,7 +69,7 @@ def test_renderer_reuses_quantized_fruit_rotation_surfaces() -> None:
 
 def test_renderer_rotation_surface_cache_stays_bounded() -> None:
     renderer = Renderer(pygame.Surface((1280, 720)))
-    entries = load_catalog().entries[:5]
+    entries = load_catalog().entries[:6]
 
     for entry in entries:
         for rotation_step in range(1, 24):
@@ -80,7 +80,7 @@ def test_renderer_rotation_surface_cache_stays_bounded() -> None:
                 world_coordinates=False,
             )
 
-    assert len(renderer._rotated_fruit_surfaces) == 96
+    assert len(renderer._rotated_fruit_surfaces) == 128
 
 
 def test_effect_particle_memory_remains_capped_after_many_events() -> None:
