@@ -12,7 +12,7 @@ from suika_elika.game.catalog import catalog_from_data, load_catalog
 def test_classic_catalog_matches_all_proposed_fruit_rules() -> None:
     catalog = load_catalog()
 
-    assert catalog.ruleset_version == "classic-v2"
+    assert catalog.ruleset_version == "classic-v3"
     assert len(catalog.entries) == 11
     assert [entry.fruit_id for entry in catalog.entries] == [
         "cherry",
@@ -80,15 +80,15 @@ def test_catalog_uses_proposed_mass_from_radius_area() -> None:
 
 
 def test_catalog_loader_accepts_an_explicit_rules_file(tmp_path: Path) -> None:
-    source = Path(__file__).parents[2] / "data" / "rules" / "classic-v2.json"
+    source = Path(__file__).parents[2] / "data" / "rules" / "classic-v3.json"
     target = tmp_path / "alternate.json"
     target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
-    assert load_catalog(target).ruleset_version == "classic-v2"
+    assert load_catalog(target).ruleset_version == "classic-v3"
 
 
 def read_rules() -> dict[str, object]:
-    path = Path(__file__).parents[2] / "data" / "rules" / "classic-v2.json"
+    path = Path(__file__).parents[2] / "data" / "rules" / "classic-v3.json"
     return json.loads(path.read_text(encoding="utf-8"))
 
 

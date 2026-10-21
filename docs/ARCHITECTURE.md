@@ -68,6 +68,8 @@ Ordem de cada passo: consumir comandos válidos → guardar poses anteriores →
 
 Pausa, foco perdido e desconexão congelam tempo de simulação, limpam entradas residuais e zeram o acumulador. Ao retomar, a confirmação é consumida pela UI e não vira soltura. O relógio visual de menus pode continuar.
 
+O lançador libera novas tentativas a cada 0,2 s de simulação (60/300, ou 300 por minuto), contados desde a última soltura aceita, sem esperar contato ou chegada ao fundo. A consulta da área de nascimento continua rejeitando qualquer lançamento que começaria sobreposto à pilha.
+
 Parâmetros de passo, sorteio, massa, pontos, raio e derrota pertencem ao ruleset. Perfis gráficos reduzem efeitos sem mudar a simulação. Alterações que impactem comparabilidade de recordes exigem revisar `ruleset_version`.
 
 ## 5. Fronteiras de módulos

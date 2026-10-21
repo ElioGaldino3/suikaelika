@@ -176,7 +176,7 @@ def catalog_from_data(data: object) -> FruitCatalog:
 def load_catalog(path: Path | None = None) -> FruitCatalog:
     """Load the default classic rules or another JSON ruleset path."""
     rules_path = path or (
-        Path(__file__).resolve().parents[2] / "data" / "rules" / "classic-v2.json"
+        Path(__file__).resolve().parents[2] / "data" / "rules" / "classic-v3.json"
     )
     try:
         with rules_path.open("r", encoding="utf-8") as rules_file:

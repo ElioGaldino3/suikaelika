@@ -73,7 +73,7 @@ class GameSession:
     for wall/floor contacts: the current PhysicsPort reports fruit-to-fruit
     contacts only, so this class never guesses static geometry collisions from
     a body's position. Fruit-pair contacts and consumption by a merge are
-    detected internally; the launcher's one-second timeout remains a failsafe.
+    detected internally. The launcher release interval is independent of contact.
     """
 
     def __init__(
@@ -396,14 +396,7 @@ class GameSession:
         )
 
         launch_id = self._launcher.snapshot.launch_entity_id
-        launch_was_consumed = launch_id is not None and launch_id not in self._fruits
-        launch_active = launch_id is not None and launch_id in self._fruits
-        launch_touched_fruit = launch_id is not None and launch_id in contact_pairs
-        self._launcher.advance(
-            self._fixed_dt,
-            launch_contacted=launch_contacted or launch_touched_fruit or launch_was_consumed,
-            launch_body_active=launch_active if launch_id is not None else None,
-        )
+        self._launcher.advance(self._fixed_dt)
 
         observations = tuple(
             DangerObservation(

@@ -346,18 +346,18 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-005, SE-007`
-- Writes: `suika_elika/game/spawning.py; tests/game/test_spawning.py`
+- Writes: `suika_elika/game/spawning.py; suika_elika/game/session.py; suika_elika/game/catalog.py; data/rules/classic-v3.json; tests/game/test_spawning.py; tests/game/test_session.py; docs/PROJECT.md; docs/ARCHITECTURE.md`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; suika_elika/game/physics.py; tests/game/test_physics.py`
 - Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Entrega revisada: prévia sem corpo, rejeição por nascimento bloqueado sem consumo da sequência, uma soltura por borda, cooldown mínimo de 0,2 s (300 BPM) após contato, timeout de simulação e previsão circular estática do primeiro contato/fundo. Revisão atual: testes de física/spawning/session (32 passed), suíte total 177 passed, 4 skips, Ruff e mypy configurado passaram. A sessão deve fornecer à `advance()` o sinal de contato da fruta lançada também com parede/fundo; integração permanece com SE-016.
+- Attempts: `2`
+- Evidence: Prévia sem corpo, rejeição por nascimento bloqueado sem consumir a sequência, uma soltura por borda, intervalo de 0,2 s (300 por minuto) desde a soltura independente de contato e previsão circular estática do primeiro contato/fundo. O bloqueio da região de nascimento continua rejeitando sobreposição. Recordes passam para ruleset `classic-v3` por impacto na cadência. Suíte completa: 206 passaram; Ruff, mypy (42 arquivos), grafo (35 tarefas) e `git diff --check` passaram. Build Batocera regenerado incluindo `classic-v3`.
 - Blocker: `none`
 
-**Objetivo:** Gerenciar fruta em espera, limites horizontais, contato/cooldown e bloqueio de nascimento.
+**Objetivo:** Gerenciar fruta em espera, limites horizontais, cadência de soltura e bloqueio de nascimento.
 
 **Aceitação:**
 - Fruta em espera não tem corpo; soltura aceita cria um corpo e rejeitada não consome sequência.
-- WAIT_CONTACT/COOLDOWN/BLOCKED/READY, cooldown mínimo de 0,2 s e timeout seguem PROJECT, sem repetir botão segurado.
+- COOLDOWN termina 0,2 s após a soltura aceita, sem aguardar contato; o bloqueio de sobreposição e a exigência de nova borda seguem PROJECT.
 - Mira considera soma dos raios e primeiro contato estático, sem prometer a posição final.
 
 ### SE-016 — Coordenar sessão e snapshots da partida

@@ -21,14 +21,14 @@ DEFAULT_WIDTH = 800.0
 DEFAULT_HEIGHT = 460.0
 DEFAULT_LAUNCH_Y = -18.0
 DEFAULT_SIDE_MARGIN = 4.0
-DEFAULT_CONTACT_COOLDOWN = 0.2
-DEFAULT_CONTACT_TIMEOUT = 1.0
+DEFAULT_DROP_RATE_BPM = 300
+DEFAULT_DROP_INTERVAL = 60.0 / DEFAULT_DROP_RATE_BPM
 DEFAULT_SPAWN_TOLERANCE = 0.5
+_TIMER_EPSILON = 1e-9
 
 
 class LauncherState(str, Enum):
     READY = "ready"
-    WAIT_CONTACT = "wait_contact"
     COOLDOWN = "cooldown"
     BLOCKED = "blocked"
 
@@ -117,12 +117,7 @@ def predict_aim(
 
 
 class FruitLauncher:
-    """Own bodyless launch preview and a single, exactly-once drop transition.
-
-    The simulation reports whether the launched body contacted something through
-    ``advance``. This keeps the launcher independent of Pymunk callback objects;
-    the caller may also report consumption by a merge as a contact.
-    """
+    """Own bodyless preview, a timed drop interval, and spawn-area safety checks."""
 
     def __init__(
         self,
@@ -134,8 +129,7 @@ class FruitLauncher:
         height: float = DEFAULT_HEIGHT,
         launch_y: float = DEFAULT_LAUNCH_Y,
         side_margin: float = DEFAULT_SIDE_MARGIN,
-        contact_cooldown: float = DEFAULT_CONTACT_COOLDOWN,
-        contact_timeout: float = DEFAULT_CONTACT_TIMEOUT,
+        drop_interval: float = DEFAULT_DROP_INTERVAL,
         spawn_tolerance: float = DEFAULT_SPAWN_TOLERANCE,
     ) -> None:
         values = (
@@ -143,8 +137,7 @@ class FruitLauncher:
             height,
             launch_y,
             side_margin,
-            contact_cooldown,
-            contact_timeout,
+            drop_interval,
             spawn_tolerance,
         )
         if any(not isfinite(value) for value in values):
@@ -153,13 +146,10 @@ class FruitLauncher:
             width <= 0
             or height <= 0
             or side_margin < 0
-            or contact_cooldown < 0
-            or contact_timeout <= 0
+            or drop_interval <= 0
             or spawn_tolerance < 0
         ):
             raise ValueError("launcher dimensions and timers are invalid")
-        if contact_timeout < contact_cooldown:
-            raise ValueError("contact timeout must not be shorter than the cooldown")
         self._sequence = sequence
         self._physics = physics
         self._entity_id_factory = entity_id_factory
@@ -167,15 +157,13 @@ class FruitLauncher:
         self._height = height
         self._launch_y = launch_y
         self._side_margin = side_margin
-        self._contact_cooldown = contact_cooldown
-        self._contact_timeout = contact_timeout
+        self._drop_interval = drop_interval
         self._spawn_tolerance = spawn_tolerance
         self._launcher_x = width / 2
         self._state = LauncherState.READY
         self._last_edge_sequence = -1
         self._launch_entity_id: str | None = None
         self._elapsed_since_launch = 0.0
-        self._contact_seen = False
         self._blocked_by: tuple[str, ...] = ()
 
     @property
@@ -236,9 +224,8 @@ class FruitLauncher:
         self._sequence.try_consume_drop(accepted=True)
         self._launch_entity_id = entity_id
         self._elapsed_since_launch = 0.0
-        self._contact_seen = False
         self._blocked_by = ()
-        self._state = LauncherState.WAIT_CONTACT
+        self._state = LauncherState.COOLDOWN
         # Clamp again because the newly revealed preview may be a different size.
         self.set_launcher_x(self._launcher_x)
         return DropResult(True, entity_id=entity_id)
@@ -246,17 +233,10 @@ class FruitLauncher:
     def advance(
         self,
         delta_seconds: float,
-        *,
-        launch_contacted: bool = False,
-        launch_body_active: bool | None = None,
     ) -> LauncherState:
-        """Advance release timers on simulation time and resolve the current state."""
+        """Advance the release interval; contacts do not delay another drop."""
         if not isfinite(delta_seconds) or delta_seconds < 0:
             raise ValueError("simulation delta must be finite and non-negative")
-        if type(launch_contacted) is not bool:
-            raise TypeError("launch_contacted must be a bool")
-        if launch_body_active is not None and type(launch_body_active) is not bool:
-            raise TypeError("launch_body_active must be a bool or None")
 
         if self._state is LauncherState.BLOCKED:
             definition = self._sequence.current
@@ -269,23 +249,13 @@ class FruitLauncher:
                 self._state = LauncherState.READY
             return self._state
 
-        if self._state not in (LauncherState.WAIT_CONTACT, LauncherState.COOLDOWN):
+        if self._state is not LauncherState.COOLDOWN:
             return self._state
 
         self._elapsed_since_launch += delta_seconds
-        if launch_contacted or launch_body_active is False:
-            self._contact_seen = True
-        if self._state is LauncherState.WAIT_CONTACT and (
-            self._contact_seen or self._elapsed_since_launch >= self._contact_timeout
-        ):
-            self._state = LauncherState.COOLDOWN
-        if (
-            self._state is LauncherState.COOLDOWN
-            and self._elapsed_since_launch >= self._contact_cooldown
-        ):
+        if self._elapsed_since_launch + _TIMER_EPSILON >= self._drop_interval:
             self._state = LauncherState.READY
             self._launch_entity_id = None
-            self._contact_seen = False
         return self._state
 
 

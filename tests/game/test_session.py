@@ -160,9 +160,11 @@ def test_merge_precedes_danger_evaluation_and_scores_once() -> None:
     session.step(_drop_frame(1))
     first_id = next(iter(physics.bodies))
 
-    # Timeout safely releases the next drop when no fruit-pair contact arrives.
-    for _ in range(120):
+    # The 0.2 s release interval expires while the first fruit is still airborne.
+    for _ in range(22):
         session.step()
+    assert not session.snapshot.drop_ready
+    session.step()
     assert session.snapshot.drop_ready
     session.step(_drop_frame(2))
     second_id = max(physics.bodies)
@@ -205,17 +207,16 @@ def test_merge_precedes_danger_evaluation_and_scores_once() -> None:
     )
 
 
-def test_explicit_static_contact_unlocks_launcher_and_pause_freezes_state() -> None:
+def test_drop_interval_unlocks_before_contact_and_pause_freezes_state() -> None:
     physics = FakePhysics()
     session = GameSession(physics, seed=0)
     session.step(_drop_frame(1))
     launch_id = next(iter(physics.bodies))
-    session.step(launch_contacted=True)
-    danger_state = session._danger.state(launch_id)
-    assert danger_state is not None and danger_state.contact_age_seconds == 0
-    # Contact starts the 0.2 s minimum cooldown; elapsed time still applies.
-    for _ in range(24):
+    # One initial step plus 23 steps is still below 300 drops per minute.
+    for _ in range(22):
         session.step()
+    assert not session.snapshot.drop_ready
+    session.step()
     assert session.snapshot.drop_ready
     session.step(_drop_frame(2))
     assert session.drop_count == 2
