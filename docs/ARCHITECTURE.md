@@ -1,6 +1,6 @@
 # Arquitetura de Suika Elika
 
-**Revisão:** 0.1, 20/10/2026. **Estado:** contratos e limites propostos para implementação. Ainda não há runtime do jogo.
+**Revisão:** 0.1, 20/10/2026. **Estado:** contratos e limites usados pelo runtime local; homologação no Batocera continua pendente.
 
 O produto e os parâmetros de gameplay estão em [PROJECT.md](PROJECT.md). Este documento organiza dependências e contratos para permitir implementação paralela. Não substitui nem duplica as tabelas de regras de `PROJECT.md`.
 

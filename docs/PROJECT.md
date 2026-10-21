@@ -12,7 +12,7 @@
 
 **Idioma inicial:** português do Brasil
 
-**Estado:** documentação de um jogo a implementar; os comportamentos abaixo ainda não foram executados ou homologados.
+**Estado:** jogo implementado em Python/Pygame com protótipo funcional local; controle físico e execução no Batocera ainda não foram homologados.
 
 **Navegação:** [pesquisa de Suika](#2-pesquisa-de-suika-game) · [Fruit Match e vídeos](#3-pesquisa-de-fruit-match-da-playworks) · [regras](#6-regras-das-frutas-e-da-pontuação) · [física](#9-motor-físico-e-parâmetros) · [fusões](#10-algoritmo-de-fusão) · [joystick](#11-joystick-teclado-e-entrada) · [gráficos](#12-direção-gráfica-e-protótipo-sem-imagens) · [áudio](#14-som-e-música) · [Batocera](#18-execução-e-distribuição-no-batocera) · [validação](#20-plano-de-validação-da-futura-implementação) · [fontes](#25-fontes-e-referências).
 
@@ -342,17 +342,17 @@ Todos os valores desta tabela são pontos de partida para experimentação, não
 | Velocidade angular máxima | 10 rad/s | Conter giros excessivos |
 | Massa | `(radius / 14)²` | Densidade equivalente por área |
 | Momento de inércia | Disco sólido: `0,5 × mass × radius²` | Rolagem coerente com o círculo |
-| Atrito de cada fruta | 0,65 | Equilíbrio entre rolar e estabilizar |
-| Atrito de cada parede/fundo | 0,80 | Ajudar a pilha a assentar |
-| Elasticidade de cada fruta | 0,30 | Rebote discreto |
-| Elasticidade de cada parede/fundo | 0,30 | Contato macio no recipiente |
-| Damping do espaço | 0,995 por segundo | Pequena dissipação global |
+| Atrito de cada fruta | 1,0 | Rolar com mais estabilização nos contatos |
+| Atrito de cada parede/fundo | 1,0 | Ajudar a pilha a assentar |
+| Elasticidade de cada fruta | 0,18 | Rebote reduzido |
+| Elasticidade de cada parede/fundo | 0,18 | Contato macio no recipiente |
+| Damping do espaço | 0,55 por segundo | Dissipar deslize e rotação com mais rapidez |
 | Iterações do solver | 20 | Pilhas mais firmes como alvo inicial |
 | `collision_slop` | 0,5 unidade | Pequena tolerância de contato |
 | `sleep_time_threshold` | 0,7 s | Reduzir custo em corpos parados |
 | `idle_speed_threshold` | 8 unidades/s | Candidato inicial para repouso |
 
-Na API consultada, os coeficientes de atrito e elasticidade do contato resultam do produto dos coeficientes das formas. Assim, duas frutas de elasticidade 0,30 produzem aproximadamente 0,09 de restituição no contato, não 0,30. Damping é uma retenção por segundo, não uma multiplicação manual por quadro. Confirmar esses detalhes na versão fixada. Fonte: [referência da API](https://www.pymunk.org/en/latest/pymunk.html).
+Na API consultada, os coeficientes de atrito e elasticidade do contato resultam do produto dos coeficientes das formas. Assim, duas frutas de elasticidade 0,18 produzem aproximadamente 0,032 de restituição no contato, não 0,18. Damping é uma retenção por segundo, não uma multiplicação manual por quadro. Os valores mais fortes de atrito e damping foram escolhidos para limitar rolagem longa observada durante o ajuste local.
 
 Não impor o repouso de toda a pilha artificialmente a cada queda. Acordar os corpos afetados pela introdução de uma fruta ou pelo reposicionamento após fusão, respeitando os mecanismos do motor. Não zerar a velocidade das demais frutas para obter estabilidade aparente.
 
@@ -849,7 +849,7 @@ suika-elika/
 │   ├── music/
 │   └── fonts/
 ├── data/
-│   ├── rules/classic-v1.json
+│   ├── rules/classic-v2.json
 │   └── controls/
 ├── packaging/batocera/
 │   ├── Suika Elika.pygame          # futuro: entrada Python, não shell
@@ -1253,5 +1253,6 @@ Consultadas em **20/10/2026**. Links de documentação `latest` podem mudar; a i
 |---|---|---|
 | 0.1 | 20/10/2026 | Pesquisa inicial, análise visual dos dois vídeos, proposta completa do modo clássico, física com Pymunk, primeiro visual procedural e integração planejada com Batocera e joystick |
 | Governança | 20/10/2026 | AGENTS com commit obrigatório, arquitetura complementar, backlog paralelo e skill de orquestração; sem implementação do runtime |
+| Correções de apresentação e física | 20/10/2026 | Fullscreen passa a usar a resolução atual do display; colisão e borda visual compartilham o perfil do fundo curvo do balde; damping/atrito/restituição ajustados para reduzir deslizamento e quique. Novo ruleset `classic-v2` mantém recordes da física anterior separados. |
 
-Alterações futuras devem registrar o motivo, o impacto na experiência e a necessidade de mudar `ruleset_version`. Esta revisão define uma base implementável; os valores propostos ainda precisam de validação em jogo.
+Alterações futuras devem registrar o motivo, o impacto na experiência e a necessidade de mudar `ruleset_version`. O protótipo local continua sujeito a balanceamento e validação no aparelho alvo.

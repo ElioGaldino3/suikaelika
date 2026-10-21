@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -91,6 +92,32 @@ def test_fixed_loop_caps_recovery_and_discards_backlog(persistence: JsonPersiste
     assert count == 3
     assert session.snapshot.round_state is RoundState.READY
     assert app.accumulator < app.config.fixed_dt
+
+
+@pytest.mark.parametrize(
+    ("fullscreen", "expected_size"),
+    [(True, (0, 0)), (False, (1280, 720))],
+)
+def test_display_uses_native_resolution_for_fullscreen(
+    fullscreen: bool, expected_size: tuple[int, int]
+) -> None:
+    calls: list[tuple[tuple[int, int], int]] = []
+
+    class Display:
+        @staticmethod
+        def set_mode(size: tuple[int, int], flags: int) -> object:
+            calls.append((size, flags))
+            return object()
+
+        @staticmethod
+        def set_caption(_caption: str) -> None:
+            pass
+
+    pygame = SimpleNamespace(FULLSCREEN=1, display=Display())
+    app = App(AppConfig(fullscreen=fullscreen), pygame_module=pygame)
+    app._create_display()
+
+    assert calls == [(expected_size, 1 if fullscreen else 0)]
 
 
 def test_focus_loss_pauses_and_confirmation_resumes_without_a_drop(

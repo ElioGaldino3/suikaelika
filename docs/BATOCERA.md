@@ -34,7 +34,7 @@ versão 43.
 
 O arquivo `.pygame` inclui seu próprio caminho de instalação em `sys.path`. O
 pacote Python e os dados de regras ficam ao lado dele; o catálogo localiza
-`data/rules/classic-v1.json` a partir do próprio módulo.
+`data/rules/classic-v2.json` a partir do próprio módulo.
 
 ```sh
 PROJECT_ROOT="/userdata/system/suika-elika-source"

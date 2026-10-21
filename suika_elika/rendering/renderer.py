@@ -6,6 +6,7 @@ from importlib import import_module
 from math import degrees, isfinite, pi, sin
 from typing import Any
 
+from suika_elika.container_geometry import bowl_edge, bowl_outline_points
 from suika_elika.contracts import DomainEvent, FruitDefinition, SessionSnapshot, Vector2
 from suika_elika.game.catalog import FruitCatalog, load_catalog
 from suika_elika.game.spawning import AimCircle, predict_aim
@@ -312,23 +313,17 @@ class Renderer:
         pygame = self._pygame
         left = round(WORLD_ORIGIN.x)
         right = round(WORLD_ORIGIN.x + WORLD_WIDTH)
-        bottom = round(WORLD_ORIGIN.y + WORLD_HEIGHT)
+        top = round(WORLD_ORIGIN.y)
+        edge = bowl_edge(WORLD_WIDTH, WORLD_HEIGHT)
+        outline = bowl_outline_points(WORLD_WIDTH, WORLD_HEIGHT, edge)
+        floor_points = tuple(
+            (round(WORLD_ORIGIN.x + x), round(WORLD_ORIGIN.y + y))
+            for x, y in outline[2:]
+        )
         rim = (23, 105, 133)
-        pygame.draw.line(
-            self._logical, rim, (left, bottom - 4), (left + 160, bottom - 4), 7
-        )
-        pygame.draw.line(
-            self._logical,
-            rim,
-            (left + 160, bottom - 4),
-            (right - 160, bottom - 4),
-            7,
-        )
-        pygame.draw.line(
-            self._logical, rim, (right - 160, bottom - 4), (right, bottom - 4), 7
-        )
-        pygame.draw.line(self._logical, rim, (left, round(WORLD_ORIGIN.y)), (left, bottom), 7)
-        pygame.draw.line(self._logical, rim, (right, round(WORLD_ORIGIN.y)), (right, bottom), 7)
+        pygame.draw.lines(self._logical, rim, False, floor_points, 7)
+        pygame.draw.line(self._logical, rim, (right, top), floor_points[0], 7)
+        pygame.draw.line(self._logical, rim, (left, top), floor_points[-1], 7)
 
     def _draw_hud(self, snapshot: SessionSnapshot) -> None:
         draw_hud(

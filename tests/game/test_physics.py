@@ -33,8 +33,8 @@ def test_default_world_uses_classic_fixed_step_and_empty_open_top_container() ->
 
     assert world.config.fixed_dt == pytest.approx(1 / 120)
     assert world.space.gravity == (0, 1000)
-    assert len(world.space.static_body.shapes) == 3
-    assert len(world.space.shapes) == 3
+    assert len(world.space.static_body.shapes) == 5
+    assert len(world.space.shapes) == 5
     assert all(isinstance(shape, pymunk.Segment) for shape in world.space.shapes)
 
 
@@ -97,7 +97,7 @@ def test_floor_stops_fruit_and_allows_it_to_rest() -> None:
     _advance(world, 5)
 
     snapshot = world.poses(("resting",))[0]
-    assert snapshot.pose.position.y == pytest.approx(460 - 14, abs=1.5)
+    assert snapshot.pose.position.y == pytest.approx(460 - 20, abs=1.5)
     assert abs(snapshot.velocity.y) < 8
 
 
@@ -108,6 +108,35 @@ def test_open_top_has_no_ceiling_collision() -> None:
     _advance(world, 0.1)
 
     assert world.poses(("upward",))[0].pose.position.y < -5
+
+
+def test_bowl_floor_has_a_shallow_rising_profile_at_the_sides() -> None:
+    world = PhysicsWorld()
+    floors = tuple(
+        shape
+        for shape in world.space.shapes
+        if isinstance(shape, pymunk.Segment) and shape.a.x != shape.b.x
+    )
+
+    assert len(floors) == 3
+    assert sum(isclose(shape.a.y, shape.b.y, abs_tol=1e-9) for shape in floors) == 1
+    assert {
+        shape.a.y < shape.b.y
+        for shape in floors
+        if not isclose(shape.a.y, shape.b.y, abs_tol=1e-9)
+    } == {
+        True,
+        False,
+    }
+
+
+def test_default_materials_reduce_bounce_and_residual_motion() -> None:
+    config = PhysicsConfig()
+
+    assert config.fruit_friction == 1.0
+    assert config.wall_friction == 1.0
+    assert config.elasticity < 0.2
+    assert config.damping < 0.6
 
 
 def test_velocity_and_angular_velocity_are_clamped() -> None:

@@ -382,7 +382,9 @@ class App:
         pygame = self._pygame
         assert pygame is not None
         flags = pygame.FULLSCREEN if self._settings.fullscreen else 0
-        self._screen = pygame.display.set_mode(self.config.window_size, flags)
+        # A zero size asks SDL for the current desktop resolution in fullscreen.
+        size = (0, 0) if self._settings.fullscreen else self.config.window_size
+        self._screen = pygame.display.set_mode(size, flags)
         pygame.display.set_caption("Suika Elika")
 
     def _process_events(self, events: tuple[Any, ...]) -> None:
@@ -583,7 +585,7 @@ class App:
                 True,
                 (24, 59, 78),
             )
-            self._screen.blit(text, text.get_rect(center=(self.config.window_size[0] // 2, 52)))
+            self._screen.blit(text, text.get_rect(center=(self._screen.get_width() // 2, 52)))
         elif self._controller_reconnect_lock:
             assert self._pygame is not None
             connected = (
@@ -600,7 +602,7 @@ class App:
             )
             self._screen.blit(
                 text,
-                text.get_rect(center=(self.config.window_size[0] // 2, 52)),
+                text.get_rect(center=(self._screen.get_width() // 2, 52)),
             )
 
     @staticmethod

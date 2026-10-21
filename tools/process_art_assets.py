@@ -16,7 +16,7 @@ SOURCE = ROOT / "raw_assets"
 OUTPUT = ROOT / "assets"
 LOGICAL_SIZE = (1280, 720)
 
-# Cells follow classic-v1.json: six upper-row fruits, then five lower-row fruits.
+# Cells follow the classic catalog: six upper-row fruits, then five lower-row fruits.
 # Boundaries sit in the clear gaps between drawings, including their shadows.
 FRUIT_CELLS = {
     "cherry": (18, 210, 166, 461),

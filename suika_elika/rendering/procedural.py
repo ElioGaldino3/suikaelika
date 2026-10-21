@@ -11,6 +11,7 @@ from importlib import import_module
 from math import ceil, pi
 from typing import Any
 
+from suika_elika.container_geometry import bowl_edge, bowl_outline_points
 from suika_elika.game.catalog import FruitCatalog, FruitCatalogEntry
 
 Color = tuple[int, int, int]
@@ -85,16 +86,12 @@ class ProceduralArt:
 
         pygame = self._pygame
         surface = pygame.Surface(size, pygame.SRCALPHA, 32)
-        edge = max(4, round(min(size) * 0.012))
+        edge = bowl_edge(width, height)
         rim = (62, 137, 191)
         inner = (192, 231, 241, 110)
         points = [
-            (edge * 2, edge),
-            (width - edge * 2, edge),
-            (width - edge * 2, height - edge * 3),
-            (width * 3 // 4, height - edge),
-            (width // 4, height - edge),
-            (edge * 2, height - edge * 3),
+            tuple(round(value) for value in point)
+            for point in bowl_outline_points(width, height, edge)
         ]
         pygame.draw.polygon(surface, inner, points)
         pygame.draw.line(surface, rim, points[0], points[-1], edge)

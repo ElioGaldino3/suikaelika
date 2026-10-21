@@ -8,6 +8,7 @@ from typing import TypeAlias
 
 import pymunk
 
+from suika_elika.container_geometry import bowl_edge, bowl_outline_points
 from suika_elika.contracts import BodySnapshot, ContactSnapshot, FruitDefinition, Pose, Vector2
 
 _ZERO_VELOCITY = Vector2(0.0, 0.0)
@@ -24,10 +25,10 @@ class PhysicsConfig:
     gravity: Vector2 = Vector2(0.0, 1000.0)
     max_speed: float = 1000.0
     max_angular_speed: float = 10.0
-    fruit_friction: float = 0.65
-    wall_friction: float = 0.80
-    elasticity: float = 0.30
-    damping: float = 0.995
+    fruit_friction: float = 1.0
+    wall_friction: float = 1.0
+    elasticity: float = 0.18
+    damping: float = 0.55
     solver_iterations: int = 20
     collision_slop: float = 0.5
     sleep_time_threshold: float = 0.7
@@ -190,13 +191,30 @@ class PhysicsWorld:
         half = self.config.wall_thickness / 2
         left_x = -half
         right_x = self.config.width + half
-        floor_y = self.config.height + half
         start_y = -half
-        end_y = self.config.height + self.config.wall_thickness
+        edge = bowl_edge(self.config.width, self.config.height)
+        outline = bowl_outline_points(self.config.width, self.config.height, edge)
+        bottom = outline[2:]
+        collision_bottom = tuple((x, y + half) for x, y in bottom)
         walls = (
-            pymunk.Segment(self.space.static_body, (left_x, start_y), (left_x, end_y), half),
-            pymunk.Segment(self.space.static_body, (right_x, start_y), (right_x, end_y), half),
-            pymunk.Segment(self.space.static_body, (left_x, floor_y), (right_x, floor_y), half),
+            pymunk.Segment(
+                self.space.static_body,
+                (left_x, start_y),
+                (left_x, self.config.height - edge * 3 + half),
+                half,
+            ),
+            pymunk.Segment(
+                self.space.static_body,
+                (right_x, start_y),
+                (right_x, self.config.height - edge * 3 + half),
+                half,
+            ),
+            *(
+                pymunk.Segment(self.space.static_body, first, second, half)
+                for first, second in zip(
+                    collision_bottom, collision_bottom[1:], strict=False
+                )
+            ),
         )
         for wall in walls:
             wall.friction = self.config.wall_friction

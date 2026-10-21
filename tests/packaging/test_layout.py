@@ -17,7 +17,7 @@ def test_pygame_entrypoint_bootstraps_package_from_its_install_directory() -> No
     assert 'importlib.import_module("suika_elika.app").main' in source
     assert "raise SystemExit(main())" in source
     assert (ROOT / "suika_elika" / "app.py").is_file()
-    assert (ROOT / "data" / "rules" / "classic-v1.json").is_file()
+    assert (ROOT / "data" / "rules" / "classic-v2.json").is_file()
     assert (ROOT / "assets" / "sprites" / "cherry.png").is_file()
     assert (ROOT / "assets" / "backgrounds" / "gameplay.png").is_file()
 
