@@ -715,3 +715,24 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 **Aceitação:**
 - Especificar efeito, disponibilidade e limites de cada item.
 - Não adicionar compras, serviços externos ou economia ao clássico por inferência da referência.
+
+### SE-034 — Integrar sprites e cenários fornecidos
+
+- Status: `done`
+- Scope: `mvp`
+- Priority: `P1`
+- Depends: `SE-020, SE-023, SE-025`
+- Writes: `tools/process_art_assets.py; assets/sprites/**; assets/backgrounds/**; suika_elika/rendering/assets.py; suika_elika/rendering/renderer.py; suika_elika/app.py; tests/rendering/test_assets.py; docs/BATOCERA.md; docs/art/**; TODO.md`
+- Reads: `raw_assets/frutinhas.png; raw_assets/background_menu.png; raw_assets/background_jogo.png; data/rules/classic-v1.json; suika_elika/rendering/procedural.py; suika_elika/app.py; packaging/batocera/**`
+- Owner: `unassigned`
+- Attempts: `1`
+- Evidence: Script reproduzível gera os 11 sprites recortados com alpha e os dois backgrounds opacos 1280×720; App/Renderer carregam os assets em cache e mantêm fallback procedural. Mapeamento visual, limitações da folha e instalação com `assets/` documentados. Testes completos: 196 passaram; Ruff global, mypy (41 arquivos), validação do grafo (35 tarefas) e `git diff --check` passaram. Prévia visual dos recortes conferida; isso não substitui verificação no Batocera.
+- Blocker: `none`
+
+**Objetivo:** Tratar os três arquivos de arte enviados, mapear as onze frutas à ordem do catálogo e exibir os fundos de menu e partida, incluindo-os nas instruções de instalação.
+
+**Aceitação:**
+- Preservar originais; gerar sprites PNG com transparência, recortados e nomeados por ID de fruta, e fundos 16:9 otimizados.
+- Usar sprites no jogo e os respectivos cenários no menu/partida, mantendo fallback procedural para ambientes sem assets.
+- Cobrir extração, transparência, carregamento, dimensões e integração com verificações locais; documentar a cópia dos assets para Batocera.
+- Registrar o mapeamento visual e limitações de recorte; revisar diff e concluir lote com commit explícito.

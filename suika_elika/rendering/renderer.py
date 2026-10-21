@@ -9,6 +9,7 @@ from typing import Any
 from suika_elika.contracts import DomainEvent, FruitDefinition, SessionSnapshot, Vector2
 from suika_elika.game.catalog import FruitCatalog, load_catalog
 from suika_elika.game.spawning import AimCircle, predict_aim
+from suika_elika.rendering.assets import GameArt
 from suika_elika.rendering.effects import EffectSystem
 from suika_elika.rendering.hud import HudMetrics, draw_hud
 from suika_elika.rendering.procedural import ProceduralArt
@@ -37,7 +38,7 @@ class Renderer:
         target: Surface,
         *,
         catalog: FruitCatalog | None = None,
-        art: ProceduralArt | None = None,
+        art: GameArt | ProceduralArt | None = None,
         safe_area_fraction: float = 0.05,
         effect_seed: int = 0,
         reduced_effects: bool = False,
@@ -50,7 +51,7 @@ class Renderer:
             raise TypeError("reduced_effects must be a boolean")
         self.target = target
         self.catalog = catalog or load_catalog()
-        self.art = art or ProceduralArt()
+        self.art = art or GameArt()
         self.reduced_effects = reduced_effects
         self._logical = self._pygame.Surface(
             (int(LOGICAL_WIDTH), int(LOGICAL_HEIGHT)), self._pygame.SRCALPHA, 32

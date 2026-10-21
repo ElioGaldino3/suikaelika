@@ -18,6 +18,8 @@ def test_pygame_entrypoint_bootstraps_package_from_its_install_directory() -> No
     assert "raise SystemExit(main())" in source
     assert (ROOT / "suika_elika" / "app.py").is_file()
     assert (ROOT / "data" / "rules" / "classic-v1.json").is_file()
+    assert (ROOT / "assets" / "sprites" / "cherry.png").is_file()
+    assert (ROOT / "assets" / "backgrounds" / "gameplay.png").is_file()
 
 
 def test_ports_launcher_uses_hidden_data_folder_quotes_paths_and_exec() -> None:
@@ -49,3 +51,4 @@ def test_installation_instructions_cover_both_launch_modes_and_limits() -> None:
     assert "jogador 1" in instructions
     assert "mesma identidade GUID/nome" in instructions
     assert "não foi homologada" in instructions.casefold()
+    assert '"$PROJECT_ROOT/assets"' in instructions

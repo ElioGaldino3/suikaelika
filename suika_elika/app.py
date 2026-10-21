@@ -13,6 +13,7 @@ from suika_elika.game.session import GameSession
 from suika_elika.input.controller import NativeInputRegistry
 from suika_elika.input.manager import InputBackend, InputManager, InputSample
 from suika_elika.persistence import JsonPersistence
+from suika_elika.rendering.assets import ASSET_ROOT, cover_surface
 from suika_elika.rendering.renderer import Renderer
 from suika_elika.scene_manager import SceneManager
 
@@ -67,6 +68,14 @@ class _MenuCanvas:
         self.target = target
         if not self.pygame.font.get_init():
             self.pygame.font.init()
+        menu_path = ASSET_ROOT / "backgrounds" / "menu.png"
+        self._background = (
+            self.pygame.image.load(menu_path) if menu_path.is_file() else None
+        )
+        self._scaled_background: Any = None
+        self._scaled_size: tuple[int, int] | None = None
+        self._panel: Any = None
+        self._panel_size: tuple[int, int] | None = None
 
     def draw_menu(self, snapshot: Any) -> None:
         surface = self.target
@@ -78,21 +87,44 @@ class _MenuCanvas:
             choice_count=len(snapshot.choices),
             footer_lines=footer_lines,
         )
-        surface.fill((112, 201, 235))
+        if self._background is None:
+            surface.fill((112, 201, 235))
+        else:
+            if self._scaled_size != (width, height):
+                self._scaled_background = cover_surface(
+                    self.pygame, self._background, (width, height)
+                )
+                self._scaled_size = (width, height)
+            surface.blit(self._scaled_background, (0, 0))
+        if self._panel_size != (width, height):
+            self._panel = self.pygame.Surface(
+                (width, height), self.pygame.SRCALPHA, 32
+            )
+            panel_rect = self.pygame.Rect(
+                round(width * 0.12),
+                round(height * 0.07),
+                round(width * 0.76),
+                round(height * 0.86),
+            )
+            self.pygame.draw.rect(
+                self._panel, (15, 53, 63, 172), panel_rect, border_radius=24
+            )
+            self._panel_size = (width, height)
+        surface.blit(self._panel, (0, 0))
         title_font = self.pygame.font.Font(None, layout.title_font_size)
         body_font = self.pygame.font.Font(None, layout.body_font_size)
         small_font = self.pygame.font.Font(None, layout.footer_font_size)
-        title = title_font.render(snapshot.title, True, (24, 59, 78))
+        title = title_font.render(snapshot.title, True, (255, 247, 220))
         surface.blit(title, title.get_rect(center=(width // 2, layout.title_y)))
 
         for index, line in enumerate(snapshot.subtitle.splitlines()):
-            rendered = small_font.render(line, True, (34, 73, 89))
+            rendered = small_font.render(line, True, (235, 247, 239))
             subtitle_y = layout.subtitle_y + index * layout.subtitle_spacing
             surface.blit(rendered, rendered.get_rect(center=(width // 2, subtitle_y)))
 
         for index, label in enumerate(snapshot.choices):
             selected = index == snapshot.selected_index
-            color = (255, 247, 194) if selected else (24, 59, 78)
+            color = (255, 229, 121) if selected else (255, 247, 220)
             text = body_font.render(("›  " if selected else "   ") + label, True, color)
             item_y = layout.choices_y + index * layout.choice_spacing
             surface.blit(text, text.get_rect(center=(width // 2, round(item_y))))
@@ -100,7 +132,7 @@ class _MenuCanvas:
         footer_text = [line for line in (snapshot.message, snapshot.footer) if line]
         first_footer_y = layout.footer_y - (len(footer_text) - 1) * layout.footer_spacing
         for index, line in enumerate(footer_text):
-            rendered = small_font.render(line, True, (24, 59, 78))
+            rendered = small_font.render(line, True, (235, 247, 239))
             footer_y = first_footer_y + index * layout.footer_spacing
             surface.blit(rendered, rendered.get_rect(center=(width // 2, footer_y)))
 

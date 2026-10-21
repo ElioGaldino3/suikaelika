@@ -40,7 +40,8 @@ pacote Python e os dados de regras ficam ao lado dele; o catálogo localiza
 PROJECT_ROOT="/userdata/system/suika-elika-source"
 INSTALL_DIR="/userdata/roms/pygame/SuikaElika"
 mkdir -p "$INSTALL_DIR"
-cp -R "$PROJECT_ROOT/suika_elika" "$PROJECT_ROOT/data" "$INSTALL_DIR/"
+cp -R "$PROJECT_ROOT/suika_elika" "$PROJECT_ROOT/data" \
+  "$PROJECT_ROOT/assets" "$INSTALL_DIR/"
 cp "$PROJECT_ROOT/packaging/batocera/pygame/SuikaElika.pygame" "$INSTALL_DIR/"
 ```
 
@@ -60,7 +61,8 @@ do sistema.
 PROJECT_ROOT="/userdata/system/suika-elika-source"
 GAME_DIR="/userdata/roms/ports/.data/SuikaElika"
 mkdir -p "$GAME_DIR"
-cp -R "$PROJECT_ROOT/suika_elika" "$PROJECT_ROOT/data" "$GAME_DIR/"
+cp -R "$PROJECT_ROOT/suika_elika" "$PROJECT_ROOT/data" \
+  "$PROJECT_ROOT/assets" "$GAME_DIR/"
 cp "$PROJECT_ROOT/packaging/batocera/pygame/SuikaElika.pygame" "$GAME_DIR/"
 cp "$PROJECT_ROOT/packaging/batocera/ports/Suika Elika.sh" \
   "/userdata/roms/ports/Suika Elika.sh"
