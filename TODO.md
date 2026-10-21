@@ -322,15 +322,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-014 — Implementar proteção, transbordamento e escape
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-007`
 - Writes: `suika_elika/game/danger.py; tests/game/test_danger.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/physics.py; tests/game/test_physics.py`
-- Owner: `se014`
+- Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Ainda não executada.
+- Evidence: Proteção inicial finita por altura/contato/tempo, perigo individual com histerese e recuperação de 0,12 s, game over por 1,5 s, escape por 0,6 s após proteção e diagnóstico fatal ao atravessar o fundo; pause congela relógios e entidades consumidas saem da decisão. Python 3.13.16: `pytest tests/game/test_danger.py tests/game/test_physics.py -q` (22 passed), Ruff e mypy estrito direcionados passaram. Execução local; comportamento ainda depende de integração na sessão.
 - Blocker: `none`
 
 **Objetivo:** Aplicar a regra de perigo por entidade e produzir um motivo de derrota compreensível.
