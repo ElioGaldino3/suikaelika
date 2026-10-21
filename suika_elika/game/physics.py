@@ -277,19 +277,24 @@ class PhysicsWorld:
         if first_id is None or second_id is None:
             return
         points = arbiter.contact_point_set.points
+        normal = arbiter.normal
         if points:
-            point_x = sum((point.point_a.x + point.point_b.x) / 2 for point in points) / len(points)
-            point_y = sum((point.point_a.y + point.point_b.y) / 2 for point in points) / len(points)
+            # Fruit shapes are circles, so the manifold has a single contact.
+            # Avoid building a generator and summing it for every contact.
+            point = points[0]
+            point_x = (point.point_a.x + point.point_b.x) / 2
+            point_y = (point.point_a.y + point.point_b.y) / 2
         else:
-            point_x = (arbiter.bodies[0].position.x + arbiter.bodies[1].position.x) / 2
-            point_y = (arbiter.bodies[0].position.y + arbiter.bodies[1].position.y) / 2
+            first_body, second_body = arbiter.bodies
+            point_x = (first_body.position.x + second_body.position.x) / 2
+            point_y = (first_body.position.y + second_body.position.y) / 2
         impulse = arbiter.total_impulse
         self._step_contacts.append(
             ContactSnapshot(
                 first_entity_id=first_id,
                 second_entity_id=second_id,
                 point=Vector2(float(point_x), float(point_y)),
-                normal=Vector2(float(arbiter.normal.x), float(arbiter.normal.y)),
+                normal=Vector2(float(normal.x), float(normal.y)),
                 impulse=float(hypot(impulse.x, impulse.y)),
             )
         )

@@ -176,6 +176,11 @@ def test_contacts_and_overlap_results_are_copied_and_sorted() -> None:
     assert {contact.first_entity_id, contact.second_entity_id} == {"a", "b"}
     assert isinstance(contact.point, Vector2)
     assert isinstance(contact.normal, Vector2)
+    assert isclose(
+        contact.normal.x**2 + contact.normal.y**2,
+        1.0,
+        abs_tol=1e-6,
+    )
     assert contact.impulse >= 0
     assert world.overlaps(Vector2(312.5, 100), 30) == ("a", "b")
 
