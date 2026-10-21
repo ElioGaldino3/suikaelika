@@ -123,6 +123,7 @@ Em checkout compartilhado, revisar mudanças no local. Worktrees isolados só se
 | ADR-005 | Versões e recordes por ruleset | Ajustes de física não misturam silenciosamente resultados incomparáveis |
 | ADR-006 | Batalha coordena duas GameSession independentes | Mesmo catálogo e seed, cestas 480×460, placares e física separados, sem persistência do clássico |
 | ADR-007 | Slots de batalha por instance ID | GUID/nome apenas para reconquistar slot ausente; modelos iguais conectados continuam jogadores distintos |
+| ADR-008 | Teclado somente com `--desktop` | Padrão nativo em todos os sistemas; teclado como fallback explícito, fora da contagem de joysticks |
 
 ## 9. Contratos implementados para BATALHA
 
@@ -157,3 +158,23 @@ usam as mesmas dimensões. O fundo bruto tem prioridade na árvore de fontes;
 o pacote usa a cópia preparada em `assets/backgrounds/battle.png`.
 
 Atualize esta tabela com motivo e impactos quando uma decisão realmente mudar. Não registre uma arquitetura planejada como implementação já existente.
+
+## 10. Entrada de desktop e diagnóstico de dispositivos
+
+`AppConfig.allow_keyboard_fallback` é falso por padrão. Todos os launchers
+compartilham `app.main(argv)`, que aceita `--desktop`. A opção registra o adaptador
+de teclado em backend separado; um controle nativo conectado continua prioritário.
+Ao remover o controle no clássico, o fallback desktop só retoma após confirmar,
+consumindo esse aperto sem lançar. A batalha continua exclusivamente nativa.
+
+`--p1-index` e `--p2-index` são fornecidos juntos. `App` resolve os índices de
+abertura para instance IDs, seleciona P1 no clássico/menu e entrega a ordem
+preferida a `BattleControls`. Índices indisponíveis impedem a inicialização com
+erro visível. Depois de iniciar, os slots continuam usando IDs e identidades de
+reconexão; não reinterpretar índices que mudaram durante a partida. Este é um
+contrato explícito do jogo, sem alegação de herdar a ordem do EmulationStation.
+
+`tools/check_controllers.py` é independente dos módulos de gameplay. Inicializa
+apenas vídeo/eventos/joystick e a API Controller opcional, enumera via joystick,
+coleta metadados e libera os dispositivos. Não cria janela nem inicia mixer.
+`--headless` usa vídeo dummy sem substituir o backend nativo de joystick.

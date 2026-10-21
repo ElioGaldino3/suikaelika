@@ -14,8 +14,11 @@ class BattleControls:
     reclaim a missing slot, never to merge two identical connected controllers.
     """
 
-    def __init__(self, registry: NativeInputRegistry) -> None:
+    def __init__(
+        self, registry: NativeInputRegistry, *, preferred_instances: tuple[int, ...] = ()
+    ) -> None:
         self.registry = registry
+        self._preferred_instances = preferred_instances
         self.slots: list[int | None] = [None, None]
         self._identities = ["", ""]
         self._managers = (InputManager(), InputManager())
@@ -40,6 +43,10 @@ class BattleControls:
             if active in ids:
                 ids.remove(active)
                 ids.insert(0, active)
+            if self._preferred_instances:
+                ids = [slot for slot in self._preferred_instances if slot in devices] + [
+                    slot for slot in ids if slot not in self._preferred_instances
+                ]
             desired: list[int | None] = list(ids[:2])
             desired += [None] * (2 - len(desired))
         else:
@@ -65,6 +72,8 @@ class BattleControls:
                 manager.register_adapter(InputBackend.NATIVE, device)
                 manager.select_backend(InputBackend.NATIVE)
             self.slots[index] = instance_id
+        if locked and self.ready:
+            self._preferred_instances = tuple(slot for slot in self.slots if slot is not None)
 
     def poll(self, delta_seconds: float) -> tuple[InputFrame, InputFrame]:
         return (

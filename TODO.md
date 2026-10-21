@@ -2,7 +2,7 @@
 
 Atualizado em 20/10/2026. O jogo clássico está funcional e jogável localmente.
 O histórico detalhado do MVP foi arquivado em [docs/archive/TODO-classic.md](docs/archive/TODO-classic.md).
-Este arquivo concentra o novo modo BATALHA e os bloqueios reais de homologação.
+Este arquivo concentra BATALHA, entrada/diagnóstico e os bloqueios reais de homologação.
 A validação com drivers simulados não homologa controles físicos nem Batocera.
 
 ## Modo BATALHA 1x1
@@ -91,3 +91,24 @@ A validação com drivers simulados não homologa controles físicos nem Batocer
 **Aceitação:**
 
 - Pendências anteriores SE-004/024/026/027/028/029/030: coletar runtime, fixar dependências, revisar balanceamento, homologar controles/áudio/persistência, definir licença e fechar documentação da distribuição.
+
+
+### SE-040 — Diagnóstico de controles e teclado desktop explícito
+
+- Status: `done`
+- Scope: `input`
+- Priority: `P1`
+- Depends: `SE-035`
+- Writes: `tools/check_controllers.py; suika_elika/config.py; suika_elika/app.py; suika_elika/input/battle.py; suika_elika/scene_manager.py; tests/tools/test_check_controllers.py; tests/integration/test_desktop_mode.py; README.md; docs/DEVELOPMENT.md; docs/BATOCERA.md; docs/ARCHITECTURE.md; docs/PROJECT.md; docs/validation/controller-desktop.md; TODO.md`
+- Reads: `suika_elika/input/controller.py; docs/PROJECT.md; docs/ARCHITECTURE.md`
+- Owner: `unassigned`
+- Attempts: `1`
+- Evidence: Implementado e revisado. 251 testes passaram, Ruff e mypy (46 fontes) aprovados, build e smoke do pacote com código 0. Diagnóstico real retornou 0 joysticks e teclado fora da contagem. Pesquisa, comandos, critérios e limitações em docs/validation/controller-desktop.md. Homologação física continua em SE-038/039.
+- Blocker: `none`
+
+**Aceitação:**
+
+- Script independente lista quantidade e metadados de joysticks no terminal; JSON, execução sem display e erros de leitura explícitos.
+- Teclado comum fora da contagem. Entrada nativa por padrão; --desktop autoriza fallback no clássico/menu, sem substituir o segundo controle da batalha.
+- Seleção explícita de P1/P2 por índices SDL distintos; não presumir que a ordem do EmulationStation seja transmitida pelo lançador Pygame.
+- Regressões, lint, tipos, build e smoke local aprovados; limitações de hardware registradas.

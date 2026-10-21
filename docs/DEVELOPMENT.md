@@ -23,11 +23,28 @@ Em Linux/macOS, substitua a ativação por `source .venv/bin/activate`. Use `pyt
 
 ## Controles de desenvolvimento
 
+Inicie com `python main.py --desktop` (ou `python -m suika_elika --desktop`).
+Sem `--desktop`, o jogo exige joystick inclusive no Windows. A opção autoriza
+teclado como fallback quando não há controle ativo; um controle conectado tem
+prioridade. Ao removê-lo, a partida pausa e o teclado pode confirmar a retomada.
+Teclado nunca conta como joystick nem habilita BATALHA com um só controle.
+
 - Teclas de seta: mover a mira e navegar pelos menus.
 - Espaço ou Enter: soltar fruta; Enter também confirma a opção selecionada.
 - **Esc:** abrir o menu de pausa durante a partida; no menu, voltar/continuar.
 - **P:** atalho adicional para abrir a pausa.
 - No controle, o botão **Start** abre a pausa.
+
+Diagnóstico: `python tools/check_controllers.py` lista os joysticks nativos que
+SDL enumera, sem abrir janela de jogo nem iniciar áudio. Também aceita
+`--format json` e `--headless` para terminal sem display. É um script independente
+que pode ser copiado para o Batocera e executado pelo `python3` local.
+
+Seleção explícita de jogadores: `python main.py --p1-index 1 --p2-index 0`.
+Informe ambos juntos, com índices distintos e não negativos da enumeração atual.
+Se um índice não puder ser aberto, o jogo informa o erro no terminal e encerra
+com código 1. Índice não é instance ID; após iniciar a partida, os lugares usam
+instance ID e a política existente de reconexão.
 
 ## Verificações
 

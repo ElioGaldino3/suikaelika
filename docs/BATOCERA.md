@@ -77,6 +77,46 @@ O tema ativo precisa ter uma área para exibir a imagem.
 
 ## Dependências e validação
 
+### Teclado e ordem dos controles
+
+O [Batocera não considera o teclado comum um controle para gerar configurações](https://wiki.batocera.org/supported_controllers#keyboard).
+Pygame também separa eventos de teclado da enumeração `pygame.joystick`.
+Suika Elika ignora teclado por padrão; `--desktop` é uma autorização explícita
+de fallback para testes de computador. Não use essa opção no lançador Batocera
+quando quiser somente controles nativos. Pad-to-keyboard não é necessário para
+este jogo e suas teclas geradas são ignoradas no modo padrão.
+
+O menu [Controller & Bluetooth Settings](https://wiki.batocera.org/menu_tree#controller_and_bluetooth_settings)
+permite definir a ordem dos jogadores no EmulationStation, mas não se deve
+confundir essa ordem com a enumeração SDL do processo do jogo. Foram consultados
+o [gerador Pygame do Batocera 42](https://github.com/batocera-linux/batocera.linux/blob/batocera-42/package/batocera/core/batocera-configgen/configgen/configgen/generators/pygame/pygameGenerator.py)
+e o [lançador atual](https://github.com/batocera-linux/batocera.linux/blob/master/python-src/batocera-launch/batocera_launch/emulators/pygame.py):
+ambos chamam `pygame <rom>` sem argumentos P1/P2 específicos do Suika. Não há
+integração automática comprovada com a seleção da interface do aparelho.
+
+Copie `tools/check_controllers.py` para o aparelho e execute:
+
+```sh
+python3 tools/check_controllers.py --headless
+```
+
+Os índices começam em zero. Para fixar a atribuição no jogo, o lançador Python
+do pacote (`main.py`) pode chamar, por exemplo:
+
+```python
+raise SystemExit(main(["--p1-index", "1", "--p2-index", "0"]))
+```
+
+Use os índices vistos no aparelho, nunca os números do relatório Windows. Eles
+podem mudar após desconectar/reiniciar; são resolvidos para instance IDs ao abrir
+o jogo. Durante uma batalha, a reconexão preserva o lugar do jogador restante.
+Sem seleção explícita, o jogo usa os dois primeiros dispositivos abertos.
+Não filtrar controles pelo nome: um encoder arcade convertido pelo
+[keyboardToPads](https://wiki.batocera.org/diy-arcade-controls#using_keyboardtopads_to_convert_keyboard_controllers_to_gamepads_controllers)
+é um joystick virtual legítimo para SDL e pode contar como controle.
+
+### Runtime do aparelho
+
 O sistema Batocera precisa oferecer um `python3` compatível que consiga importar
 Pygame e Pymunk, junto das bibliotecas nativas exigidas por elas. O build não
 torna essas dependências portáveis. Não copie wheels do Windows para Linux. A

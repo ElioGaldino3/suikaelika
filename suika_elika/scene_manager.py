@@ -37,12 +37,14 @@ class SceneManager:
         *,
         controller_status: str = "Controle não conectado",
         fixed_dt: float = 1 / 120,
+        keyboard_enabled: bool = False,
     ) -> None:
         self.session = session
         self.persistence = persistence
         self.input_manager = input_manager
         self.audio = audio or NullAudioManager()
         self.controller_status = controller_status
+        self.keyboard_enabled = keyboard_enabled
         self.battle_ready = False
         self.battle_mode = False
         self.battle_session = BattleSession(fixed_dt=fixed_dt)
@@ -74,6 +76,10 @@ class SceneManager:
         was_ready = self.battle_ready
         self.battle_ready = count >= 2
         self.controller_status = f"{count} controle(s) conectado(s)"
+        if count == 0:
+            self.controller_status += (
+                " · teclado desktop" if self.keyboard_enabled else " · conecte um controle"
+            )
         if isinstance(self.current, TitleScene):
             if self.battle_ready and not was_ready:
                 self.current.message = ""

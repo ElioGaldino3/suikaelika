@@ -14,7 +14,7 @@ py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e .
-python main.py
+python main.py --desktop
 ```
 
 ### Linux
@@ -24,12 +24,32 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e .
-python main.py
+python main.py --desktop
 ```
 
 Não é preciso gerar um `.exe`: `main.py` inicia o jogo pelo Python. Se não
-houver joystick, o teclado funciona como fallback de desenvolvimento. Os
+iniciar com `--desktop` e não houver joystick, o teclado funciona como fallback
+de desenvolvimento. Sem essa opção, somente controles nativos são aceitos. Os
 controles estão em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
+Para conferir quantos controles o Pygame vê pelo terminal:
+
+```powershell
+python tools/check_controllers.py
+```
+
+O relatório mostra quantidade, nomes, índices, instance IDs, GUIDs e mapeamento
+SDL. Teclado comum não entra nessa contagem; pads virtuais podem aparecer.
+Use `--format json` para JSON ou `--headless` se executar por SSH sem display.
+Para escolher explicitamente os controles de cada jogador, use os índices do
+relatório (começam em zero):
+
+```powershell
+python main.py --p1-index 1 --p2-index 0
+```
+
+Os índices são da enumeração atual e podem mudar ao reconectar. O jogo não
+presume que o lançador Pygame herdou a ordem P1/P2 do EmulationStation.
 
 ## BATALHA 1x1 local
 

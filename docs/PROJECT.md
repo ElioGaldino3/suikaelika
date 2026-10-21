@@ -183,6 +183,12 @@ Ranking online, serviços de conta e geração de assets durante a partida ficam
 - Fundo fornecido: `raw_assets/battle_background.png`; cópia 16:9 para distribuição em `assets/backgrounds/battle.png`.
 - Verificações locais com controles simulados não homologam dois dispositivos reais, áudio HDMI, desempenho nem Batocera.
 
+**Entrada atualizada em 20/10/2026:** o padrão exige controles nativos também no
+Windows. `--desktop` autoriza teclado como fallback do clássico/menu, sem contá-lo
+como controle da batalha. A atribuição explícita P1/P2 pode ser indicada com
+`--p1-index` e `--p2-index`; o diagnóstico `tools/check_controllers.py` mostra os
+índices SDL atuais. A ordem do EmulationStation não é presumida como herdada.
+
 ## 6. Regras das frutas e da pontuação
 
 ### 6.1 Catálogo proposto

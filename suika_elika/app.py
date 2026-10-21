@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import argparse
+import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -308,7 +311,8 @@ class App:
                 frame_number += 1
                 if frame_limit is not None and frame_number >= frame_limit:
                     break
-        except Exception:
+        except Exception as error:
+            print(f"Suika Elika: {error}", file=sys.stderr)
             self._exit_code = 1
         finally:
             self.close()
@@ -353,8 +357,23 @@ class App:
 
         self._registry = NativeInputRegistry(pygame)
         devices = self._registry.discover()
-        self._battle_controls = BattleControls(self._registry)
-        self._battle_controls.sync(locked=False)
+        preferred: tuple[int, ...] = ()
+        if self.config.player_indexes is not None:
+            by_index = {
+                device.device_index: instance_id
+                for instance_id, device in self._registry.devices.items()
+            }
+            missing = [index for index in self.config.player_indexes if index not in by_index]
+            if missing:
+                raise ValueError(f"Controles não disponíveis nos índices: {missing}")
+            preferred = tuple(by_index[index] for index in self.config.player_indexes)
+            devices = preferred + tuple(
+                instance for instance in devices if instance not in preferred
+            )
+        self._battle_controls = BattleControls(self._registry, preferred_instances=preferred)
+        if self.config.allow_keyboard_fallback:
+            self._keyboard = _KeyboardAdapter(pygame)
+            self._input.register_adapter(InputBackend.KEYBOARD_EMULATED, self._keyboard)
         if devices:
             self._registry.select(devices[0])
             self._selected_controller_identity = self._controller_identity(
@@ -366,10 +385,9 @@ class App:
         else:
             controller_status = "Controle não conectado"
             if self.config.allow_keyboard_fallback:
-                self._keyboard = _KeyboardAdapter(pygame)
-                self._input.register_adapter(InputBackend.KEYBOARD_EMULATED, self._keyboard)
                 self._input.select_backend(InputBackend.KEYBOARD_EMULATED)
                 controller_status += " · teclado de desenvolvimento"
+        self._battle_controls.sync(locked=False)
 
         self._session = GameSession(
             PhysicsWorld(PhysicsConfig(fixed_dt=self.config.fixed_dt)),
@@ -401,6 +419,7 @@ class App:
             self._audio,
             controller_status=controller_status,
             fixed_dt=self.config.fixed_dt,
+            keyboard_enabled=self.config.allow_keyboard_fallback,
         )
         self._manager.set_controller_count(len(self._registry.devices))
 
@@ -526,6 +545,8 @@ class App:
         self._clear_input_states()
         if self._registry is not None:
             self._registry.select(None)
+        if self._keyboard is not None:
+            self._input.select_backend(InputBackend.KEYBOARD_EMULATED)
         if self._manager is not None:
             self._manager.reset_input()
 
@@ -576,7 +597,10 @@ class App:
             if (
                 confirmed
                 and self._registry is not None
-                and self._registry.active_instance_id is not None
+                and (
+                    self._registry.active_instance_id is not None
+                    or self._input.active_backend is InputBackend.KEYBOARD_EMULATED
+                )
             ):
                 self._controller_reconnect_lock = False
                 self._input.reset()
@@ -724,6 +748,8 @@ class App:
                 and self._registry.active_instance_id is not None
             )
             message = (
+                "Controle removido · confirme no teclado para continuar (--desktop)"
+                if self._input.active_backend is InputBackend.KEYBOARD_EMULATED else
                 "Controle reconectado · pressione confirmar para continuar"
                 if connected
                 else "Controle removido · reconecte o controle do jogador 1"
@@ -771,9 +797,24 @@ class App:
             self._manager.reset_input()
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Console entry function used by both package and compatibility launchers."""
-    return App().run()
+    parser = argparse.ArgumentParser(description="Suika Elika — clássico e batalha local")
+    parser.add_argument(
+        "--desktop", action="store_true",
+        help="permitir teclado no clássico/menu quando nenhum controle estiver conectado",
+    )
+    parser.add_argument("--p1-index", type=int, help="índice Pygame do controle do jogador 1")
+    parser.add_argument("--p2-index", type=int, help="índice Pygame do controle do jogador 2")
+    args = parser.parse_args(argv)
+    indexes = None
+    if args.p1_index is not None or args.p2_index is not None:
+        if args.p1_index is None or args.p2_index is None:
+            parser.error("informe --p1-index e --p2-index juntos")
+        if min(args.p1_index, args.p2_index) < 0 or args.p1_index == args.p2_index:
+            parser.error("P1 e P2 precisam de índices distintos e não negativos")
+        indexes = (args.p1_index, args.p2_index)
+    return App(AppConfig(allow_keyboard_fallback=args.desktop, player_indexes=indexes)).run()
 
 
 __all__ = ["App", "main"]
