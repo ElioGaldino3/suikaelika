@@ -130,8 +130,8 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; tools/diagnostics.py; docs/BATOCERA-ENVIRONMENT.md; tests/tools/test_diagnostics.py`
 - Owner: `unassigned`
 - Attempts: `0`
-- Evidence: Ainda não executada.
-- Blocker: `Equipamento Batocera ainda não identificado/acessível. Desbloquear após obter modelo, versão, arquitetura, controle e acesso ao alvo para executar SE-003.`
+- Evidence: Relato do usuário: Batocera 43 em notebook x86, com `python3` disponível. Ainda sem saída do diagnóstico no equipamento e sem versões confirmadas de Python, Pygame/Pymunk, ABI/libc ou probes de áudio/joystick.
+- Blocker: `O usuário informa Batocera 43, notebook x86 e python3; falta executar tools/diagnostics.py no equipamento para confirmar arquitetura, runtime e dependências. Joystick físico continua necessário para a etapa de homologação.`
 
 **Objetivo:** Executar a prova de Pygame, joystick e Pymunk no destino e identificar a matriz efetiva do equipamento.
 
@@ -242,15 +242,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-010 — Implementar adaptadores SDL e joystick genérico
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-006`
 - Writes: `suika_elika/input/controller.py; suika_elika/input/joystick.py; tests/input/test_devices.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/input/actions.py; suika_elika/input/manager.py; tests/input/test_actions.py`
-- Owner: `se010`
-- Attempts: `1`
-- Evidence: Ainda não executada.
+- Owner: `unassigned`
+- Attempts: `2`
+- Evidence: Adaptadores SDL Controller e Joystick usam índices apenas na abertura, `instance_id` no ciclo de conexão, preferem caminho Controller e não adivinham botões genéricos; eixo Controller int16 e Joystick float normalizados separadamente; fallback sem `_sdl2.controller`/rumble. Testes simulados. Python 3.13.16: `pytest tests/input -q` (26 passed), Ruff e mypy estrito direcionados passaram; suíte global `python -m pytest` (100 passed). Joystick físico ainda não homologado.
 - Blocker: `none`
 
 **Objetivo:** Ler controles reconhecidos e genéricos com identidade de instância e ciclo de conexão.
@@ -282,14 +282,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-012 — Implementar serviço de áudio e fallback silencioso
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002`
 - Writes: `suika_elika/audio.py; tests/services/test_audio.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se012`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
@@ -302,14 +302,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-013 — Implementar fusões transacionais e cadeias
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-005, SE-007`
 - Writes: `suika_elika/game/merging.py; tests/game/test_merging.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; suika_elika/game/physics.py; tests/game/test_physics.py`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se013`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
