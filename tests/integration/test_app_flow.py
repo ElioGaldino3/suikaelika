@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from suika_elika.app import App, calculate_menu_layout
+from suika_elika.app import App, _KeyboardAdapter, calculate_menu_layout
 from suika_elika.audio import NullAudioManager
 from suika_elika.config import AppConfig
 from suika_elika.contracts import InputAction, InputEdge, InputFrame, RoundState, SceneTransition
@@ -61,6 +61,45 @@ def test_local_flow_starts_pauses_resumes_restarts_and_exits(persistence: JsonPe
     assert manager.current_name == "play"
     assert session.round_state is RoundState.PLAYING
     assert audio.available is False
+
+
+def test_escape_opens_pause_menu_and_closes_it_again(persistence: JsonPersistence) -> None:
+    class ReleasedKeys:
+        def __getitem__(self, _key: int) -> bool:
+            return False
+
+    pygame = SimpleNamespace(
+        KEYDOWN=1,
+        K_RETURN=13,
+        K_SPACE=32,
+        K_ESCAPE=27,
+        K_p=112,
+        K_LEFT=276,
+        K_RIGHT=275,
+        K_UP=273,
+        K_DOWN=274,
+        K_LSHIFT=304,
+        key=SimpleNamespace(get_pressed=ReleasedKeys),
+    )
+    keyboard = _KeyboardAdapter(pygame)
+    session, manager, _audio = _stack(persistence)
+    input_manager = manager.input_manager
+    input_manager.register_adapter(InputBackend.KEYBOARD_EMULATED, keyboard)
+    input_manager.select_backend(InputBackend.KEYBOARD_EMULATED)
+
+    manager.handle_actions(_frame(0, InputAction.CONFIRM))
+    assert manager.current_name == "play"
+
+    escape = SimpleNamespace(type=pygame.KEYDOWN, key=pygame.K_ESCAPE, repeat=False)
+    keyboard.process_events((escape,))
+    manager.handle_actions(input_manager.poll(0.0).frame)
+    assert manager.current_name == "pause"
+    assert session.round_state is RoundState.PAUSED
+
+    keyboard.process_events((escape,))
+    manager.handle_actions(input_manager.poll(0.0).frame)
+    assert manager.current_name == "play"
+    assert session.round_state is RoundState.READY
 
     manager.handle_actions(_frame(4, InputAction.PAUSE))
     manager.handle_actions(_frame(5, InputAction.NAV_DOWN))

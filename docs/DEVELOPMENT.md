@@ -21,6 +21,14 @@ python -m pip install -e ".[dev]"
 
 Em Linux/macOS, substitua a ativação por `source .venv/bin/activate`. Use `python3` no lugar de `py -3` caso o launcher do Windows não esteja disponível.
 
+## Controles de desenvolvimento
+
+- Teclas de seta: mover a mira e navegar pelos menus.
+- Espaço ou Enter: soltar fruta; Enter também confirma a opção selecionada.
+- **Esc:** abrir o menu de pausa durante a partida; no menu, voltar/continuar.
+- **P:** atalho adicional para abrir a pausa.
+- No controle, o botão **Start** abre a pausa.
+
 ## Verificações
 
 Execute a partir da raiz do repositório:

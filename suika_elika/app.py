@@ -30,7 +30,7 @@ class _KeyboardAdapter:
         mapping = {
             getattr(keys, "K_RETURN", -1): (InputAction.CONFIRM, InputAction.DROP),
             getattr(keys, "K_SPACE", -2): (InputAction.DROP,),
-            getattr(keys, "K_ESCAPE", -3): (InputAction.CANCEL,),
+            getattr(keys, "K_ESCAPE", -3): (InputAction.PAUSE, InputAction.CANCEL),
             getattr(keys, "K_p", -4): (InputAction.PAUSE,),
         }
         keydown = getattr(keys, "KEYDOWN", object())
