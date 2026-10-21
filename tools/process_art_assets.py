@@ -14,55 +14,36 @@ import pygame
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "raw_assets"
 OUTPUT = ROOT / "assets"
+FRUIT_SHEET = SOURCE / "frutinhas_v2.png"
+FRUIT_SHEET_SIZE = (1536, 1024)
 LOGICAL_SIZE = (1280, 720)
 
-# Cells follow the classic catalog: six upper-row fruits, then five lower-row fruits.
-# Boundaries sit in the clear gaps between drawings, including their shadows.
+# Alpha-aware cells follow the classic catalog: six upper-row fruits, then five
+# lower-row fruits. The bounds fit between the visible, non-transparent drawings.
 FRUIT_CELLS = {
-    "cherry": (18, 210, 166, 461),
-    "strawberry": (162, 202, 327, 465),
-    "grape": (330, 176, 550, 457),
-    "lemon": (556, 154, 790, 480),
-    "apple": (795, 141, 1088, 480),
-    "orange": (1090, 127, 1445, 478),
-    "pear": (0, 485, 220, 984),
-    "peach": (228, 493, 475, 987),
-    "pineapple": (479, 475, 730, 1000),
-    "melon": (735, 489, 1018, 996),
-    "watermelon": (1028, 480, 1448, 1016),
+    "cherry": (0, 0, 187, 480),
+    "strawberry": (187, 0, 411, 480),
+    "grape": (411, 0, 670, 480),
+    "lemon": (670, 0, 924, 480),
+    "apple": (924, 0, 1217, 480),
+    "orange": (1217, 0, 1536, 480),
+    "pear": (0, 480, 270, 1024),
+    "peach": (270, 480, 557, 1024),
+    "pineapple": (557, 480, 833, 1024),
+    "melon": (833, 480, 1129, 1024),
+    "watermelon": (1129, 480, 1536, 1024),
 }
 
 
-def remove_edge_background(image: pygame.Surface) -> pygame.Surface:
-    """Make near-white pixels connected to the crop edge transparent."""
-    rgba = pygame.Surface(image.get_size(), pygame.SRCALPHA, 32)
-    rgba.blit(image, (0, 0))
-    white = pygame.mask.from_threshold(
-        rgba,
-        (253, 253, 253, 255),
-        (12, 12, 12, 255),
-    )
-    width, height = rgba.get_size()
-    edge = pygame.mask.Mask((width, height))
-    edge.draw(pygame.mask.Mask((width, 1), fill=True), (0, 0))
-    edge.draw(pygame.mask.Mask((width, 1), fill=True), (0, height - 1))
-    edge.draw(pygame.mask.Mask((1, height), fill=True), (0, 0))
-    edge.draw(pygame.mask.Mask((1, height), fill=True), (width - 1, 0))
-
-    background = pygame.mask.Mask((width, height))
-    for component in white.connected_components():
-        if component.overlap_area(edge, (0, 0)):
-            background.draw(component, (0, 0))
-
-    alpha = background.to_surface(
-        setcolor=(255, 255, 255, 0), unsetcolor=(255, 255, 255, 255)
-    )
-    rgba.blit(alpha, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-    return rgba
-
-
-def trim_transparent(image: pygame.Surface, padding: int = 8) -> pygame.Surface:
-    bounds = image.get_bounding_rect(min_alpha=1)
+def trim_transparent(
+    image: pygame.Surface, padding: int = 8, min_alpha: int = 32
+) -> pygame.Surface:
+    """Trim only the nearly invisible outer glow, keeping source pixels intact."""
+    if type(padding) is not int or padding < 0:
+        raise ValueError("padding must be a non-negative integer")
+    if type(min_alpha) is not int or not 1 <= min_alpha <= 255:
+        raise ValueError("min_alpha must be an integer in [1, 255]")
+    bounds = image.get_bounding_rect(min_alpha=min_alpha)
     if bounds.width <= 0 or bounds.height <= 0:
         raise ValueError("fruit crop contains no opaque pixels")
     left = max(0, bounds.left - padding)
@@ -90,13 +71,17 @@ def fit_cover(image: pygame.Surface, size: tuple[int, int]) -> pygame.Surface:
 def main() -> None:
     pygame.init()
     try:
-        sheet = pygame.image.load(SOURCE / "frutinhas.png")
+        sheet = pygame.image.load(FRUIT_SHEET)
+        if sheet.get_size() != FRUIT_SHEET_SIZE:
+            raise ValueError(
+                f"expected {FRUIT_SHEET_SIZE} fruit sheet, got {sheet.get_size()}"
+            )
         sprite_dir = OUTPUT / "sprites"
         sprite_dir.mkdir(parents=True, exist_ok=True)
         for fruit_id, cell in FRUIT_CELLS.items():
             x1, y1, x2, y2 = cell
             cropped = sheet.subsurface((x1, y1, x2 - x1, y2 - y1)).copy()
-            sprite = trim_transparent(remove_edge_background(cropped))
+            sprite = trim_transparent(cropped)
             pygame.image.save(sprite, sprite_dir / f"{fruit_id}.png")
 
         background_dir = OUTPUT / "backgrounds"

@@ -13,13 +13,15 @@ PACKAGING = ROOT / "packaging" / "batocera"
 def test_pygame_entrypoint_bootstraps_package_from_its_install_directory() -> None:
     entrypoint = PACKAGING / "pygame" / "SuikaElika.pygame"
     source = entrypoint.read_text(encoding="utf-8")
+    main = PACKAGING / "pygame" / "main.py"
+    main_source = main.read_text(encoding="utf-8")
 
     compile(source, str(entrypoint), "exec")
+    compile(main_source, str(main), "exec")
     assert source.startswith("#!/usr/bin/env python3\n")
-    assert "INSTALL_ROOT = Path(__file__).resolve().parent" in source
-    assert "sys.path.insert(0, str(INSTALL_ROOT))" in source
-    assert 'importlib.import_module("suika_elika.app").main' in source
+    assert "from main import main" in source
     assert "raise SystemExit(main())" in source
+    assert 'from suika_elika.app import main' in main_source
     assert (ROOT / "suika_elika" / "app.py").is_file()
     assert (ROOT / "data" / "rules" / "classic-v2.json").is_file()
     assert (ROOT / "assets" / "sprites" / "cherry.png").is_file()
@@ -36,13 +38,15 @@ def test_build_creates_and_replaces_the_pygame_installation_folder(tmp_path: Pat
     entrypoint = tmp_path / "packaging" / "batocera" / "pygame" / "SuikaElika.pygame"
     entrypoint.parent.mkdir(parents=True)
     entrypoint.write_text("print('run')\n", encoding="utf-8")
+    (entrypoint.parent / "main.py").write_text("print('main')\n", encoding="utf-8")
 
     output = build_package(tmp_path)
     (output / "stale-file").write_text("old", encoding="utf-8")
     output = build_package(tmp_path)
 
-    assert output == tmp_path / "dist" / "SuikaElika"
+    assert output == tmp_path / "dist" / "SuikaElika.pygame"
     assert (output / "SuikaElika.pygame").read_text(encoding="utf-8") == "print('run')\n"
+    assert (output / "main.py").read_text(encoding="utf-8") == "print('main')\n"
     for directory in ("suika_elika", "data", "assets"):
         assert (output / directory / "marker").is_file()
     assert (output / "README-BATOCERA.txt").is_file()
@@ -61,7 +65,8 @@ def test_installation_instructions_cover_pygame_and_limits() -> None:
     )
 
     assert "/userdata/roms/pygame" in instructions
-    assert "dist/SuikaElika" in instructions
+    assert "dist/SuikaElika.pygame" in instructions
+    assert "main.py" in instructions
     assert "SuikaElika.pygame" in instructions
     assert "python3" in instructions
     assert "Pygame" in instructions

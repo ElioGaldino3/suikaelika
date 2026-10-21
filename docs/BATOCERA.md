@@ -17,32 +17,35 @@ Na raiz do checkout, rode:
 python tools/build_batocera.py
 ```
 
-O script monta `dist/SuikaElika/`, removendo apenas a saída anterior com esse
-mesmo nome dentro de `dist/`:
+O script monta a pasta `dist/SuikaElika.pygame/`, removendo apenas a saída
+anterior com esse mesmo nome dentro de `dist/`:
 
 ```text
-dist/SuikaElika/
-├── SuikaElika.pygame       # entrada Python chamada pelo sistema Batocera
+dist/SuikaElika.pygame/
+├── main.py                 # entrada principal que inicia o jogo
+├── SuikaElika.pygame       # arquivo ROM reconhecido pelo sistema Batocera
 ├── README-BATOCERA.txt
 ├── suika_elika/            # código do jogo
 ├── data/                   # regras classic-v2
 └── assets/                 # imagens do jogo
 ```
 
-O nome `SuikaElika.pygame` pertence ao arquivo lançador. A pasta do jogo se
-chama `SuikaElika`, sem extensão. O build não é um executável compilado; apenas
-reúne o lançador, o pacote Python e seus dados. Ele não baixa nem inclui Python,
-Pygame, SDL ou Pymunk.
+O diretório completo termina em `.pygame`, como solicitado. O Batocera encontra
+o arquivo `SuikaElika.pygame` que fica dentro dele; esse lançador chama
+`main.py`. O build não é um executável compilado; apenas reúne os pontos de
+entrada, o pacote Python e seus dados. Ele não baixa nem inclui Python, Pygame,
+SDL ou Pymunk.
 
 ## Copiar para o Batocera
 
-Copie a pasta **inteira** `dist/SuikaElika` para `/userdata/roms/pygame/`. Pelo
-compartilhamento de rede no Windows, o destino costuma ser
+Copie a pasta **inteira** `dist/SuikaElika.pygame` para `/userdata/roms/pygame/`.
+No Windows, use o compartilhamento de rede, normalmente
 `\\BATOCERA\share\roms\pygame\`; substitua `BATOCERA` pelo nome/IP do aparelho
 se necessário. No aparelho, a estrutura final deve ser:
 
 ```text
-/userdata/roms/pygame/SuikaElika/
+/userdata/roms/pygame/SuikaElika.pygame/
+├── main.py
 ├── SuikaElika.pygame
 ├── README-BATOCERA.txt
 ├── suika_elika/
@@ -61,7 +64,7 @@ Guarde a imagem, por exemplo, em
 
 ```xml
 <game>
-  <path>./SuikaElika/SuikaElika.pygame</path>
+  <path>./SuikaElika.pygame/SuikaElika.pygame</path>
   <name>Suika Elika</name>
   <image>./images/SuikaElika.png</image>
   <desc>Jogo de queda e fusão de frutas.</desc>

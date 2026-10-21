@@ -10,11 +10,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_DIRS = ("suika_elika", "data", "assets")
-ENTRYPOINT = Path("packaging") / "batocera" / "pygame" / "SuikaElika.pygame"
+BATOCERA_PYGAME_DIR = Path("packaging") / "batocera" / "pygame"
+ENTRYPOINT = BATOCERA_PYGAME_DIR / "SuikaElika.pygame"
+MAIN_ENTRYPOINT = BATOCERA_PYGAME_DIR / "main.py"
+PACKAGE_NAME = "SuikaElika.pygame"
 INSTALL_GUIDE = """Suika Elika — Batocera Pygame build
 
-Copy this complete folder to /userdata/roms/pygame/SuikaElika.
-The file SuikaElika.pygame is the Python entry point; it is not a binary.
+Copy this complete folder to /userdata/roms/pygame/SuikaElika.pygame.
+main.py starts the game; the nested SuikaElika.pygame file is the ROM entry point.
+Neither file is a compiled binary.
 Refresh the game list in EmulationStation, then launch Pygame > SuikaElika.
 
 Batocera must provide a compatible Python, Pygame/SDL and Pymunk runtime.
@@ -30,7 +34,7 @@ def build_package(
     if dist_path.is_symlink():
         raise ValueError("project dist directory must not be a symlink")
     dist_root = dist_path.resolve()
-    requested_target = output_dir or dist_root / "SuikaElika"
+    requested_target = output_dir or dist_root / PACKAGE_NAME
     target = requested_target if requested_target.is_absolute() else source_root / requested_target
     target = target.absolute()
     if target.parent != dist_root:
@@ -40,7 +44,7 @@ def build_package(
     if target.is_symlink():
         raise ValueError("output directory must not be a symlink")
 
-    required_sources = (*PACKAGE_DIRS, str(ENTRYPOINT))
+    required_sources = (*PACKAGE_DIRS, str(ENTRYPOINT), str(MAIN_ENTRYPOINT))
     missing = [path for path in required_sources if not (source_root / path).exists()]
     if missing:
         raise FileNotFoundError("missing package inputs: " + ", ".join(missing))
@@ -56,6 +60,7 @@ def build_package(
                 ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
             )
         shutil.copy2(source_root / ENTRYPOINT, stage / "SuikaElika.pygame")
+        shutil.copy2(source_root / MAIN_ENTRYPOINT, stage / "main.py")
         (stage / "README-BATOCERA.txt").write_text(INSTALL_GUIDE, encoding="utf-8")
 
         if target.exists():
@@ -80,7 +85,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     output = build_package(output_dir=args.output)
     print(f"Batocera Pygame package built: {output}")
-    print("Copy this folder to /userdata/roms/pygame/SuikaElika")
+    print(f"Copy this folder to /userdata/roms/pygame/{PACKAGE_NAME}")
     return 0
 
 

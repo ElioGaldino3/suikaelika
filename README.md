@@ -33,11 +33,12 @@ controles estão em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Build para o sistema Pygame do Batocera
 
-O arquivo `.pygame` é o script Python de entrada do jogo. O build monta uma
-pasta `SuikaElika` com esse script e os arquivos que ele importa:
+O build monta a pasta `SuikaElika.pygame`. Dentro dela, `main.py` inicia o jogo
+e o arquivo `SuikaElika.pygame` é a entrada reconhecida pelo sistema Batocera:
 
 ```text
-dist/SuikaElika/
+dist/SuikaElika.pygame/
+├── main.py
 ├── SuikaElika.pygame
 ├── suika_elika/
 ├── data/
@@ -51,18 +52,19 @@ Gere o pacote na raiz do projeto:
 python tools/build_batocera.py
 ```
 
-O resultado pronto para copiar fica em `dist/SuikaElika/`. Copie essa pasta
+O resultado pronto para copiar fica em `dist/SuikaElika.pygame/`. Copie a pasta
 inteira para `/userdata/roms/pygame/`, para que o destino seja
-`/userdata/roms/pygame/SuikaElika/`. Por exemplo, no Windows, a pasta pode ser
-copiada pelo compartilhamento de rede do Batocera, normalmente
+`/userdata/roms/pygame/SuikaElika.pygame/`. No Windows, transfira pelo
+compartilhamento de rede do Batocera, normalmente
 `\\BATOCERA\share\roms\pygame\` (ou substitua `BATOCERA` pelo IP do aparelho).
 Depois, atualize a lista de jogos no EmulationStation e inicie **Pygame →
 SuikaElika**.
 
-`SuikaElika.pygame` é um arquivo dentro da pasta do jogo, não o nome da pasta.
-Não é `.exe` nem binário independente: o aparelho ainda precisa de uma versão
-compatível de Python, Pygame/SDL e Pymunk. O build organiza os arquivos do jogo,
-mas não compila nem inclui essas bibliotecas do sistema. Confira os passos e
+O arquivo `SuikaElika.pygame` dentro da pasta é o lançador do sistema; `main.py`
+é a entrada Python principal. Nenhum deles é `.exe` ou binário independente:
+o aparelho ainda precisa de uma versão compatível de Python, Pygame/SDL e Pymunk.
+O build organiza os arquivos do jogo, mas não compila nem inclui essas
+bibliotecas do sistema. Confira os passos e
 limites de instalação em [docs/BATOCERA.md](docs/BATOCERA.md).
 
 ## Arte na lista de jogos
@@ -72,7 +74,7 @@ instalação acima:
 
 ```xml
 <game>
-  <path>./SuikaElika/SuikaElika.pygame</path>
+  <path>./SuikaElika.pygame/SuikaElika.pygame</path>
   <name>Suika Elika</name>
   <image>./images/SuikaElika.png</image>
   <desc>Jogo de queda e fusão de frutas.</desc>

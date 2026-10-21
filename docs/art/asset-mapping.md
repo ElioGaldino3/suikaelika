@@ -1,10 +1,12 @@
 # Arte fornecida para o protótipo
 
 O processamento reproduzível é feito com `python tools/process_art_assets.py`
-no ambiente de desenvolvimento com Pygame instalado. Os arquivos de entrada
-em `raw_assets/` ficam intactos. O script separa as células por nível do
-catálogo, remove o fundo claro conectado às bordas (preservando brilhos claros
-isolados dentro dos desenhos), corta a transparência excedente e salva PNGs.
+no ambiente de desenvolvimento com Pygame instalado. A folha `raw_assets/frutinhas_v2.png`
+tem 1536×1024 pixels e transparência por pixel; o script a usa sem reamostrar
+os recortes. Os arquivos de entrada em `raw_assets/` ficam intactos. As células
+seguem a ordem do catálogo, ignoram apenas o halo quase invisível ao calcular
+os limites e mantêm os pixels originais com alpha dentro da caixa recortada.
+Os PNGs são salvos sem compressão com perda.
 Os cenários são ajustados para preencher o canvas lógico 1280×720, com corte
 central e preservação da proporção.
 
@@ -34,7 +36,7 @@ manter o texto legível. Se os diretórios processados não estiverem disponíve
 a renderização mantém o fallback procedural anterior.
 
 **Limitação do recorte:** a separação usa células fixas porque a folha não tem
-guias. A imagem enviada tem frutas próximas e sombras que se tocam, então os
-limites foram colocados nos espaços visíveis entre as ilustrações. Confira os
-PNG individuais antes de substituir a arte fonte ou alterar a composição da
-folha.
+guias. A nova imagem aproxima algumas sombras nas linhas inferiores; os limites
+foram posicionados entre os pixels opacos para não misturar as frutas vizinhas.
+Confira os PNGs individuais antes de substituir a arte fonte ou alterar a
+composição da folha.

@@ -509,15 +509,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Writes: `packaging/batocera/**; tools/build_batocera.py; tests/packaging/test_layout.py; docs/BATOCERA.md; README.md`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tools/diagnostics.py; tests/tools/test_diagnostics.py; docs/BATOCERA-ENVIRONMENT.md; suika_elika/app.py; suika_elika/scene_manager.py; suika_elika/config.py; suika_elika/__main__.py; main.py; tests/integration/test_app_flow.py`
 - Owner: `unassigned`
-- Attempts: `2`
-- Evidence: Pacote agora é exclusivo do sistema Pygame: `tools/build_batocera.py` gera `dist/SuikaElika/` com `SuikaElika.pygame`, pacote, regras e assets; recria somente essa saída de build. O README e `docs/BATOCERA.md` explicam instalação em `/userdata/roms/pygame/SuikaElika`, atualização da lista e metadados opcionais de arte; removida a alternativa Ports. `python tools/build_batocera.py` gerou a pasta de instalação; testes completos: 177 passed, 4 skipped (Pygame ausente), Ruff passou, mypy passou com `import-not-found` desativado, e `git diff --check` passou. Batocera real, joystick, áudio e compatibilidade de ABI/dependências continuam pendentes em SE-004/SE-024.
+- Attempts: `3`
+- Evidence: O build do sistema Pygame gera `dist/SuikaElika.pygame/` com `main.py`, o ROM lançador `SuikaElika.pygame`, pacote, regras e assets; recria somente essa saída. README e `docs/BATOCERA.md` explicam a cópia para `/userdata/roms/pygame/SuikaElika.pygame`, atualização da lista e metadados opcionais de arte; sem alternativa Ports. O build foi executado e a estrutura conferida. Suíte completa: 204 passaram; Ruff, mypy (42 fontes), grafo (35 tarefas) e `git diff --check` passaram. A pasta final segue o formato aceito pelo sistema Pygame, que lista ROMs `.pygame`; Batocera real, joystick, áudio e compatibilidade de ABI/dependências continuam pendentes em SE-004/SE-024.
 - Blocker: `none`
 
 **Objetivo:** Preparar um build reproduzível e instruções para o sistema Pygame, sem alegar pacote universal.
 
 **Aceitação:**
 - `.pygame` contém a entrada Python e o build inclui código, regras e assets a partir da pasta da própria instalação.
-- A saída recria somente `dist/SuikaElika`; configuração e dados graváveis permanecem em userdata separado.
+- A saída recria somente `dist/SuikaElika.pygame`; `main.py` inicia o jogo e o arquivo ROM `.pygame` permanece reconhecível pelo sistema. Configuração e dados graváveis permanecem em userdata separado.
 - As instruções descrevem `/userdata/roms/pygame` e arte opcional por metadados do EmulationStation.
 - Layout e bootstrap são verificáveis localmente; dependências finais e execução real continuam dependentes de SE-024/027.
 
@@ -724,10 +724,10 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Priority: `P1`
 - Depends: `SE-020, SE-023, SE-025`
 - Writes: `tools/process_art_assets.py; assets/sprites/**; assets/backgrounds/**; suika_elika/rendering/assets.py; suika_elika/rendering/renderer.py; suika_elika/app.py; tests/rendering/test_assets.py; docs/BATOCERA.md; docs/art/**; TODO.md`
-- Reads: `raw_assets/frutinhas.png; raw_assets/background_menu.png; raw_assets/background_jogo.png; data/rules/classic-v1.json; suika_elika/rendering/procedural.py; suika_elika/app.py; packaging/batocera/**`
+- Reads: `raw_assets/frutinhas_v2.png; raw_assets/background_menu.png; raw_assets/background_jogo.png; data/rules/classic-v1.json; suika_elika/rendering/procedural.py; suika_elika/app.py; packaging/batocera/**`
 - Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Script reproduzível gera os 11 sprites recortados com alpha e os dois backgrounds opacos 1280×720; App/Renderer carregam os assets em cache e mantêm fallback procedural. Mapeamento visual, limitações da folha e instalação com `assets/` documentados. Testes completos: 196 passaram; Ruff global, mypy (41 arquivos), validação do grafo (35 tarefas) e `git diff --check` passaram. Prévia visual dos recortes conferida; isso não substitui verificação no Batocera.
+- Attempts: `2`
+- Evidence: Script reproduzível gera os 11 sprites em resolução nativa da folha transparente corrigida `frutinhas_v2.png` (1536×1024), sem perda e com alpha; App/Renderer carregam os assets em cache e mantêm fallback procedural. Mapeamento visual, limitações da folha e instalação com `assets/` documentados. Prévia visual dos recortes conferida; 204 testes passaram, Ruff, mypy (42 fontes), grafo (35 tarefas) e `git diff --check` passaram. Build Batocera executado e layout com `main.py` inspecionado. Isso não substitui verificação no aparelho.
 - Blocker: `none`
 
 **Objetivo:** Tratar os três arquivos de arte enviados, mapear as onze frutas à ordem do catálogo e exibir os fundos de menu e partida, incluindo-os nas instruções de instalação.

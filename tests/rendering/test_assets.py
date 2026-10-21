@@ -11,6 +11,34 @@ from suika_elika.contracts import RoundState, SessionSnapshot  # noqa: E402
 from suika_elika.game.catalog import load_catalog  # noqa: E402
 from suika_elika.rendering.assets import ASSET_ROOT, GameArt  # noqa: E402
 from suika_elika.rendering.renderer import Renderer  # noqa: E402
+from tools.process_art_assets import FRUIT_CELLS, FRUIT_SHEET, FRUIT_SHEET_SIZE  # noqa: E402
+
+
+def test_art_pipeline_uses_new_transparent_sheet_and_nonoverlapping_crop_cells() -> None:
+    sheet = pygame.image.load(FRUIT_SHEET)
+    assert sheet.get_size() == FRUIT_SHEET_SIZE == (1536, 1024)
+    assert sheet.get_at((0, 0)).a == 0
+    assert len(FRUIT_CELLS) == 11
+
+    cells = tuple(FRUIT_CELLS.values())
+    for index, first in enumerate(cells):
+        x1, y1, x2, y2 = first
+        assert 0 <= x1 < x2 <= FRUIT_SHEET_SIZE[0]
+        assert 0 <= y1 < y2 <= FRUIT_SHEET_SIZE[1]
+        for second in cells[index + 1 :]:
+            other_x1, other_y1, other_x2, other_y2 = second
+            assert x2 <= other_x1 or other_x2 <= x1 or y2 <= other_y1 or other_y2 <= y1
+
+
+def test_larger_fruit_source_pngs_retain_high_resolution_crop() -> None:
+    watermelon = pygame.image.load(ASSET_ROOT / "sprites" / "watermelon.png")
+
+    assert watermelon.get_width() >= 380
+    assert watermelon.get_height() >= 430
+    bounds = watermelon.get_bounding_rect(min_alpha=32)
+    assert bounds.left > 0 and bounds.top > 0
+    assert bounds.right < watermelon.get_width()
+    assert bounds.bottom < watermelon.get_height()
 
 
 def test_imported_fruit_sprites_match_catalog_and_have_transparency() -> None:
