@@ -362,15 +362,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-016 — Coordenar sessão e snapshots da partida
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-005, SE-013, SE-014, SE-015`
 - Writes: `suika_elika/game/session.py; tests/game/test_session.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; suika_elika/game/merging.py; tests/game/test_merging.py; suika_elika/game/danger.py; tests/game/test_danger.py; suika_elika/game/spawning.py; tests/game/test_spawning.py`
-- Owner: `se016`
+- Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Ainda não executada.
+- Evidence: Sessão executa input → poses → física → fusões/pontuação → lançador → perigo/escape → snapshot/eventos; pausa/retomada/reinício limpam bordas; recordes são por modo+ruleset e estatísticas acumulam uma vez ao fim. Contato com fruta ou consumo atualiza o lançador; o caller fornece `launch_contacted=True` para parede/fundo porque o PhysicsPort ainda não exporta esse dado. Com CPython 3.13.16, `python -m pytest tests/game/test_session.py -q` passou (6 testes), suíte completa `python -m pytest` passou (161), `python -m ruff check .`, `python -m mypy` (32 arquivos) e `git diff --check` passaram.
 - Blocker: `none`
 
 **Objetivo:** Unir os sistemas de gameplay na ordem fixa sem dependência de renderização.
@@ -402,15 +402,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-018 — Implementar menus, opções e ajuda por ações
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-006, SE-009, SE-011, SE-017`
 - Writes: `suika_elika/scenes/title.py; suika_elika/scenes/options.py; suika_elika/scenes/help.py; suika_elika/scenes/pause.py; suika_elika/scenes/results.py; tests/scenes/test_navigation.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/input/actions.py; suika_elika/input/manager.py; tests/input/test_actions.py; suika_elika/persistence.py; suika_elika/platform.py; tests/services/test_persistence.py; tests/services/test_platform.py; suika_elika/input/profiles.py; tests/input/test_profiles.py; suika_elika/rendering/viewport.py; tests/rendering/test_viewport.py`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Menus de título, ajuda, opções, pausa e resultado implementados com navegação por bordas semânticas, rótulos em português, retorno de contexto, ajuste/salvamento de opções, assistente de remapeamento com confirmação e proteção contra reinício/abandono acidentais. Com CPython 3.13.16, `python -m pytest tests/scenes/test_navigation.py -q` passou (11 testes), suíte completa `python -m pytest` passou (161), Ruff e mypy estrito nos seis arquivos passaram; gates globais `python -m ruff check .`, `python -m mypy` (32 arquivos) e `git diff --check` também passaram.
 - Blocker: `none`
 
 **Objetivo:** Criar navegação completa com foco visível e retorno ao contexto de origem.
