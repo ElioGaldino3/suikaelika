@@ -202,15 +202,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-008 — Desenhar frutas e cenário sem imagens externas
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002, SE-005`
 - Writes: `suika_elika/rendering/procedural.py; tests/rendering/test_procedural.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py`
-- Owner: `se008`
+- Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Ainda não executada.
+- Evidence: Sprites cacheados das 11 frutas, recipiente e cenário em superfícies Pygame, com detalhes dentro dos bounds; importação lazy não inicializa Pygame. Python 3.13.16 + Pygame 2.6.1: `python -m pytest` (80 passed), testes direcionados (8 passed), Ruff e mypy direcionados passaram. Ruff/mypy globais, naquele estado do checkout, apontaram somente erros nos arquivos SE-010 ainda em edição.
 - Blocker: `none`
 
 **Objetivo:** Gerar superfícies das onze frutas, recipiente e cenário com primitivas do Pygame.
@@ -242,14 +242,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-010 — Implementar adaptadores SDL e joystick genérico
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-006`
 - Writes: `suika_elika/input/controller.py; suika_elika/input/joystick.py; tests/input/test_devices.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/input/actions.py; suika_elika/input/manager.py; tests/input/test_actions.py`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se010`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
@@ -262,15 +262,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-011 — Implementar perfis e assistente de remapeamento
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-006, SE-009`
 - Writes: `suika_elika/input/profiles.py; tests/input/test_profiles.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/input/actions.py; suika_elika/input/manager.py; tests/input/test_actions.py; suika_elika/persistence.py; suika_elika/platform.py; tests/services/test_persistence.py; tests/services/test_platform.py`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: IDs estáveis baseados em plataforma/GUID/nome/backend, sem instance_id; assistente aguarda neutro, rejeita amostras ambíguas, permite cancelar/restaurar e pular ajuste fino; repositório mantém perfil anterior em falha. Python 3.13.16: suíte global `python -m pytest` (80 passed), direcionados (6 testes de perfis e 8 de renderização), Ruff direcionado e mypy estrito direcionado passaram. Ruff/mypy globais, naquele estado do checkout, apontaram somente erros nos arquivos SE-010 ainda em edição.
 - Blocker: `none`
 
 **Objetivo:** Configurar e persistir ações de controles sem depender de teclado.
