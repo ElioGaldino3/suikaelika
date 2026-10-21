@@ -162,15 +162,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-006 — Implementar ações e normalização de entrada
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002`
 - Writes: `suika_elika/input/actions.py; suika_elika/input/manager.py; tests/input/test_actions.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
-- Owner: `se006`
+- Owner: `unassigned`
 - Attempts: `2`
-- Evidence: Ainda não executada.
+- Evidence: Normalização conforme PROJECT (deadzone 0,20, curva 1,3 e velocidades 520/420/100), prioridade/cancelamento digital, bordas sem repetição, backend exclusivo e navegação com limiar/histerese/repetição. Python 3.13.16: `python -m pytest tests/input/test_actions.py` (13 passed) e combinado com física (24 passed); Ruff direcionado e mypy strict direcionado passaram. Suíte global durante SE-008 em andamento: 71 passaram e 3 falharam apenas em `tests/rendering/test_procedural.py`; Ruff global reportou 17 E501 apenas em `suika_elika/rendering/procedural.py`.
 - Blocker: `none`
 
 **Objetivo:** Converter fontes de entrada em ações semânticas com bordas únicas e movimento normalizado.
@@ -182,15 +182,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-007 — Implementar mundo físico circular
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002, SE-005`
 - Writes: `suika_elika/game/physics.py; tests/game/test_physics.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Pymunk 7.3.1; passo fixo 1/120 s, recipiente aberto 800×460, corpos circulares com massa/momento do catálogo, limites de velocidade, contatos copiados e mutações post-step. Na venv Python 3.13.16, `python -m pytest tests/game/test_physics.py tests/game/test_catalog.py tests/game/test_randomizer.py -q` (28 passed), Ruff e mypy passaram; `git diff --check` passou. Homologação Batocera continua em SE-004.
 - Blocker: `none`
 
 **Objetivo:** Criar o adaptador Pymunk e o recipiente com passo fixo e consultas de contatos.
@@ -202,14 +202,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-008 — Desenhar frutas e cenário sem imagens externas
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002, SE-005`
 - Writes: `suika_elika/rendering/procedural.py; tests/rendering/test_procedural.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se008`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 

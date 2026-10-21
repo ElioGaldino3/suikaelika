@@ -1,0 +1,151 @@
+"""Scenario checks for the Pymunk physics adapter."""
+
+from __future__ import annotations
+
+from math import isclose
+
+import pymunk
+import pytest
+
+from suika_elika.contracts import FruitDefinition, Pose, Vector2
+from suika_elika.game.catalog import load_catalog
+from suika_elika.game.physics import PhysicsConfig, PhysicsWorld
+
+
+def _fruit(radius: float = 14.0) -> FruitDefinition:
+    return FruitDefinition(
+        fruit_id="test-fruit",
+        level=1,
+        radius=radius,
+        mass=(radius / 14) ** 2,
+        points_on_spawn=0,
+        visual_key="test-fruit",
+    )
+
+
+def _advance(world: PhysicsWorld, seconds: float) -> None:
+    for _ in range(round(seconds / world.config.fixed_dt)):
+        world.step()
+
+
+def test_default_world_uses_classic_fixed_step_and_empty_open_top_container() -> None:
+    world = PhysicsWorld()
+
+    assert world.config.fixed_dt == pytest.approx(1 / 120)
+    assert world.space.gravity == (0, 1000)
+    assert len(world.space.static_body.shapes) == 3
+    assert len(world.space.shapes) == 3
+    assert all(isinstance(shape, pymunk.Segment) for shape in world.space.shapes)
+
+
+def test_fruit_falls_and_keeps_catalog_mass_and_solid_disk_moment() -> None:
+    world = PhysicsWorld()
+    definition = load_catalog().get("strawberry").definition
+    world.create_body("falling", definition, Pose(Vector2(400, 100)))
+    body = world._bodies["falling"]
+
+    assert body.mass == pytest.approx(definition.mass)
+    assert body.moment == pytest.approx(0.5 * definition.mass * definition.radius**2)
+    _advance(world, 0.25)
+
+    snapshot = world.poses(("falling",))[0]
+    assert snapshot.pose.position.y > 100
+    assert snapshot.velocity.y > 0
+
+
+@pytest.mark.parametrize("x", [2.0, 798.0])
+def test_side_walls_keep_fruit_inside(x: float) -> None:
+    world = PhysicsWorld()
+    world.create_body("wall", _fruit(), Pose(Vector2(x, 300)))
+    _advance(world, 0.6)
+
+    snapshot = world.poses(("wall",))[0]
+    assert snapshot.pose.position.x >= 14 - 1
+    assert snapshot.pose.position.x <= 800 - 14 + 1
+    assert snapshot.pose.position.y > 300
+
+
+def test_floor_stops_fruit_and_allows_it_to_rest() -> None:
+    world = PhysicsWorld()
+    world.create_body("resting", _fruit(), Pose(Vector2(400, 400)))
+    _advance(world, 5)
+
+    snapshot = world.poses(("resting",))[0]
+    assert snapshot.pose.position.y == pytest.approx(460 - 14, abs=1.5)
+    assert abs(snapshot.velocity.y) < 8
+
+
+def test_open_top_has_no_ceiling_collision() -> None:
+    world = PhysicsWorld()
+    world.create_body("upward", _fruit(), Pose(Vector2(400, 5)))
+    world._bodies["upward"].velocity = (0, -200)
+    _advance(world, 0.1)
+
+    assert world.poses(("upward",))[0].pose.position.y < -5
+
+
+def test_velocity_and_angular_velocity_are_clamped() -> None:
+    world = PhysicsWorld()
+    world.create_body("fast", _fruit(), Pose(Vector2(400, 100)))
+    body = world._bodies["fast"]
+    body.velocity = (2000, 0)
+    body.angular_velocity = 50
+    world.step()
+
+    snapshot = world.poses(("fast",))[0]
+    assert isclose(snapshot.velocity.x**2 + snapshot.velocity.y**2, 1000**2, abs_tol=1e-3)
+    assert isclose(body.angular_velocity, 10, abs_tol=1e-6)
+
+
+def test_contacts_and_overlap_results_are_copied_and_sorted() -> None:
+    world = PhysicsWorld()
+    world.create_body("b", _fruit(), Pose(Vector2(300, 100)))
+    world.create_body("a", _fruit(), Pose(Vector2(325, 100)))
+    world._bodies["b"].velocity = (150, 0)
+    world.step()
+
+    contacts = world.contacts()
+    assert contacts
+    contact = contacts[0]
+    assert {contact.first_entity_id, contact.second_entity_id} == {"a", "b"}
+    assert isinstance(contact.point, Vector2)
+    assert isinstance(contact.normal, Vector2)
+    assert contact.impulse >= 0
+    assert world.overlaps(Vector2(312.5, 100), 30) == ("a", "b")
+
+
+def test_mutations_requested_inside_step_apply_after_step() -> None:
+    world = PhysicsWorld()
+    world.create_body("first", _fruit(), Pose(Vector2(100, 100)))
+    original_velocity_func = world._bodies["first"].velocity_func
+
+    def add_during_step(
+        body: pymunk.Body, gravity: pymunk.Vec2d, damping: float, dt: float
+    ) -> None:
+        assert original_velocity_func is not None
+        original_velocity_func(body, gravity, damping, dt)
+        world.create_body("second", _fruit(), Pose(Vector2(200, 100)))
+
+    world._bodies["first"].velocity_func = add_during_step
+    world.step()
+
+    assert tuple(item.entity_id for item in world.poses(("first", "second"))) == (
+        "first",
+        "second",
+    )
+    assert len(world._mutations) == 0
+
+
+def test_remove_is_idempotent_and_unknown_poses_are_omitted() -> None:
+    world = PhysicsWorld()
+    world.create_body("one", _fruit(), Pose(Vector2(200, 100)))
+    world.remove_body("one")
+    world.remove_body("one")
+
+    assert world.poses(("one", "missing")) == ()
+    assert world.overlaps(Vector2(200, 100), 20) == ()
+
+
+def test_config_rejects_invalid_fixed_step() -> None:
+    with pytest.raises(ValueError, match="positive"):
+        PhysicsConfig(fixed_dt=0)
