@@ -50,7 +50,7 @@ A tarefa SE-002 cria os modelos e interfaces em `suika_elika/contracts/`, com ti
 | `FruitDefinition` | ID, nível, raio, massa, pontos de criação e chave visual |
 | `FruitSnapshot` | ID, tipo, pose anterior/atual e estado visual de perigo; sem corpo mutável |
 | `SessionSnapshot` | Pontos, recorde contextual, atual/próxima, frutas, estado de lançamento, perigo e estado da rodada |
-| `PhysicsPort` | Criar/remover corpo, avançar passo, consultar contatos, sobreposição e poses; exclusividade de mutação pelo mundo físico |
+| `PhysicsPort` | Criar/remover corpo (incluindo velocidade linear/angular inicial), avançar passo, consultar contatos, sobreposição e poses; exclusividade de mutação pelo mundo físico |
 | `AudioPort` | Consumir eventos, ajustar ganhos, pausar e encerrar; implementação silenciosa equivalente |
 | `PersistencePort` | Carregar/salvar modelos validados e comunicar falha de persistência |
 | `SettingsData` / `ControllerProfileData` / `RecordData` / `StatisticsData` | Preferências de áudio, vídeo, acessibilidade e área segura; perfil por plataforma/GUID com bindings e calibração; recorde por modo e ruleset com duração; estatísticas acumuladas |

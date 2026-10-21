@@ -10,6 +10,8 @@ import pymunk
 
 from suika_elika.contracts import BodySnapshot, ContactSnapshot, FruitDefinition, Pose, Vector2
 
+_ZERO_VELOCITY = Vector2(0.0, 0.0)
+
 
 @dataclass(frozen=True, slots=True)
 class PhysicsConfig:
@@ -67,6 +69,8 @@ class PhysicsConfig:
 class _QueuedBody:
     definition: FruitDefinition
     pose: Pose
+    velocity: Vector2
+    angular_velocity: float
 
 
 _Mutation: TypeAlias = tuple[str, str, _QueuedBody | None]
@@ -101,14 +105,26 @@ class PhysicsWorld:
             post_solve=self._on_fruit_contact,
         )
 
-    def create_body(self, entity_id: str, definition: FruitDefinition, pose: Pose) -> None:
-        """Queue or create a fruit circle with its catalog mass and disk inertia."""
+    def create_body(
+        self,
+        entity_id: str,
+        definition: FruitDefinition,
+        pose: Pose,
+        *,
+        velocity: Vector2 = _ZERO_VELOCITY,
+        angular_velocity: float = 0.0,
+    ) -> None:
+        """Create a catalog circle, optionally with a copied initial velocity."""
         if not entity_id:
             raise ValueError("entity_id must not be empty")
+        if not isfinite(angular_velocity):
+            raise ValueError("angular velocity must be finite")
         if entity_id in self._entity_ids:
             raise ValueError(f"body {entity_id!r} already exists")
         self._entity_ids.add(entity_id)
-        self._mutations.append(("add", entity_id, _QueuedBody(definition, pose)))
+        self._mutations.append(
+            ("add", entity_id, _QueuedBody(definition, pose, velocity, angular_velocity))
+        )
         if not self._is_stepping:
             self._apply_mutations()
 
@@ -194,6 +210,8 @@ class PhysicsWorld:
         body = pymunk.Body(mass, moment)
         body.position = (queued.pose.position.x, queued.pose.position.y)
         body.angle = queued.pose.angle
+        body.velocity = (queued.velocity.x, queued.velocity.y)
+        body.angular_velocity = queued.angular_velocity
         body.velocity_func = self._limited_velocity
         shape = pymunk.Circle(body, definition.radius)
         shape.friction = self.config.fruit_friction

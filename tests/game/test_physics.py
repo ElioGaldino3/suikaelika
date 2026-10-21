@@ -53,6 +53,32 @@ def test_fruit_falls_and_keeps_catalog_mass_and_solid_disk_moment() -> None:
     assert snapshot.velocity.y > 0
 
 
+def test_body_accepts_initial_linear_and_angular_velocity_through_public_api() -> None:
+    world = PhysicsWorld()
+    world.create_body(
+        "moving",
+        _fruit(),
+        Pose(Vector2(300, 100)),
+        velocity=Vector2(12.5, -4.0),
+        angular_velocity=1.25,
+    )
+
+    snapshot = world.poses(("moving",))[0]
+    assert snapshot.velocity == Vector2(12.5, -4.0)
+    assert world._bodies["moving"].angular_velocity == pytest.approx(1.25)
+
+
+def test_body_rejects_non_finite_initial_angular_velocity() -> None:
+    world = PhysicsWorld()
+    with pytest.raises(ValueError, match="angular velocity"):
+        world.create_body(
+            "invalid",
+            _fruit(),
+            Pose(Vector2(300, 100)),
+            angular_velocity=float("nan"),
+        )
+
+
 @pytest.mark.parametrize("x", [2.0, 798.0])
 def test_side_walls_keep_fruit_inside(x: float) -> None:
     world = PhysicsWorld()

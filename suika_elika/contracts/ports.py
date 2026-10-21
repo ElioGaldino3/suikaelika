@@ -10,6 +10,8 @@ from .events import DomainEvent
 from .input import InputFrame
 from .models import FruitDefinition, Pose, SessionSnapshot, Vector2
 
+_ZERO_VELOCITY = Vector2(0.0, 0.0)
+
 
 @dataclass(frozen=True, slots=True)
 class ContactSnapshot:
@@ -32,7 +34,15 @@ class BodySnapshot:
 class PhysicsPort(Protocol):
     """Operations owned by the physics adapter; only it mutates its world."""
 
-    def create_body(self, entity_id: str, definition: FruitDefinition, pose: Pose) -> None: ...
+    def create_body(
+        self,
+        entity_id: str,
+        definition: FruitDefinition,
+        pose: Pose,
+        *,
+        velocity: Vector2 = _ZERO_VELOCITY,
+        angular_velocity: float = 0.0,
+    ) -> None: ...
 
     def remove_body(self, entity_id: str) -> None: ...
 
