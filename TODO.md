@@ -542,15 +542,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-025 — Medir e ajustar desempenho do protótipo
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P2`
 - Depends: `SE-020, SE-022`
 - Writes: `tools/performance.py; suika_elika/rendering/procedural.py; suika_elika/rendering/renderer.py; suika_elika/rendering/effects.py; docs/validation/local-performance.md; tests/rendering/test_resource_limits.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/app.py; suika_elika/scene_manager.py; suika_elika/config.py; suika_elika/__main__.py; main.py; tests/integration/test_app_flow.py; tests/integration/test_classic_rules.py; tests/integration/test_failure_recovery.py; docs/validation/local-functional.md`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Baseline reproduzível normal (24 frutas), referência (150), estresse com efeitos e overlay de pausa, além de física com 24/120/400 corpos, registrada em `docs/validation/local-performance.md`. Revisão independente repetiu renderização longa (1200 quadros) e física (400 quadros): render 24 frutas p50/p95 5,96/6,42 ms; 150 frutas 12,10/12,61 ms; estresse 12,84/14,03 ms; física 400 corpos 22,60/26,65 ms, acima do passo de 8,33 ms. Pico de working set independente ~62,5 MiB. Reuso da superfície de saída do `smoothscale` e do véu de estado evita alocações recorrentes observadas; nenhuma alteração em regras/física/RNG. 191 testes, Ruff, mypy (40 fontes), `todo_graph.py validate` e `git diff --check` passaram. Relatório distingue RSS/working set, `tracemalloc` e estimativa de superfícies SDL. Windows 11/SDL dummy não homologa Batocera nem display real.
 - Blocker: `none`
 
 **Objetivo:** Medir custo de quadros, física, partículas e cache; melhorar gargalos demonstrados.

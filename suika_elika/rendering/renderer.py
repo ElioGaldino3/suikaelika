@@ -55,6 +55,12 @@ class Renderer:
         self._logical = self._pygame.Surface(
             (int(LOGICAL_WIDTH), int(LOGICAL_HEIGHT)), self._pygame.SRCALPHA, 32
         )
+        self._state_veil = self._pygame.Surface(
+            (int(LOGICAL_WIDTH), int(LOGICAL_HEIGHT)), self._pygame.SRCALPHA, 32
+        )
+        self._state_veil.fill((24, 59, 78, 132))
+        self._scaled_surface: Surface | None = None
+        self._scaled_size: tuple[int, int] | None = None
         if not self._pygame.font.get_init():
             self._pygame.font.init()
         self._fonts: dict[int, Any] = {}
@@ -335,10 +341,7 @@ class Renderer:
         )
 
     def _draw_state_overlay(self, state: str) -> None:
-        pygame = self._pygame
-        veil = pygame.Surface((int(LOGICAL_WIDTH), int(LOGICAL_HEIGHT)), pygame.SRCALPHA, 32)
-        veil.fill((24, 59, 78, 132))
-        self._logical.blit(veil, (0, 0))
+        self._logical.blit(self._state_veil, (0, 0))
         message = "PAUSADO" if state == "paused" else "FIM DE JOGO"
         label = self._font(54).render(message, True, (255, 247, 220))
         self._logical.blit(label, label.get_rect(center=(640, 360)))
@@ -363,7 +366,15 @@ class Renderer:
         if target_rect.size == self._logical.get_size():
             scaled = self._logical
         else:
-            scaled = pygame.transform.smoothscale(self._logical, target_rect.size)
+            if self._scaled_size != target_rect.size:
+                self._scaled_surface = pygame.Surface(
+                    target_rect.size, pygame.SRCALPHA, 32
+                )
+                self._scaled_size = target_rect.size
+            assert self._scaled_surface is not None
+            scaled = pygame.transform.smoothscale(
+                self._logical, target_rect.size, self._scaled_surface
+            )
         self.target.blit(scaled, target_rect)
 
     def _font(self, size: int) -> Any:
