@@ -282,15 +282,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-012 — Implementar serviço de áudio e fallback silencioso
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002`
 - Writes: `suika_elika/audio.py; tests/services/test_audio.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
-- Owner: `se012`
+- Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Ainda não executada.
+- Evidence: Efeitos PCM sintetizados originais, canais por prioridade, limites de queda/aviso, ganhos, pausa/retomada/encerramento e fallback nulo quando o mixer falha; importação não abre áudio. Python 3.13.16: teste direcionado (11 passed), suíte global (107 passed), Ruff global e mypy global passaram. Testes de mixer são simulados; áudio físico/HDMI ainda não homologado.
 - Blocker: `none`
 
 **Objetivo:** Consumir eventos com efeitos curtos, ganhos separados e operação silenciosa quando não houver mixer.
@@ -302,15 +302,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-013 — Implementar fusões transacionais e cadeias
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-005, SE-007`
 - Writes: `suika_elika/game/merging.py; tests/game/test_merging.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; suika_elika/game/physics.py; tests/game/test_physics.py`
-- Owner: `se013`
+- Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Ainda não executada.
+- Evidence: Resolução pós-step determinística reserva pares sem sobreposição, gera filho com pose corrigida, velocidade linear/angular amortecida via PhysicsPort, herda risco/proteção e registra score/eventos; pares de melancia removem ambas e valem 100. Python 3.13.16: 7 testes direcionados e suíte global (107 passed), Ruff global e mypy global passaram. Contatos de domínio são valores copiados; testes transacionais usam fake PhysicsPort.
 - Blocker: `none`
 
 **Objetivo:** Resolver pares iguais de forma estável, sem consumo ou pontuação duplicados.
@@ -322,14 +322,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-014 — Implementar proteção, transbordamento e escape
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-007`
 - Writes: `suika_elika/game/danger.py; tests/game/test_danger.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/physics.py; tests/game/test_physics.py`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se014`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
