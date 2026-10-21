@@ -11,12 +11,17 @@ from suika_elika.contracts import RoundState, SessionSnapshot  # noqa: E402
 from suika_elika.game.catalog import load_catalog  # noqa: E402
 from suika_elika.rendering.assets import ASSET_ROOT, GameArt  # noqa: E402
 from suika_elika.rendering.renderer import Renderer  # noqa: E402
-from tools.process_art_assets import FRUIT_CELLS, FRUIT_SHEET, FRUIT_SHEET_SIZE  # noqa: E402
+from tools.process_art_assets import (  # noqa: E402
+    FRUIT_CELLS,
+    FRUIT_SHEET,
+    FRUIT_SHEET_SIZE,
+    process_fruit_sprites,
+)
 
 
 def test_art_pipeline_uses_new_transparent_sheet_and_nonoverlapping_crop_cells() -> None:
     sheet = pygame.image.load(FRUIT_SHEET)
-    assert sheet.get_size() == FRUIT_SHEET_SIZE == (1536, 1024)
+    assert sheet.get_size() == FRUIT_SHEET_SIZE == (1448, 1086)
     assert sheet.get_at((0, 0)).a == 0
     assert len(FRUIT_CELLS) == 11
 
@@ -30,11 +35,31 @@ def test_art_pipeline_uses_new_transparent_sheet_and_nonoverlapping_crop_cells()
             assert x2 <= other_x1 or other_x2 <= x1 or y2 <= other_y1 or other_y2 <= y1
 
 
+def test_v3_sheet_generates_all_native_resolution_transparent_sprites(tmp_path) -> None:
+    sheet = pygame.image.load(FRUIT_SHEET)
+    sprite_dir = tmp_path / "sprites"
+
+    process_fruit_sprites(sheet, sprite_dir)
+
+    assert {path.stem for path in sprite_dir.glob("*.png")} == set(FRUIT_CELLS)
+    for fruit_id in FRUIT_CELLS:
+        generated = pygame.image.load(sprite_dir / f"{fruit_id}.png")
+        packaged = pygame.image.load(ASSET_ROOT / "sprites" / f"{fruit_id}.png")
+        assert generated.get_size() == packaged.get_size()
+        bounds = generated.get_bounding_rect(min_alpha=32)
+        assert bounds.width > 0
+        assert bounds.left >= 8 and bounds.top >= 8
+        assert bounds.right <= generated.get_width() - 8
+        assert bounds.bottom <= generated.get_height() - 8
+
+
 def test_larger_fruit_source_pngs_retain_high_resolution_crop() -> None:
     watermelon = pygame.image.load(ASSET_ROOT / "sprites" / "watermelon.png")
+    radius = load_catalog().get("watermelon").definition.radius
+    render_side = 2 * (radius + max(7, round(radius * 0.28)))
 
-    assert watermelon.get_width() >= 380
-    assert watermelon.get_height() >= 430
+    assert watermelon.get_width() >= render_side
+    assert watermelon.get_height() >= render_side
     bounds = watermelon.get_bounding_rect(min_alpha=32)
     assert bounds.left > 0 and bounds.top > 0
     assert bounds.right < watermelon.get_width()
