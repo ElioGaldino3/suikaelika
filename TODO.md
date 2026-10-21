@@ -362,14 +362,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-016 — Coordenar sessão e snapshots da partida
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-005, SE-013, SE-014, SE-015`
 - Writes: `suika_elika/game/session.py; tests/game/test_session.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; suika_elika/game/merging.py; tests/game/test_merging.py; suika_elika/game/danger.py; tests/game/test_danger.py; suika_elika/game/spawning.py; tests/game/test_spawning.py`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se016`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
@@ -382,15 +382,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-017 — Implementar viewport e escala de apresentação
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-002`
 - Writes: `suika_elika/rendering/viewport.py; tests/rendering/test_viewport.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
 - Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Ainda não executada.
+- Attempts: `2`
+- Evidence: Viewport lógica 1280×720 com escala uniforme, centralização, conversão em ambos os sentidos e área segura alinhada ao limite de `SettingsData` (0–0,25). Revisão independente em CPython 3.13.16: `python -m pytest tests/rendering/test_viewport.py -q` passou (17 testes), Ruff e mypy strict nos dois arquivos passaram; casos cobrem 720p/1080p/4K, 4:3, round-trip e limites inválidos.
 - Blocker: `none`
 
 **Objetivo:** Preservar a tela lógica 1280x720 em diferentes resoluções, com margem segura.
