@@ -36,7 +36,7 @@ Teclado nunca conta como joystick nem habilita BATALHA com um só controle.
 - **P:** atalho adicional para abrir a pausa.
 - No controle, o botão **Start** abre a pausa.
 
-O botão sul do controle usa a mesma regra de aperto/hold, inclusive na batalha.
+Os botões sul/A e X usam a mesma regra de aperto/hold, inclusive na batalha.
 Não há cooldown artificial entre apertos novos. Nascer sobre outra fruta continua
 bloqueado. Confirmações de menu/foco/reconexão são consumidas sem armar repetição;
 solte e aperte novamente após retomar. O repeat do teclado do sistema não altera

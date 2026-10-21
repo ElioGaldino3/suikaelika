@@ -168,7 +168,16 @@ class NativeInputRegistry:
         self.controller_api = (
             _load_controller_api() if controller_api is _AUTO else controller_api
         )
-        self.joystick_bindings = joystick_bindings
+        self.joystick_bindings = (
+            joystick_bindings
+            if joystick_bindings is not None
+            else JoystickBindings(
+                # SDL's common Xbox-style raw layout puts the left face/X
+                # button at index 2. Keep this fallback for Batocera devices
+                # that SDL does not expose through its semantic Controller API.
+                button_actions={2: (InputAction.CONFIRM, InputAction.DROP)}
+            )
+        )
         self._devices: dict[int, SDLControllerAdapter | JoystickAdapter] = {}
         self._device_index_to_instance: dict[int, int] = {}
         self.active_instance_id: int | None = None
@@ -316,12 +325,17 @@ def _load_controller_api() -> Any | None:
 def _default_controller_actions(api: Any) -> dict[int, tuple[InputAction, ...]]:
     actions: dict[int, tuple[InputAction, ...]] = {}
     button_a = _constant(api, "CONTROLLER_BUTTON_A")
+    button_x = _constant(api, "CONTROLLER_BUTTON_X")
     button_b = _constant(api, "CONTROLLER_BUTTON_B")
     button_start = _constant(api, "CONTROLLER_BUTTON_START")
     if button_a is not None:
         # The south face button confirms menus and releases fruit in gameplay;
         # scenes consume only the action relevant to their current state.
         actions[int(button_a)] = (InputAction.CONFIRM, InputAction.DROP)
+    if button_x is not None:
+        # Batocera users commonly expect the left face button labelled X to
+        # confirm/release as well as the south/A button used by SDL defaults.
+        actions[int(button_x)] = (InputAction.CONFIRM, InputAction.DROP)
     if button_b is not None:
         actions[int(button_b)] = (InputAction.CANCEL,)
     if button_start is not None:

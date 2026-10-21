@@ -472,15 +472,15 @@ O jogo não deve consultar índices de botões dentro das regras. Um `InputManag
 |---|---|---|
 | Mover lançador | D-pad horizontal ou eixo X esquerdo | Setas esquerda/direita |
 | Ajuste fino | Segurar ombro esquerdo / L1 | Shift esquerdo |
-| Soltar fruta | Botão sul | Espaço |
-| Confirmar menu | Botão sul | Enter |
+| Soltar fruta | Botão sul/A ou botão X (compatibilidade Batocera) | Espaço |
+| Confirmar menu | Botão sul/A ou botão X (compatibilidade Batocera) | Enter |
 | Voltar/cancelar | Botão leste | Escape |
 | Pausar/continuar | Start | Escape ou P |
 | Navegar nos menus | D-pad ou analógico | Setas |
 | Reiniciar | Opção no menu de pausa/resultado | Mesma navegação do menu |
 | Sair para o Batocera | Opção Sair; hotkey do sistema quando configurada | Alt+F4 ou fechar janela |
 
-Usar a **posição física** na explicação inicial: botão sul corresponde normalmente a A no Xbox, B no padrão Nintendo e cruz no PlayStation. Não presumir que uma letra identifica a mesma posição em todos os controles. Ícones podem ser adaptados ao perfil e sempre devem ter uma legenda funcional.
+Usar a **posição física** na explicação inicial: botão sul corresponde normalmente a A no Xbox, B no padrão Nintendo e cruz no PlayStation. Para compatibilidade com o uso informado no Batocera, X também confirma e solta; em joysticks genéricos, o índice SDL 2 é aceito como convenção comum de X no layout estilo Xbox. Outros layouts podem exigir um perfil. Não presumir que uma letra identifica a mesma posição em todos os controles.
 
 ### 11.2 Backends nativos
 
@@ -950,9 +950,11 @@ Distribuição planejada:
 
 O arquivo `.pygame` resolve sua própria pasta, adiciona o pacote ao caminho de
 importação e chama a aplicação. O build de `tools/build_batocera.py` prepara
-essa estrutura em `dist/SuikaElika/`. Não inclui Python, Pygame, SDL ou Pymunk:
-essas dependências precisam ser fornecidas pelo alvo numa combinação
-compatível.
+essa estrutura em `dist/SuikaElika/`. Não inclui Python, Pygame ou SDL: precisam
+ser fornecidos pelo alvo numa combinação compatível. O launcher instala Pymunk
+e suas dependências via pip, sob demanda, numa pasta persistente em `/userdata`;
+a primeira instalação exige internet e espaço gravável. Se pip não existir,
+tenta `ensurepip` e depois o instalador oficial PyPA.
 
 Copiar a pasta inteira para `/userdata/roms/pygame/` e atualizar a lista de
 jogos pelo EmulationStation. Capa e metadados de `gamelist.xml` são opcionais.
@@ -1005,7 +1007,11 @@ Estratégia proposta:
 4. Se necessário, compilar no ambiente correspondente ou usar a cadeia de build do Batocera.
 5. Produzir um arquivo de distribuição por arquitetura/runtime homologado, com manifesto e versões.
 
-Não executar instalação global de dependências no início do jogo. Não exigir `pip`, compilador, rede ou token no equipamento do jogador. Uma instalação Linux genérica não deve ser apresentada como pacote universal de Batocera.
+Não instalar dependências nos diretórios globais do Python. O bootstrap usa o
+espaço persistente do usuário e exige rede apenas na primeira instalação; o
+Pymunk instalado permanece disponível offline. Se não houver wheel compatível,
+a instalação pode falhar por falta de compilador ou dependências nativas. Uma
+instalação Linux genérica não deve ser apresentada como pacote universal de Batocera.
 
 ### 18.6 Mapeamentos SDL
 

@@ -13,6 +13,7 @@ PACKAGE_DIRS = ("suika_elika", "data", "assets")
 BATOCERA_PYGAME_DIR = Path("packaging") / "batocera" / "pygame"
 ENTRYPOINT = BATOCERA_PYGAME_DIR / "SuikaElika.pygame"
 MAIN_ENTRYPOINT = BATOCERA_PYGAME_DIR / "main.py"
+BOOTSTRAP = BATOCERA_PYGAME_DIR / "bootstrap.py"
 PACKAGE_NAME = "SuikaElika.pygame"
 INSTALL_GUIDE = """Suika Elika — Batocera Pygame build
 
@@ -21,7 +22,10 @@ main.py starts the game; the nested SuikaElika.pygame file is the ROM entry poin
 Neither file is a compiled binary.
 Refresh the game list in EmulationStation, then launch Pygame > SuikaElika.
 
-Batocera must provide a compatible Python, Pygame/SDL and Pymunk runtime.
+Batocera must provide compatible Python and Pygame/SDL. On first launch, the
+package checks for Pymunk and installs it with pip into
+/userdata/system/configs/suika-elika/python-packages when needed. Internet access
+is required for that first installation; Pymunk is stored for later offline use.
 """
 
 
@@ -44,7 +48,12 @@ def build_package(
     if target.is_symlink():
         raise ValueError("output directory must not be a symlink")
 
-    required_sources = (*PACKAGE_DIRS, str(ENTRYPOINT), str(MAIN_ENTRYPOINT))
+    required_sources = (
+        *PACKAGE_DIRS,
+        str(ENTRYPOINT),
+        str(MAIN_ENTRYPOINT),
+        str(BOOTSTRAP),
+    )
     missing = [path for path in required_sources if not (source_root / path).exists()]
     if missing:
         raise FileNotFoundError("missing package inputs: " + ", ".join(missing))
@@ -61,6 +70,7 @@ def build_package(
             )
         shutil.copy2(source_root / ENTRYPOINT, stage / "SuikaElika.pygame")
         shutil.copy2(source_root / MAIN_ENTRYPOINT, stage / "main.py")
+        shutil.copy2(source_root / BOOTSTRAP, stage / "bootstrap.py")
         (stage / "README-BATOCERA.txt").write_text(INSTALL_GUIDE, encoding="utf-8")
 
         if target.exists():

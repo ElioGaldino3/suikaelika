@@ -125,6 +125,8 @@ Em checkout compartilhado, revisar mudanças no local. Worktrees isolados só se
 | ADR-007 | Slots de batalha por instance ID | GUID/nome apenas para reconquistar slot ausente; modelos iguais conectados continuam jogadores distintos |
 | ADR-008 | Teclado somente com `--desktop` | Padrão nativo em todos os sistemas; teclado como fallback explícito, fora da contagem de joysticks |
 | ADR-009 | Bordas imediatas e hold em tempo de simulação | 180 BPM por sessão; `drop_held` propagado pelas cenas, sem repetir confirmações nem depender do repeat do sistema |
+| ADR-010 | Bootstrap de Pymunk no Batocera | O launcher instala `pymunk>=7.3,<8` via pip em `/userdata/system/configs/suika-elika`; cria pip por `ensurepip` e, se necessário, pelo bootstrap PyPA. Só grava no espaço do usuário; a primeira instalação exige internet e pode depender de wheel/compilador compatível. |
+| ADR-011 | X como confirmação/soltura compatível | SDL Controller reconhece A e X; joysticks genéricos usam índice 2 como convenção SDL comum de X estilo Xbox, com perfil explícito disponível para outros layouts. |
 
 ## 9. Contratos implementados para BATALHA
 

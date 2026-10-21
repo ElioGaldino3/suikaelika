@@ -32,8 +32,8 @@ iniciar com `--desktop` e não houver joystick, o teclado funciona como fallback
 de desenvolvimento. Sem essa opção, somente controles nativos são aceitos. Os
 controles estão em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-Para soltar frutas, aperte o botão sul do controle (ou Espaço/Enter com
-`--desktop`). Novos apertos não têm cooldown artificial. Segurar repete a
+Para soltar frutas, aperte o botão sul/A ou o botão X do controle (ou Espaço/Enter
+com `--desktop`). Novos apertos não têm cooldown artificial. Segurar repete a
 **180 BPM**, uma fruta a cada **333,33 ms**, enquanto a boca da cesta estiver livre.
 Soltar interrompe a repetição; após pausar ou retomar, aperte novamente para lançar.
 
@@ -74,8 +74,10 @@ Cada controle move e solta apenas na sua cesta; **Start** de qualquer jogador
 pausa ambos. Ambos podem operar os menus de pausa, resultado e revanche.
 Remover qualquer controle congela as duas cestas até reconectar e confirmar;
 o botão de voltar do controle restante permite retornar ao menu. A confirmação
-de retomada é consumida sem soltar fruta. Controles com mapeamento SDL usam o
-botão sul para confirmar/soltar; joysticks genéricos dependem de bindings explícitos.
+de retomada é consumida sem soltar fruta. Controles com mapeamento SDL aceitam
+botão sul/A e X para confirmar/soltar. Em joysticks genéricos, o índice 2 (X no
+layout SDL comum de estilo Xbox) também é usado; outros layouts podem exigir
+ajuste de perfil.
 O teclado de desenvolvimento não conta como segundo controle.
 
 O fundo vem de `raw_assets/battle_background.png`. A cópia preparada em
@@ -94,6 +96,7 @@ e o arquivo `SuikaElika.pygame` é a entrada reconhecida pelo sistema Batocera:
 dist/SuikaElika.pygame/
 ├── main.py
 ├── SuikaElika.pygame
+├── bootstrap.py
 ├── suika_elika/
 ├── data/
 ├── assets/
@@ -116,10 +119,10 @@ SuikaElika**.
 
 O arquivo `SuikaElika.pygame` dentro da pasta é o lançador do sistema; `main.py`
 é a entrada Python principal. Nenhum deles é `.exe` ou binário independente:
-o aparelho ainda precisa de uma versão compatível de Python, Pygame/SDL e Pymunk.
-O build organiza os arquivos do jogo, mas não compila nem inclui essas
-bibliotecas do sistema. Confira os passos e
-limites de instalação em [docs/BATOCERA.md](docs/BATOCERA.md).
+o aparelho ainda precisa de uma versão compatível de Python e Pygame/SDL. Na
+primeira execução, o launcher instala Pymunk via pip em `/userdata` (internet
+necessária); pip é instalado automaticamente se o Python não o fornecer.
+Confira os passos e limites em [docs/BATOCERA.md](docs/BATOCERA.md).
 
 ## Arte na lista de jogos
 

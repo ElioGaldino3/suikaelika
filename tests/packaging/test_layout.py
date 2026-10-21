@@ -15,6 +15,7 @@ def test_pygame_entrypoint_bootstraps_package_from_its_install_directory() -> No
     source = entrypoint.read_text(encoding="utf-8")
     main = PACKAGING / "pygame" / "main.py"
     main_source = main.read_text(encoding="utf-8")
+    bootstrap = PACKAGING / "pygame" / "bootstrap.py"
 
     compile(source, str(entrypoint), "exec")
     compile(main_source, str(main), "exec")
@@ -22,6 +23,8 @@ def test_pygame_entrypoint_bootstraps_package_from_its_install_directory() -> No
     assert "from main import main" in source
     assert "raise SystemExit(main())" in source
     assert 'from suika_elika.app import main' in main_source
+    assert "ensure_pymunk()" in main_source
+    assert "ensurepip" in bootstrap.read_text(encoding="utf-8")
     assert (ROOT / "suika_elika" / "app.py").is_file()
     assert (ROOT / "data" / "rules" / "classic-v5.json").is_file()
     assert (ROOT / "assets" / "sprites" / "cherry.png").is_file()
@@ -39,6 +42,7 @@ def test_build_creates_and_replaces_the_pygame_installation_folder(tmp_path: Pat
     entrypoint.parent.mkdir(parents=True)
     entrypoint.write_text("print('run')\n", encoding="utf-8")
     (entrypoint.parent / "main.py").write_text("print('main')\n", encoding="utf-8")
+    (entrypoint.parent / "bootstrap.py").write_text("print('bootstrap')\n", encoding="utf-8")
 
     output = build_package(tmp_path)
     (output / "stale-file").write_text("old", encoding="utf-8")
@@ -47,6 +51,7 @@ def test_build_creates_and_replaces_the_pygame_installation_folder(tmp_path: Pat
     assert output == tmp_path / "dist" / "SuikaElika.pygame"
     assert (output / "SuikaElika.pygame").read_text(encoding="utf-8") == "print('run')\n"
     assert (output / "main.py").read_text(encoding="utf-8") == "print('main')\n"
+    assert (output / "bootstrap.py").read_text(encoding="utf-8") == "print('bootstrap')\n"
     for directory in ("suika_elika", "data", "assets"):
         assert (output / directory / "marker").is_file()
     assert (output / "README-BATOCERA.txt").is_file()

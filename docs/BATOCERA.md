@@ -25,6 +25,7 @@ dist/SuikaElika.pygame/
 ├── main.py                 # entrada principal que inicia o jogo
 ├── SuikaElika.pygame       # arquivo ROM reconhecido pelo sistema Batocera
 ├── README-BATOCERA.txt
+├── bootstrap.py            # instalação inicial de Pymunk no espaço do usuário
 ├── suika_elika/            # código do jogo
 ├── data/                   # regras classic-v4 e versões anteriores
 └── assets/                 # imagens do jogo
@@ -32,9 +33,8 @@ dist/SuikaElika.pygame/
 
 O diretório completo termina em `.pygame`, como solicitado. O Batocera encontra
 o arquivo `SuikaElika.pygame` que fica dentro dele; esse lançador chama
-`main.py`. O build não é um executável compilado; apenas reúne os pontos de
-entrada, o pacote Python e seus dados. Ele não baixa nem inclui Python, Pygame,
-SDL ou Pymunk.
+`main.py`. O build não é um executável compilado; reúne os pontos de entrada, o
+pacote Python e seus dados. Ele não baixa nem inclui Python, Pygame ou SDL.
 
 ## Copiar para o Batocera
 
@@ -48,6 +48,7 @@ se necessário. No aparelho, a estrutura final deve ser:
 ├── main.py
 ├── SuikaElika.pygame
 ├── README-BATOCERA.txt
+├── bootstrap.py
 ├── suika_elika/
 ├── data/
 └── assets/
@@ -117,10 +118,20 @@ Não filtrar controles pelo nome: um encoder arcade convertido pelo
 
 ### Runtime do aparelho
 
-O sistema Batocera precisa oferecer um `python3` compatível que consiga importar
-Pygame e Pymunk, junto das bibliotecas nativas exigidas por elas. O build não
-torna essas dependências portáveis. Não copie wheels do Windows para Linux. A
-combinação de versão, arquitetura e ABI deve ser verificada no aparelho:
+O sistema Batocera precisa oferecer `python3` e Pygame/SDL compatíveis. Na
+primeira execução, o pacote verifica o Pymunk e instala `pymunk>=7.3,<8` com pip
+em `/userdata/system/configs/suika-elika/python-packages`. Se `pip` não existir,
+tenta `ensurepip`; se o Python do sistema não o oferecer, baixa o instalador
+oficial do PyPA e instala pip no espaço de usuário. A instalação exige internet
+na primeira execução; depois o Pymunk fica no armazenamento persistente para
+execuções offline. O instalador não altera os diretórios do Python do sistema.
+
+O primeiro lançamento precisa de espaço gravável em `/userdata` e acesso ao
+PyPI. A disponibilidade de uma wheel Linux compatível depende da versão do
+Python e da arquitetura; caso contrário, o pip poderá tentar compilar Pymunk e
+precisará de compilador e dependências nativas, que normalmente não fazem parte
+do runtime do Batocera. Não copie wheels do Windows para Linux. O diagnóstico
+abaixo ajuda a identificar a combinação do aparelho:
 
 ```sh
 python3 tools/diagnostics.py --format json

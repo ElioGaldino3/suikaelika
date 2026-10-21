@@ -94,6 +94,7 @@ class FakeControllerApi:
     CONTROLLER_BUTTON_A = 0
     CONTROLLER_BUTTON_B = 1
     CONTROLLER_BUTTON_START = 2
+    CONTROLLER_BUTTON_X = 8
     CONTROLLER_BUTTON_DPAD_UP = 3
     CONTROLLER_BUTTON_DPAD_DOWN = 4
     CONTROLLER_BUTTON_DPAD_LEFT = 5
@@ -248,6 +249,20 @@ def test_generic_button_mapping_emits_one_edge_and_rumble_is_optional() -> None:
     assert adapter.rumble(0.2, 0.7, 150)
 
 
+def test_registry_maps_common_generic_x_button_index() -> None:
+    joystick = FakeJoystick(57, buttons=(False, False, True))
+    registry = NativeInputRegistry(
+        _pygame(FakeJoystickModule((joystick,))), controller_api=None
+    )
+    registry.discover()
+    registry.select(57)
+
+    sample = registry.poll()
+    assert sample.action_edges == (InputAction.CONFIRM, InputAction.DROP)
+    assert sample.drop_held
+    registry.close()
+
+
 def test_controller_import_absence_falls_back_without_failing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -331,3 +346,6 @@ def test_controller_api_without_constants_uses_real_pygame_namespace() -> None:
     device.buttons[pygame.CONTROLLER_BUTTON_B] = True
     device.buttons[pygame.CONTROLLER_BUTTON_START] = True
     assert adapter.poll().action_edges == (InputAction.CANCEL, InputAction.PAUSE)
+    device.buttons.clear()
+    device.buttons[pygame.CONTROLLER_BUTTON_X] = True
+    assert adapter.poll().action_edges == (InputAction.CONFIRM, InputAction.DROP)

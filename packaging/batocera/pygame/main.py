@@ -3,6 +3,10 @@
 
 from __future__ import annotations
 
+from bootstrap import ensure_pymunk
+
+ensure_pymunk()
+
 from suika_elika.app import main
 
 
