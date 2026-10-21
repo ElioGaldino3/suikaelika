@@ -193,6 +193,9 @@ class App:
         self._applied_settings: SettingsData | None = None
         self._registry: NativeInputRegistry | None = None
         self._keyboard: _KeyboardAdapter | None = None
+        self._selected_controller_identity: str | None = None
+        self._controller_reconnect_lock = False
+        self._controller_resume_gameplay = False
         self._input = InputManager()
         self._audio: Any = None
         self._persistence: Any = None
@@ -302,6 +305,9 @@ class App:
         devices = self._registry.discover()
         if devices:
             self._registry.select(devices[0])
+            self._selected_controller_identity = self._controller_identity(
+                self._registry.devices.get(devices[0])
+            )
             self._input.register_adapter(InputBackend.NATIVE, self._registry)
             self._input.select_backend(InputBackend.NATIVE)
             controller_status = "Controle conectado"
@@ -349,7 +355,22 @@ class App:
 
     def _process_events(self, events: tuple[Any, ...]) -> None:
         if self._registry is not None:
-            self._registry.process_events(events)
+            active_before = self._registry.active_instance_id
+            added = self._registry.process_events(events)
+            if active_before is not None and self._registry.active_instance_id is None:
+                self._handle_active_controller_removal()
+            if self._controller_reconnect_lock:
+                for instance_id in added:
+                    device = self._registry.devices.get(instance_id)
+                    identity = self._controller_identity(device)
+                    if (
+                        identity is None
+                        or identity != self._selected_controller_identity
+                    ):
+                        continue
+                    self._registry.select(instance_id)
+                    self._input.select_backend(InputBackend.NATIVE)
+                    break
         if self._keyboard is not None:
             self._keyboard.process_events(events)
         pygame = self._pygame
@@ -404,10 +425,50 @@ class App:
                 if callable(reset):
                     reset()
 
+    def _handle_active_controller_removal(self) -> None:
+        """Pause and disarm the active player until its controller is confirmed again."""
+        self._controller_reconnect_lock = True
+        self._controller_resume_gameplay = (
+            self._manager is not None
+            and self._manager.current_name == "play"
+            and self._session is not None
+            and self._session.round_state in (RoundState.READY, RoundState.PLAYING)
+        )
+        if self._session is not None and self._controller_resume_gameplay:
+            self._session.pause()
+        if self._audio is not None:
+            self._audio.pause()
+        self._accumulator = 0.0
+        self._input.select_backend(None)
+        self._clear_input_states()
+        if self._registry is not None:
+            self._registry.select(None)
+        if self._manager is not None:
+            self._manager.reset_input()
+
     def _poll_and_dispatch(self, ui_delta: float, events: tuple[Any, ...]) -> None:
         del events
         assert self._manager is not None
         managed = self._input.poll(ui_delta)
+        if self._controller_reconnect_lock:
+            confirmed = any(
+                edge.action is InputAction.CONFIRM for edge in managed.frame.edges
+            )
+            if (
+                confirmed
+                and self._registry is not None
+                and self._registry.active_instance_id is not None
+            ):
+                self._controller_reconnect_lock = False
+                self._input.reset()
+                if self._controller_resume_gameplay and self._session is not None:
+                    self._session.resume()
+                if self._controller_resume_gameplay and self._audio is not None:
+                    self._audio.resume()
+                self._controller_resume_gameplay = False
+            # Confirmation is consumed here. In particular, a face button mapped
+            # to CONFIRM and DROP cannot resume and launch in the same frame.
+            return
         self._manager.handle_actions(managed.frame)
 
     def _poll_focus_confirmation(self, ui_delta: float, events: tuple[Any, ...]) -> None:
@@ -491,6 +552,34 @@ class App:
                 (24, 59, 78),
             )
             self._screen.blit(text, text.get_rect(center=(self.config.window_size[0] // 2, 52)))
+        elif self._controller_reconnect_lock:
+            assert self._pygame is not None
+            connected = (
+                self._registry is not None
+                and self._registry.active_instance_id is not None
+            )
+            message = (
+                "Controle reconectado · pressione confirmar para continuar"
+                if connected
+                else "Controle removido · reconecte o controle do jogador 1"
+            )
+            text = self._pygame.font.Font(None, 34).render(
+                message, True, (24, 59, 78)
+            )
+            self._screen.blit(
+                text,
+                text.get_rect(center=(self.config.window_size[0] // 2, 52)),
+            )
+
+    @staticmethod
+    def _controller_identity(device: Any | None) -> str | None:
+        if device is None:
+            return None
+        guid = str(getattr(device, "guid", "")).strip().casefold()
+        if guid:
+            return f"guid:{guid}"
+        name = str(getattr(device, "name", "")).strip().casefold()
+        return f"name:{name}" if name else None
 
 
 def main() -> int:

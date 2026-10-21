@@ -462,15 +462,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-021 — Fechar reconexão e duplicidade de entrada ponta a ponta
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-020`
 - Writes: `suika_elika/input/manager.py; suika_elika/app.py; tests/integration/test_controller_lifecycle.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/app.py; suika_elika/scene_manager.py; suika_elika/config.py; suika_elika/__main__.py; main.py; tests/integration/test_app_flow.py`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Remoção do controle ativo pausa a sessão, zera acumulador/entrada e desarma o backend; só um controle reconectado com GUID/nome correspondente é selecionado e sua confirmação é consumida sem queda residual. Controles adicionais não são selecionados nem consultados automaticamente. Verificado em `tests/integration/test_controller_lifecycle.py` e `tests/input/test_devices.py` (10 focados passaram); suíte total 180 passou; Ruff global, mypy configurado (40 arquivos), `git diff --check` e `todo_graph.py validate` passaram. A seleção inicial usa o primeiro dispositivo enumerado; substituto de identidade diferente requer fluxo futuro. Sem joystick físico/Batocera.
 - Blocker: `none`
 
 **Objetivo:** Integrar escolha de jogador, perda de controle e modos exclusivos nativo/teclado emulado.
