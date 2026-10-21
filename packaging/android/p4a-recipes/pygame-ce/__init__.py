@@ -84,8 +84,10 @@ class PygameCERecipe(CompiledComponentsPythonRecipe):
     def install_python_package(self, arch):
         environment = self.get_recipe_env(arch)
         with current_directory(self.get_build_dir(arch.arch)):
+            hostpython = sh.Command(self.hostpython_location)
+            shprint(hostpython, "setup.py", "build_py", _env=environment)
             shprint(
-                sh.Command(self.hostpython_location),
+                hostpython,
                 "setup.py",
                 "install",
                 "--install-lib",
