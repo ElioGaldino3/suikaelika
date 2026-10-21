@@ -8,6 +8,25 @@ Em 20/10/2026, o usuário informou que usa Batocera 43 em um notebook x86 e que 
 `python3` está disponível. Esses dados são relato do usuário; não foram medidos
 por esta sessão.
 
+O usuário também relatou que scripts Pygame no Batocera usam `pygame.joystick`,
+que o mapeamento feito no EmulationStation seria herdado e que os drivers do
+sistema operacional dispensariam instalação adicional. Isso ainda não foi
+verificado no equipamento. A API `pygame.joystick` apresenta eixos e botões por
+índices do dispositivo; a abstração SDL Game Controller oferece controles
+semânticos padronizados quando há um mapeamento compatível. Portanto, a
+disponibilidade de um controle no sistema não comprova, por si só, qual API ou
+qual mapeamento o launcher Batocera entrega ao processo. [Documentação de
+pygame.joystick](https://www.pygame.org/docs/ref/joystick.html) e
+[documentação de pygame._sdl2.controller](https://www.pygame.org/docs/ref/sdl2_controller.html).
+
+## Diagnóstico local informado
+
+O usuário forneceu uma saída de `tools/diagnostics.py` executada no Windows 11,
+em processo CPython 3.13.16 de 64 bits/AMD64. O diagnóstico identificou Pygame
+2.6.1, Pymunk 7.3.1, pytest 9.1.1, Ruff 0.17.1 e mypy 1.20.2. SDL, display,
+áudio e controles não foram sondados. Este resultado descreve o ambiente local
+Windows e não confirma nenhuma versão, ABI ou capacidade do Batocera.
+
 ## Dados ainda não coletados
 
 | Campo | Resultado |

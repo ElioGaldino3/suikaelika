@@ -130,8 +130,8 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; tools/diagnostics.py; docs/BATOCERA-ENVIRONMENT.md; tests/tools/test_diagnostics.py`
 - Owner: `unassigned`
 - Attempts: `0`
-- Evidence: Relato do usuário (20/10/2026): Batocera 43 em notebook x86, com `python3` disponível. Registro parcial em `docs/validation/batocera-runtime.md`; ainda sem saída do diagnóstico no equipamento nem versões confirmadas de runtime, bibliotecas ou probes.
-- Blocker: `O usuário informa Batocera 43, notebook x86 e python3; falta executar tools/diagnostics.py no equipamento para confirmar arquitetura, runtime e dependências. Joystick físico continua necessário para a etapa de homologação.`
+- Evidence: Relato do usuário (20/10/2026): Batocera 43 em notebook x86, com `python3` disponível; também relata uso de `pygame.joystick` e herança do mapeamento do EmulationStation, ainda sem verificação no equipamento. A saída enviada de `tools/diagnostics.py` é do Windows 11/AMD64, CPython 3.13.16, Pygame 2.6.1 e Pymunk 7.3.1, com probes de dispositivos não executados; não comprova dados do Batocera. Detalhes e distinção de ambientes em `docs/validation/batocera-runtime.md`.
+- Blocker: `Falta executar tools/diagnostics.py no Batocera para confirmar arquitetura, runtime e dependências. Joystick físico continua necessário para a etapa de homologação.`
 
 **Objetivo:** Executar a prova de Pygame, joystick e Pymunk no destino e identificar a matriz efetiva do equipamento.
 
@@ -342,15 +342,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-015 — Implementar lançamento e previsão estática da mira
 
-- Status: `in_progress`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-005, SE-007`
 - Writes: `suika_elika/game/spawning.py; tests/game/test_spawning.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; suika_elika/game/physics.py; tests/game/test_physics.py`
-- Owner: `se015`
+- Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Ainda não executada.
+- Evidence: Entrega revisada: prévia sem corpo, rejeição por nascimento bloqueado sem consumo da sequência, uma soltura por borda, temporizadores de simulação e previsão circular estática do primeiro contato/fundo. Com CPython 3.13.16, `python -m pytest tests/game/test_spawning.py -q` passou (11 testes), Ruff e mypy strict nos dois arquivos passaram; suíte completa `python -m pytest` passou (127 testes), `python -m ruff check .`, `python -m mypy` e `git diff --check` passaram. A sessão deve fornecer à `advance()` o sinal de contato da fruta lançada também com parede/fundo; integração permanece com SE-016.
 - Blocker: `none`
 
 **Objetivo:** Gerenciar fruta em espera, limites horizontais, contato/cooldown e bloqueio de nascimento.
@@ -389,7 +389,7 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Writes: `suika_elika/rendering/viewport.py; tests/rendering/test_viewport.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**`
 - Owner: `unassigned`
-- Attempts: `0`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
