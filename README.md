@@ -75,9 +75,9 @@ pausa ambos. Ambos podem operar os menus de pausa, resultado e revanche.
 Remover qualquer controle congela as duas cestas até reconectar e confirmar;
 o botão de voltar do controle restante permite retornar ao menu. A confirmação
 de retomada é consumida sem soltar fruta. Controles com mapeamento SDL aceitam
-botão sul/A e X para confirmar/soltar. Em joysticks genéricos, o índice 2 (X no
-layout SDL comum de estilo Xbox) também é usado; outros layouts podem exigir
-ajuste de perfil.
+botão sul/A e X para confirmar/soltar. Em joysticks genéricos, o índice 0
+(posição sul mais comum) confirma/solta; o índice 2 não é presumido como X
+porque pode ser o botão norte em alguns controles.
 O teclado de desenvolvimento não conta como segundo controle.
 
 O fundo vem de `raw_assets/battle_background.png`. A cópia preparada em

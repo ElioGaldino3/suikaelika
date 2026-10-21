@@ -249,8 +249,8 @@ def test_generic_button_mapping_emits_one_edge_and_rumble_is_optional() -> None:
     assert adapter.rumble(0.2, 0.7, 150)
 
 
-def test_registry_maps_common_generic_x_button_index() -> None:
-    joystick = FakeJoystick(57, buttons=(False, False, True))
+def test_registry_maps_generic_south_button_without_mapping_north() -> None:
+    joystick = FakeJoystick(57, buttons=(True, False, False))
     registry = NativeInputRegistry(
         _pygame(FakeJoystickModule((joystick,))), controller_api=None
     )
@@ -260,6 +260,10 @@ def test_registry_maps_common_generic_x_button_index() -> None:
     sample = registry.poll()
     assert sample.action_edges == (InputAction.CONFIRM, InputAction.DROP)
     assert sample.drop_held
+    joystick.buttons = (False, False, True)
+    north_sample = registry.poll()
+    assert north_sample.action_edges == ()
+    assert not north_sample.drop_held
     registry.close()
 
 

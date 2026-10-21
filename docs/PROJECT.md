@@ -480,7 +480,7 @@ O jogo não deve consultar índices de botões dentro das regras. Um `InputManag
 | Reiniciar | Opção no menu de pausa/resultado | Mesma navegação do menu |
 | Sair para o Batocera | Opção Sair; hotkey do sistema quando configurada | Alt+F4 ou fechar janela |
 
-Usar a **posição física** na explicação inicial: botão sul corresponde normalmente a A no Xbox, B no padrão Nintendo e cruz no PlayStation. Para compatibilidade com o uso informado no Batocera, X também confirma e solta; em joysticks genéricos, o índice SDL 2 é aceito como convenção comum de X no layout estilo Xbox. Outros layouts podem exigir um perfil. Não presumir que uma letra identifica a mesma posição em todos os controles.
+Usar a **posição física** na explicação inicial: botão sul corresponde normalmente a A no Xbox, B no padrão Nintendo e cruz no PlayStation. Em dispositivos com mapeamento SDL, X também confirma e solta. Em joysticks genéricos, usar índice 0 como convenção comum da posição sul; não presumir o significado dos outros índices, pois variam por controle.
 
 ### 11.2 Backends nativos
 

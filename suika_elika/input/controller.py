@@ -172,10 +172,10 @@ class NativeInputRegistry:
             joystick_bindings
             if joystick_bindings is not None
             else JoystickBindings(
-                # SDL's common Xbox-style raw layout puts the left face/X
-                # button at index 2. Keep this fallback for Batocera devices
-                # that SDL does not expose through its semantic Controller API.
-                button_actions={2: (InputAction.CONFIRM, InputAction.DROP)}
+                # Raw joystick indices vary by device. Index 0 is the common
+                # south/A position; never assume index 2 is X because on some
+                # Batocera devices it is the north/Y button.
+                button_actions={0: (InputAction.CONFIRM, InputAction.DROP)}
             )
         )
         self._devices: dict[int, SDLControllerAdapter | JoystickAdapter] = {}
