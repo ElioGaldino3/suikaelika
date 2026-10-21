@@ -130,8 +130,8 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; tools/diagnostics.py; docs/BATOCERA-ENVIRONMENT.md; tests/tools/test_diagnostics.py`
 - Owner: `unassigned`
 - Attempts: `0`
-- Evidence: Relato do usuário (20/10/2026): Batocera 43 em notebook x86, com `python3` disponível; também relata uso de `pygame.joystick` e herança do mapeamento do EmulationStation, ainda sem verificação no equipamento. A saída enviada de `tools/diagnostics.py` é do Windows 11/AMD64, CPython 3.13.16, Pygame 2.6.1 e Pymunk 7.3.1, com probes de dispositivos não executados; não comprova dados do Batocera. Detalhes e distinção de ambientes em `docs/validation/batocera-runtime.md`.
-- Blocker: `Falta executar tools/diagnostics.py no Batocera para confirmar arquitetura, runtime e dependências. Joystick físico continua necessário para a etapa de homologação.`
+- Evidence: Relato do usuário (20/10/2026): Batocera 43 em notebook x86, com `python3` disponível; também relata uso de `pygame.joystick` e herança do mapeamento do EmulationStation, ainda sem verificação no equipamento. A saída enviada de `tools/diagnostics.py` é do Windows 11/AMD64, CPython 3.13.16, Pygame 2.6.1 e Pymunk 7.3.1, com probes de dispositivos não executados; não comprova dados do Batocera. Em 20/10/2026, o usuário informou que não tem acesso ao aparelho agora. Detalhes e distinção de ambientes em `docs/validation/batocera-runtime.md`.
+- Blocker: `Usuário sem acesso atual ao aparelho para executar tools/diagnostics.py e confirmar arquitetura/runtime/dependências. Joystick físico continua necessário para homologação.`
 
 **Objetivo:** Executar a prova de Pygame, joystick e Pymunk no destino e identificar a matriz efetiva do equipamento.
 
