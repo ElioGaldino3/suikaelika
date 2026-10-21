@@ -53,6 +53,18 @@ def test_fruit_falls_and_keeps_catalog_mass_and_solid_disk_moment() -> None:
     assert snapshot.velocity.y > 0
 
 
+def test_adjusted_catalog_radius_reaches_the_pymunk_circle_shape() -> None:
+    catalog = load_catalog().with_hitbox_scales((("apple", 1.25),))
+    world = PhysicsWorld()
+    world.create_body(
+        "apple",
+        catalog.get("apple").definition,
+        Pose(Vector2(400, 100)),
+    )
+
+    assert world._shapes["apple"].radius == pytest.approx(45)
+
+
 def test_body_accepts_initial_linear_and_angular_velocity_through_public_api() -> None:
     world = PhysicsWorld()
     world.create_body(

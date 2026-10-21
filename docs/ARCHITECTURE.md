@@ -120,7 +120,7 @@ Em checkout compartilhado, revisar mudanças no local. Worktrees isolados só se
 | ADR-002 | Pymunk candidato condicionado ao alvo | Desenvolvimento local pode continuar, distribuição fica bloqueada sem prova |
 | ADR-003 | TODO com escritor único e evidências | Subagentes entregam para revisão; orquestrador conclui |
 | ADR-004 | Arte procedural no MVP | Produção de imagens finais é tarefa futura separada |
-| ADR-005 | Versões e recordes por ruleset | Ajustes de física não misturam silenciosamente resultados incomparáveis |
+| ADR-005 | Versões e recordes por ruleset | Ajustes de física, inclusive escalas individuais de hitbox configuráveis, não misturam resultados incomparáveis; cada combinação de raios tem um ruleset próprio. |
 | ADR-006 | Batalha coordena duas GameSession independentes | Mesmo catálogo e seed, cestas 480×460, placares e física separados, sem persistência do clássico |
 | ADR-007 | Slots de batalha por instance ID | GUID/nome apenas para reconquistar slot ausente; modelos iguais conectados continuam jogadores distintos |
 | ADR-008 | Teclado somente com `--desktop` | Padrão nativo em todos os sistemas; teclado como fallback explícito, fora da contagem de joysticks |

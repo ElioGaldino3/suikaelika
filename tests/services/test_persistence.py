@@ -31,6 +31,7 @@ def test_versioned_data_round_trips_and_previous_file_is_backed_up(tmp_path: Pat
         control_profile_id="arcade",
         fullscreen=False,
         safe_area_fraction=0.08,
+        fruit_hitbox_scales=(("apple", 1.25), ("melon", 0.95)),
     )
     profile = ControllerProfileData(
         "arcade",
@@ -82,6 +83,17 @@ def test_versioned_data_round_trips_and_previous_file_is_backed_up(tmp_path: Pat
         ),
     }
     assert reopened.load_statistics() == statistics
+
+
+def test_legacy_settings_without_hitbox_scales_use_defaults(tmp_path: Path) -> None:
+    store = make_store(tmp_path)
+    store.save_settings(SettingsData())
+    path = tmp_path / "config" / "settings.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["data"].pop("fruit_hitbox_scales")
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    assert make_store(tmp_path).load_settings() == SettingsData()
 
 
 def test_corrupt_file_is_preserved_and_defaults_remain_available(tmp_path: Path) -> None:

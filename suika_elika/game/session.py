@@ -138,6 +138,11 @@ class GameSession:
         return self._catalog.ruleset_version
 
     @property
+    def catalog(self) -> FruitCatalog:
+        """Current rules, including the active physical fruit radii."""
+        return self._catalog
+
+    @property
     def mode(self) -> str:
         return self._mode
 
@@ -295,8 +300,18 @@ class GameSession:
             self._events = ()
             self._drop_repeater.reset()
 
-    def restart(self, seed: int | str | bytes | bytearray | None = None) -> None:
+    def restart(
+        self,
+        seed: int | str | bytes | bytearray | None = None,
+        *,
+        catalog: FruitCatalog | None = None,
+    ) -> None:
         """Start an empty round and clear all bodies and residual commands."""
+        if catalog is not None:
+            if not isinstance(catalog, FruitCatalog):
+                raise TypeError("catalog must be a FruitCatalog")
+            self._catalog = catalog
+            self._high_score = self._read_high_score()
         for entity_id in tuple(self._fruits):
             self._physics.remove_body(entity_id)
         self._edges.clear()

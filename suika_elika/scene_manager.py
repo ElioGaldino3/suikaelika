@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from suika_elika.audio import NullAudioManager
@@ -13,6 +14,7 @@ from suika_elika.contracts import (
     SceneTransition,
 )
 from suika_elika.game.battle import BattleSession
+from suika_elika.game.catalog import FruitCatalog, load_catalog
 from suika_elika.game.session import GameSession
 from suika_elika.input.manager import InputManager
 from suika_elika.input.profiles import ProfileRepository
@@ -38,6 +40,7 @@ class SceneManager:
         controller_status: str = "Controle não conectado",
         fixed_dt: float = 1 / 120,
         keyboard_enabled: bool = False,
+        catalog_provider: Callable[[], FruitCatalog] | None = None,
     ) -> None:
         self.session = session
         self.persistence = persistence
@@ -45,9 +48,13 @@ class SceneManager:
         self.audio = audio or NullAudioManager()
         self.controller_status = controller_status
         self.keyboard_enabled = keyboard_enabled
+        self.catalog_provider = catalog_provider or load_catalog
         self.battle_ready = False
         self.battle_mode = False
-        self.battle_session = BattleSession(fixed_dt=fixed_dt)
+        self.battle_session = BattleSession(
+            fixed_dt=fixed_dt,
+            catalog=self.catalog_provider(),
+        )
         self.battle_scene = BattleScene(self.battle_session)
         self.profile_repository = ProfileRepository(persistence)
         self.play_scene = PlayScene(session)
@@ -129,7 +136,10 @@ class SceneManager:
                 target = payload.get("target")
                 if target is not None and type(target) is not int:
                     raise ValueError("battle target must be an integer")
-                self.battle_session.restart(target=target if isinstance(target, int) else None)
+                self.battle_session.restart(
+                    target=target if isinstance(target, int) else None,
+                    catalog=self.catalog_provider(),
+                )
             self.battle_mode = True
             self.audio.resume()
         if destination == "play":
@@ -138,10 +148,10 @@ class SceneManager:
                 self.session.resume()
                 self.audio.resume()
             elif payload.get("restart") is True or self._current_name != "pause":
-                self.session.restart()
+                self.session.restart(catalog=self.catalog_provider())
                 self.audio.resume()
         elif destination == "title" and payload.get("abandoned") is True:
-            self.session.restart()
+            self.session.restart(catalog=self.catalog_provider())
             self.audio.resume()
         elif destination == "options" and payload.get("return_to") == "paused":
             pass

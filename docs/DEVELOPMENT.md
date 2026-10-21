@@ -34,6 +34,14 @@ o colisor físico e o retângulo amarelo é seu limite; ambos aparecem sobre as
 frutas da simulação no clássico e na BATALHA. Para usar teclado sem joystick,
 combine `--debug` com `--desktop`.
 
+Em **Opções → Ajustar hitboxes**, use esquerda/direita para mudar cada fruta em
+passos de 5%, entre 50% e 150%. Os fatores são salvos localmente. O ajuste vale
+na próxima partida ou depois de reiniciar a rodada atual; ao voltar da pausa,
+escolha **Reiniciar** para testar sem a rodada antiga usando os raios anteriores.
+O círculo verde passa a acompanhar o raio aplicado à física; os sprites mantêm
+seu tamanho original. Cada combinação ajustada recebe um ruleset próprio para
+manter os recordes separados.
+
 - Teclas de seta: mover a mira e navegar pelos menus.
 - Espaço ou Enter: cada novo aperto tenta soltar imediatamente; segurar repete a
   400 BPM (150 ms). Enter também confirma a opção selecionada nos menus.

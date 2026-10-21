@@ -102,6 +102,16 @@ class Renderer:
             raise TypeError("reduced effects flag must be a boolean")
         self.reduced_effects = enabled
 
+    def set_catalog(self, catalog: FruitCatalog) -> None:
+        """Update active fruit radii while keeping sprites at their art sizes."""
+        if not isinstance(catalog, FruitCatalog):
+            raise TypeError("catalog must be a FruitCatalog")
+        if {entry.fruit_id for entry in catalog.entries} != {
+            entry.fruit_id for entry in self.catalog.entries
+        }:
+            raise ValueError("renderer catalogs must contain the same fruit ids")
+        self.catalog = catalog
+
     @property
     def presentation_rect(self) -> tuple[int, int, int, int]:
         """Physical bounds used for the logical canvas on the last draw."""

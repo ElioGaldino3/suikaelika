@@ -71,7 +71,7 @@ class AudioPort(Protocol):
 
 @dataclass(frozen=True, slots=True)
 class SettingsData:
-    """Persistable audio, video, accessibility, and layout preferences."""
+    """Persistable audio, video, accessibility, layout, and collider preferences."""
 
     master_gain: float = 0.8
     effects_gain: float = 0.75
@@ -81,6 +81,7 @@ class SettingsData:
     control_profile_id: str = "default"
     fullscreen: bool = True
     safe_area_fraction: float = 0.05
+    fruit_hitbox_scales: tuple[tuple[str, float], ...] = ()
 
     def __post_init__(self) -> None:
         for gain in (self.master_gain, self.effects_gain, self.music_gain):
@@ -103,6 +104,23 @@ class SettingsData:
             or not 0 <= self.safe_area_fraction <= 0.25
         ):
             raise ValueError("safe area fraction must be between 0 and 0.25")
+        if not isinstance(self.fruit_hitbox_scales, tuple):
+            raise ValueError("fruit hitbox scales must be a tuple")
+        seen_fruits: set[str] = set()
+        for entry in self.fruit_hitbox_scales:
+            if not isinstance(entry, tuple) or len(entry) != 2:
+                raise ValueError("each fruit hitbox scale must contain an id and scale")
+            fruit_id, scale = entry
+            if (
+                not isinstance(fruit_id, str)
+                or not fruit_id.strip()
+                or fruit_id in seen_fruits
+                or type(scale) not in (int, float)
+                or not math.isfinite(scale)
+                or not 0.5 <= scale <= 1.5
+            ):
+                raise ValueError("fruit hitbox scales must be unique values between 0.5 and 1.5")
+            seen_fruits.add(fruit_id)
 
 
 @dataclass(frozen=True, slots=True)

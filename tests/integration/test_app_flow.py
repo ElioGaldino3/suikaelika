@@ -10,7 +10,15 @@ import pytest
 from suika_elika.app import App, _KeyboardAdapter, calculate_menu_layout
 from suika_elika.audio import NullAudioManager
 from suika_elika.config import AppConfig
-from suika_elika.contracts import InputAction, InputEdge, InputFrame, RoundState, SceneTransition
+from suika_elika.contracts import (
+    InputAction,
+    InputEdge,
+    InputFrame,
+    RoundState,
+    SceneTransition,
+    SettingsData,
+)
+from suika_elika.game.catalog import load_catalog
 from suika_elika.game.physics import PhysicsWorld
 from suika_elika.game.session import GameSession
 from suika_elika.input.manager import InputBackend, InputManager, InputSample
@@ -33,9 +41,21 @@ def persistence(tmp_path: Path) -> JsonPersistence:
 
 
 def _stack(persistence: JsonPersistence) -> tuple[GameSession, SceneManager, NullAudioManager]:
-    session = GameSession(PhysicsWorld(), persistence=persistence, seed=4)
+    def catalog_provider():
+        settings = persistence.load_settings() or SettingsData()
+        return load_catalog().with_hitbox_scales(settings.fruit_hitbox_scales)
+
+    session = GameSession(
+        PhysicsWorld(), catalog=catalog_provider(), persistence=persistence, seed=4
+    )
     audio = NullAudioManager()
-    manager = SceneManager(session, persistence, InputManager(), audio)
+    manager = SceneManager(
+        session,
+        persistence,
+        InputManager(),
+        audio,
+        catalog_provider=catalog_provider,
+    )
     return session, manager, audio
 
 
@@ -118,6 +138,29 @@ def test_escape_opens_pause_menu_and_closes_it_again(persistence: JsonPersistenc
 
     manager.transition(SceneTransition("exit"))
     assert not manager.running
+
+
+def test_saved_hitbox_scales_apply_on_classic_and_battle_restarts(
+    persistence: JsonPersistence,
+) -> None:
+    session, manager, _audio = _stack(persistence)
+    persistence.save_settings(SettingsData(fruit_hitbox_scales=(("apple", 1.25),)))
+
+    manager.transition(SceneTransition("play"))
+
+    assert session.catalog.get("apple").definition.radius == pytest.approx(45)
+    assert session.ruleset_version.startswith("classic-v5-hitbox-")
+
+    manager.battle_ready = True
+    manager.transition(SceneTransition("battle"))
+    assert (
+        manager.battle_session.players[0].catalog.get("apple").definition.radius
+        == pytest.approx(45)
+    )
+    assert (
+        manager.battle_session.players[1].catalog.get("apple").definition.radius
+        == pytest.approx(45)
+    )
 
 
 def test_fixed_loop_caps_recovery_and_discards_backlog(persistence: JsonPersistence) -> None:
@@ -216,14 +259,14 @@ def test_pause_options_save_and_return_to_pause(persistence: JsonPersistence) ->
 
 
 @pytest.mark.parametrize("height", [480, 720, 1080])
-def test_nine_choice_menu_rows_fit_between_subtitle_and_footer(height: int) -> None:
+def test_hitbox_menu_rows_fit_between_subtitle_and_footer(height: int) -> None:
     layout = calculate_menu_layout(
         height,
         subtitle_lines=1,
-        choice_count=9,
+        choice_count=13,
         footer_lines=2,
     )
-    last_choice_center = layout.choices_y + 8 * layout.choice_spacing
+    last_choice_center = layout.choices_y + 12 * layout.choice_spacing
     choice_top = layout.choices_y - layout.body_font_size / 2
     choice_bottom = last_choice_center + layout.body_font_size / 2
     subtitle_bottom = layout.subtitle_y + layout.subtitle_spacing

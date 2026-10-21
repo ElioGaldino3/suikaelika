@@ -18,6 +18,7 @@ from suika_elika.contracts import (
     SceneTransition,
     SettingsData,
 )
+from suika_elika.game.catalog import FruitCatalog, load_catalog
 from suika_elika.game.physics import PhysicsConfig, PhysicsWorld
 from suika_elika.game.session import GameSession
 from suika_elika.input.battle import BattleControls
@@ -354,6 +355,7 @@ class App:
         self._settings = self._persistence.load_settings() or SettingsData(
             fullscreen=self.config.fullscreen
         )
+        catalog = self._catalog_for_settings(self._settings)
         self._create_display()
 
         self._registry = NativeInputRegistry(pygame)
@@ -392,6 +394,7 @@ class App:
 
         self._session = GameSession(
             PhysicsWorld(PhysicsConfig(fixed_dt=self.config.fixed_dt)),
+            catalog=catalog,
             persistence=self._persistence,
             fixed_dt=self.config.fixed_dt,
         )
@@ -423,8 +426,31 @@ class App:
             controller_status=controller_status,
             fixed_dt=self.config.fixed_dt,
             keyboard_enabled=self.config.allow_keyboard_fallback,
+            catalog_provider=self._load_saved_catalog,
+        )
+        self._renderer.set_catalog(self._session.catalog)
+        self._battle_renderer.set_catalog(
+            self._manager.battle_session.players[0].catalog
         )
         self._manager.set_controller_count(len(self._registry.devices))
+
+    def _catalog_for_settings(self, settings: SettingsData) -> FruitCatalog:
+        catalog = load_catalog()
+        known_ids = {entry.fruit_id for entry in catalog.entries}
+        scales = tuple(
+            (fruit_id, scale)
+            for fruit_id, scale in settings.fruit_hitbox_scales
+            if fruit_id in known_ids
+        )
+        return catalog.with_hitbox_scales(scales)
+
+    def _load_saved_catalog(self) -> FruitCatalog:
+        settings = (
+            self._persistence.load_settings()
+            if self._persistence is not None
+            else None
+        )
+        return self._catalog_for_settings(settings or self._settings)
 
     def _create_display(self) -> None:
         pygame = self._pygame
@@ -685,6 +711,11 @@ class App:
     def _apply_current_settings(self) -> None:
         if self._manager is None or self._renderer is None or self._audio is None:
             return
+        self._renderer.set_catalog(self._manager.session.catalog)
+        if self._battle_renderer is not None:
+            self._battle_renderer.set_catalog(
+                self._manager.battle_session.players[0].catalog
+            )
         options = getattr(self._manager.current, "settings", None)
         if not isinstance(options, SettingsData) or options == self._applied_settings:
             return
@@ -712,6 +743,10 @@ class App:
                 self._screen, safe_area_fraction=options.safe_area_fraction,
                 reduced_effects=options.effects_reduced,
                 debug_colliders=self.config.debug_colliders,
+            )
+            self._renderer.set_catalog(self._manager.session.catalog)
+            self._battle_renderer.set_catalog(
+                self._manager.battle_session.players[0].catalog
             )
         self._applied_settings = options
 

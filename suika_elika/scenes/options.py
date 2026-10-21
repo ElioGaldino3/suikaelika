@@ -9,10 +9,12 @@ from typing import Protocol
 from suika_elika.contracts import (
     ControllerProfileData,
     InputAction,
+    InputEdge,
     InputFrame,
     SceneTransition,
     SettingsData,
 )
+from suika_elika.game.catalog import FruitCatalog, load_catalog
 from suika_elika.input.profiles import ProfileRepository, RemapWizard, WizardStatus
 
 from .title import MenuCanvas, MenuItem, MenuScene, MenuSnapshot
@@ -24,6 +26,9 @@ _NUMERIC_FIELDS = {
     "safe_area_fraction": (0.01, 0.0, 0.25),
 }
 _BOOLEAN_FIELDS = {"effects_reduced", "vibration_enabled", "fullscreen"}
+_HITBOX_MIN = 0.5
+_HITBOX_MAX = 1.5
+_HITBOX_STEP = 0.05
 
 
 class SettingsPersistence(Protocol):
@@ -55,6 +60,7 @@ class OptionsScene(MenuScene):
                 MenuItem("Vibração", "vibration_enabled"),
                 MenuItem("Tela cheia", "fullscreen"),
                 MenuItem("Área segura", "safe_area_fraction"),
+                MenuItem("Ajustar hitboxes", "colliders"),
                 MenuItem("Configurar controle", "controls"),
                 MenuItem("Voltar", "back"),
             ),
@@ -64,12 +70,15 @@ class OptionsScene(MenuScene):
         self.persistence = persistence
         self.return_to = return_to
         self.settings = persistence.load_settings() or SettingsData()
+        self.catalog: FruitCatalog = load_catalog()
         self.profile_repository = profile_repository
         self.active_profile = active_profile or self._find_active_profile()
         self._wizard: RemapWizard | None = None
         self._pending_profile: ControllerProfileData | None = None
         self._wizard_prompt = ""
         self._unsaved = False
+        self._collider_menu_active = False
+        self._options_selected_index = 0
 
     def _find_active_profile(self) -> ControllerProfileData | None:
         if self.profile_repository is None:
@@ -94,6 +103,8 @@ class OptionsScene(MenuScene):
             choices = ("Aguardando controle…", "Cancelar")
             subtitle = self._wizard_prompt or "Siga as instruções para remapear."
             return MenuSnapshot(title, choices, 0, subtitle, "Botão leste: cancelar", self.message)
+        if self._collider_menu_active:
+            return self._collider_snapshot()
 
         labels: list[str] = []
         for item in self.items:
@@ -123,8 +134,9 @@ class OptionsScene(MenuScene):
         canvas.draw_menu(self.snapshot)
 
     def handle_actions(self, frame: InputFrame) -> SceneTransition | None:
+        edges = self._fresh_edges(frame)
         if self._wizard is not None:
-            for edge in self._fresh_edges(frame):
+            for edge in edges:
                 if edge.action is InputAction.CANCEL:
                     self.handle_profile_sample(cancel=True)
                     return None
@@ -133,7 +145,11 @@ class OptionsScene(MenuScene):
                     return None
             return None
 
-        for edge in self._fresh_edges(frame):
+        if self._collider_menu_active:
+            self._handle_collider_actions(frame, edges)
+            return None
+
+        for edge in edges:
             if edge.action is InputAction.NAV_UP:
                 self.selected_index = (self.selected_index - 1) % len(self.items)
             elif edge.action is InputAction.NAV_DOWN:
@@ -144,6 +160,9 @@ class OptionsScene(MenuScene):
                 item = self.items[self.selected_index]
                 if item.destination == "back":
                     return self._save_and_return()
+                if item.destination == "colliders":
+                    self._open_collider_menu()
+                    return None
                 if item.destination in _BOOLEAN_FIELDS:
                     self.settings = replace(
                         self.settings,
@@ -192,6 +211,92 @@ class OptionsScene(MenuScene):
             self.settings = replace(self.settings, music_gain=updated)
         else:
             self.settings = replace(self.settings, safe_area_fraction=updated)
+        self._unsaved = True
+        self.message = ""
+
+    def _open_collider_menu(self) -> None:
+        self._options_selected_index = self.selected_index
+        self._collider_menu_active = True
+        self.selected_index = self.catalog.get("apple").level - 1
+        self.message = ""
+
+    def _close_collider_menu(self) -> None:
+        self._collider_menu_active = False
+        self.selected_index = self._options_selected_index
+        self.message = ""
+
+    def _collider_snapshot(self) -> MenuSnapshot:
+        scale_by_id = dict(self.settings.fruit_hitbox_scales)
+        choices = tuple(
+            f"{entry.name}: {scale_by_id.get(entry.fruit_id, 1.0):.0%}"
+            for entry in self.catalog.entries
+        ) + ("Restaurar padrões", "Voltar às opções")
+        fruit_count = len(self.catalog.entries)
+        subtitle = "Ajuste aplicado ao iniciar ou reiniciar uma partida."
+        if self.selected_index < fruit_count:
+            entry = self.catalog.entries[self.selected_index]
+            scale = scale_by_id.get(entry.fruit_id, 1.0)
+            radius = entry.definition.radius * scale
+            subtitle = (
+                f"{entry.name}: raio {radius:.1f} · padrão {entry.definition.radius:.1f}"
+                " · aplica ao reiniciar"
+            )
+        return MenuSnapshot(
+            "Ajustar hitboxes",
+            choices,
+            self.selected_index,
+            subtitle,
+            "←/→ Ajustar · Confirmar · Cancelar: opções",
+            self.message,
+        )
+
+    def _handle_collider_actions(
+        self, frame: InputFrame, edges: tuple[InputEdge, ...]
+    ) -> None:
+        count = len(self.catalog.entries) + 2
+        for edge in edges:
+            if edge.action is InputAction.NAV_UP:
+                self.selected_index = (self.selected_index - 1) % count
+            elif edge.action is InputAction.NAV_DOWN:
+                self.selected_index = (self.selected_index + 1) % count
+            elif edge.action is InputAction.CANCEL:
+                self._close_collider_menu()
+                return
+            elif edge.action is InputAction.CONFIRM:
+                if self.selected_index == len(self.catalog.entries):
+                    if self.settings.fruit_hitbox_scales:
+                        self.settings = replace(self.settings, fruit_hitbox_scales=())
+                        self._unsaved = True
+                        self.message = "Tamanhos padrão restaurados."
+                elif self.selected_index == count - 1:
+                    self._close_collider_menu()
+                    return
+        if frame.move_x <= -0.55:
+            self._adjust_fruit_hitbox(-1)
+        elif frame.move_x >= 0.55:
+            self._adjust_fruit_hitbox(1)
+
+    def _adjust_fruit_hitbox(self, direction: int) -> None:
+        if self.selected_index >= len(self.catalog.entries):
+            return
+        entry = self.catalog.entries[self.selected_index]
+        scales = dict(self.settings.fruit_hitbox_scales)
+        current = scales.get(entry.fruit_id, 1.0)
+        updated = round(
+            max(_HITBOX_MIN, min(_HITBOX_MAX, current + direction * _HITBOX_STEP)),
+            2,
+        )
+        if updated == current:
+            self.message = f"Limite da hitbox: {updated:.0%}."
+            return
+        if updated == 1.0:
+            scales.pop(entry.fruit_id, None)
+        else:
+            scales[entry.fruit_id] = updated
+        self.settings = replace(
+            self.settings,
+            fruit_hitbox_scales=tuple(sorted(scales.items())),
+        )
         self._unsaved = True
         self.message = ""
 

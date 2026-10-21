@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from hashlib import sha256
 from pathlib import Path
 from types import MappingProxyType
 from typing import cast
@@ -94,6 +95,48 @@ class FruitCatalog:
     def get(self, fruit_id: str) -> FruitCatalogEntry:
         """Return one entry by stable id, raising KeyError when it is unknown."""
         return self._by_id[fruit_id]
+
+    def with_hitbox_scales(
+        self, scales: tuple[tuple[str, float], ...]
+    ) -> FruitCatalog:
+        """Return the same rules with per-fruit physical radii adjusted."""
+        adjustments = dict(scales)
+        unknown = set(adjustments) - set(self._by_id)
+        if unknown:
+            raise ValueError(f"hitbox settings reference unknown fruit ids: {sorted(unknown)}")
+        for fruit_id, scale in adjustments.items():
+            if (
+                not fruit_id
+                or type(scale) not in (int, float)
+                or not 0.5 <= scale <= 1.5
+            ):
+                raise ValueError("hitbox scales must be between 0.5 and 1.5")
+        adjustments = {
+            fruit_id: float(scale)
+            for fruit_id, scale in adjustments.items()
+            if scale != 1.0
+        }
+        if not adjustments:
+            return self
+
+        entries = tuple(
+            replace(
+                entry,
+                definition=replace(
+                    entry.definition,
+                    radius=entry.definition.radius * adjustments.get(entry.fruit_id, 1.0),
+                ),
+            )
+            for entry in self.entries
+        )
+        signature = ";".join(
+            f"{fruit_id}:{adjustments[fruit_id].hex()}"
+            for fruit_id in sorted(adjustments)
+        )
+        digest = sha256(signature.encode("ascii")).hexdigest()[:10]
+        return FruitCatalog.create(
+            f"{self.ruleset_version}-hitbox-{digest}", entries, self.spawn_weights
+        )
 
     @property
     def launch_definitions(self) -> tuple[FruitDefinition, ...]:

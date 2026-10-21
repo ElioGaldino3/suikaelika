@@ -172,6 +172,28 @@ def test_options_adjustment_is_clamped_and_save_failure_stays_on_screen() -> Non
     assert "Área segura: 25%" in scene.snapshot.choices[6]
 
 
+def test_collider_menu_adjusts_apple_and_saves_the_scale() -> None:
+    persistence = FakePersistence(SettingsData())
+    scene = OptionsScene(persistence, return_to="paused")
+    for sequence in range(1, 8):
+        scene.handle_actions(_frame(sequence, InputAction.NAV_DOWN))
+    scene.handle_actions(_frame(8, InputAction.CONFIRM))
+
+    assert scene.snapshot.title == "Ajustar hitboxes"
+    assert scene.snapshot.selected_index == 4
+    assert scene.snapshot.choices[4] == "Maçã: 100%"
+    scene.handle_actions(InputFrame(move_x=1.0))
+    assert scene.snapshot.choices[4] == "Maçã: 105%"
+    assert "37.8" in scene.snapshot.subtitle
+
+    scene.handle_actions(_frame(9, InputAction.CANCEL))
+    assert scene.snapshot.title == "Opções"
+    transition = scene.handle_actions(_frame(10, InputAction.CANCEL))
+
+    assert transition is not None and transition.destination == "paused"
+    assert persistence.settings_saved[-1].fruit_hitbox_scales == (("apple", 1.05),)
+
+
 def test_controller_assistant_requires_neutral_and_explicit_save_confirmation() -> None:
     persistence = FakePersistence(SettingsData(control_profile_id="pad-xbox"))
     persistence.profiles = (_profile(),)
@@ -179,9 +201,9 @@ def test_controller_assistant_requires_neutral_and_explicit_save_confirmation() 
     scene = OptionsScene(persistence, profile_repository=repository)
 
     # Move focus from master volume to the profile assistant.
-    for sequence in range(1, 8):
+    for sequence in range(1, 9):
         scene.handle_actions(_frame(sequence, InputAction.NAV_DOWN))
-    scene.handle_actions(_frame(8, InputAction.CONFIRM))
+    scene.handle_actions(_frame(9, InputAction.CONFIRM))
     assert scene.profile_wizard_active
 
     for index in range(7):
@@ -190,7 +212,7 @@ def test_controller_assistant_requires_neutral_and_explicit_save_confirmation() 
     assert "confirme para salvar" in scene.snapshot.subtitle.casefold()
     assert persistence.profiles_saved == []
 
-    scene.handle_actions(_frame(9, InputAction.CONFIRM))
+    scene.handle_actions(_frame(10, InputAction.CONFIRM))
     assert not scene.profile_wizard_active
     assert persistence.profiles_saved
     assert scene.active_profile is not None

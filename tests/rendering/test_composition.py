@@ -160,6 +160,24 @@ def test_debug_renderer_draws_physics_circle_and_bounding_box() -> None:
     )
 
 
+def test_debug_circle_tracks_adjusted_catalog_without_resizing_fruit_art() -> None:
+    renderer = Renderer(pygame.Surface((1280, 720)), debug_colliders=True)
+    original_sprite_size = renderer._fruit_surfaces["cherry"].get_size()
+    renderer.set_catalog(renderer.catalog.with_hitbox_scales((("cherry", 1.5),)))
+    snapshot = _snapshot()
+    fruit = snapshot.fruits[0]
+    center = (
+        round(WORLD_ORIGIN.x + fruit.current_pose.position.x),
+        round(WORLD_ORIGIN.y + fruit.current_pose.position.y),
+    )
+
+    renderer.draw_session(snapshot, ())
+
+    assert renderer.catalog.get("cherry").definition.radius == 21
+    assert renderer._fruit_surfaces["cherry"].get_size() == original_sprite_size
+    assert renderer._logical.get_at((center[0] + 20, center[1]))[:3] == DEBUG_COLLIDER_COLOR
+
+
 def test_effects_are_bounded_independent_and_consume_each_event_once() -> None:
     event = make_event(
         EventType.FRUIT_MERGED,

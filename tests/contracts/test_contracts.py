@@ -164,6 +164,13 @@ def test_settings_data_validates_persisted_gain_range() -> None:
         SettingsData(safe_area_fraction=0.3)
     with pytest.raises(ValueError, match="safe area"):
         SettingsData(safe_area_fraction=True)  # type: ignore[arg-type]
+    assert SettingsData(fruit_hitbox_scales=(("apple", 1.25),)).fruit_hitbox_scales == (
+        ("apple", 1.25),
+    )
+    with pytest.raises(ValueError, match="hitbox scales"):
+        SettingsData(fruit_hitbox_scales=(("apple", 1.6),))
+    with pytest.raises(ValueError, match="hitbox scales"):
+        SettingsData(fruit_hitbox_scales=(("apple", 1.0), ("apple", 1.1)))
     assert SettingsData(fullscreen=False, safe_area_fraction=0.1).safe_area_fraction == 0.1
 
 

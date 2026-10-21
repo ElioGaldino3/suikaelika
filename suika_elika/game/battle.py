@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from suika_elika.contracts import DomainEvent, InputFrame, RoundState, SessionSnapshot
+from suika_elika.game.catalog import FruitCatalog
 from suika_elika.game.physics import PhysicsConfig, PhysicsWorld
 from suika_elika.game.session import GameSession
 
@@ -31,7 +32,13 @@ class BattleSession:
     processing order never favors player one. Battle has no classic persistence.
     """
 
-    def __init__(self, *, fixed_dt: float = 1 / 120, seed: int = 0) -> None:
+    def __init__(
+        self,
+        *,
+        fixed_dt: float = 1 / 120,
+        seed: int = 0,
+        catalog: FruitCatalog | None = None,
+    ) -> None:
         def board() -> GameSession:
             return GameSession(
                 PhysicsWorld(
@@ -41,6 +48,7 @@ class BattleSession:
                         fixed_dt=fixed_dt,
                     )
                 ),
+                catalog=catalog,
                 width=BATTLE_WIDTH,
                 height=BATTLE_HEIGHT,
                 fixed_dt=fixed_dt,
@@ -64,13 +72,15 @@ class BattleSession:
             self.reason,
         )
 
-    def restart(self, *, target: int | None = None) -> None:
+    def restart(
+        self, *, target: int | None = None, catalog: FruitCatalog | None = None
+    ) -> None:
         if target is not None:
             if type(target) is not int or target not in BATTLE_TARGETS:
                 raise ValueError("battle target must be 1000, 2000 or 5000")
             self.target = target
         for player in self.players:
-            player.restart()
+            player.restart(catalog=catalog)
         self.finished = False
         self.winner = None
         self.reason = ""

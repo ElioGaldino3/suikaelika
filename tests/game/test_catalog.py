@@ -79,6 +79,21 @@ def test_catalog_uses_proposed_mass_from_radius_area() -> None:
         assert entry.definition.mass == pytest.approx((entry.definition.radius / 14) ** 2)
 
 
+def test_hitbox_scales_change_physics_radii_and_isolate_the_ruleset() -> None:
+    catalog = load_catalog()
+    adjusted = catalog.with_hitbox_scales((("apple", 1.25),))
+
+    assert catalog.get("apple").definition.radius == 36
+    assert adjusted.get("apple").definition.radius == pytest.approx(45)
+    assert adjusted.get("cherry").definition.radius == 14
+    assert adjusted.ruleset_version.startswith("classic-v5-hitbox-")
+    assert adjusted.ruleset_version != catalog.ruleset_version
+    assert catalog.with_hitbox_scales((("apple", 1.0),)) is catalog
+
+    with pytest.raises(ValueError, match="unknown fruit ids"):
+        catalog.with_hitbox_scales((("unknown", 1.1),))
+
+
 def test_catalog_loader_accepts_an_explicit_rules_file(tmp_path: Path) -> None:
     source = Path(__file__).parents[2] / "data" / "rules" / "classic-v3.json"
     target = tmp_path / "alternate.json"

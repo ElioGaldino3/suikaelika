@@ -51,7 +51,7 @@ class JsonPersistence(PersistencePort):
         if data is None:
             return None
         try:
-            if set(data) != {
+            required_fields = {
                 "master_gain",
                 "effects_gain",
                 "music_gain",
@@ -60,7 +60,11 @@ class JsonPersistence(PersistencePort):
                 "control_profile_id",
                 "fullscreen",
                 "safe_area_fraction",
-            }:
+            }
+            if set(data) not in (
+                required_fields,
+                required_fields | {"fruit_hitbox_scales"},
+            ):
                 raise ValueError("settings fields do not match the schema")
             gains = (data["master_gain"], data["effects_gain"], data["music_gain"])
             if any(type(gain) not in (int, float) or not math.isfinite(gain) for gain in gains):
@@ -76,6 +80,14 @@ class JsonPersistence(PersistencePort):
                 raise ValueError("settings flags must be booleans")
             if not isinstance(data["control_profile_id"], str):
                 raise ValueError("control profile id must be text")
+            raw_scales = data.get("fruit_hitbox_scales", {})
+            if not isinstance(raw_scales, dict) or any(
+                not isinstance(fruit_id, str)
+                or type(scale) not in (int, float)
+                or not math.isfinite(scale)
+                for fruit_id, scale in raw_scales.items()
+            ):
+                raise ValueError("fruit hitbox scales must be a map of numeric values")
             self._settings = SettingsData(
                 master_gain=float(data["master_gain"]),
                 effects_gain=float(data["effects_gain"]),
@@ -85,6 +97,9 @@ class JsonPersistence(PersistencePort):
                 control_profile_id=data["control_profile_id"],
                 fullscreen=data["fullscreen"],
                 safe_area_fraction=float(safe_area),
+                fruit_hitbox_scales=tuple(
+                    sorted((fruit_id, float(scale)) for fruit_id, scale in raw_scales.items())
+                ),
             )
             return self._settings
         except (TypeError, ValueError, KeyError) as error:
@@ -94,6 +109,10 @@ class JsonPersistence(PersistencePort):
     def save_settings(self, settings: SettingsData) -> None:
         if not isinstance(settings, SettingsData):
             raise TypeError("settings must be SettingsData")
+        try:
+            SettingsData(fruit_hitbox_scales=settings.fruit_hitbox_scales)
+        except (TypeError, ValueError) as error:
+            raise ValueError("fruit hitbox scales are invalid") from error
         gains = (settings.master_gain, settings.effects_gain, settings.music_gain)
         if any(
             type(gain) not in (int, float)
@@ -125,6 +144,7 @@ class JsonPersistence(PersistencePort):
                 "control_profile_id": settings.control_profile_id,
                 "fullscreen": settings.fullscreen,
                 "safe_area_fraction": settings.safe_area_fraction,
+                "fruit_hitbox_scales": dict(settings.fruit_hitbox_scales),
             },
         )
 
