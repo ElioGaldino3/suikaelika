@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""Batocera Pygame entry point for an installed Suika Elika source tree."""
+
+from __future__ import annotations
+
+import importlib
+import sys
+from pathlib import Path
+
+
+INSTALL_ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(INSTALL_ROOT))
+
+main = importlib.import_module("suika_elika.app").main
+raise SystemExit(main())

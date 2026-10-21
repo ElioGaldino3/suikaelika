@@ -470,7 +470,7 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/app.py; suika_elika/scene_manager.py; suika_elika/config.py; suika_elika/__main__.py; main.py; tests/integration/test_app_flow.py`
 - Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Remoção do controle ativo pausa a sessão, zera acumulador/entrada e desarma o backend; só um controle reconectado com GUID/nome correspondente é selecionado e sua confirmação é consumida sem queda residual. Controles adicionais não são selecionados nem consultados automaticamente. Verificado em `tests/integration/test_controller_lifecycle.py` e `tests/input/test_devices.py` (10 focados passaram); suíte total 180 passou; Ruff global, mypy configurado (40 arquivos), `git diff --check` e `todo_graph.py validate` passaram. A seleção inicial usa o primeiro dispositivo enumerado; substituto de identidade diferente requer fluxo futuro. Sem joystick físico/Batocera.
+- Evidence: Remoção do controle ativo pausa a sessão, zera acumulador/entrada e desarma o backend; só um controle reconectado com GUID/nome correspondente é selecionado e sua confirmação é consumida sem queda residual. Controles adicionais não são selecionados nem consultados automaticamente. Verificado em `tests/integration/test_controller_lifecycle.py` e `tests/input/test_devices.py` (10 focados passaram); seleção e limites do modo estão descritos em `docs/BATOCERA.md`. Suíte total 180 passou; Ruff global, mypy configurado (40 arquivos), `git diff --check` e `todo_graph.py validate` passaram. A seleção inicial usa o primeiro dispositivo enumerado; substituto de identidade diferente requer fluxo futuro. Sem joystick físico/Batocera.
 - Blocker: `none`
 
 **Objetivo:** Integrar escolha de jogador, perda de controle e modos exclusivos nativo/teclado emulado.
@@ -482,15 +482,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-022 — Cobrir regressões integradas do modo clássico
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-020, SE-021`
 - Writes: `tests/integration/test_classic_rules.py; tests/integration/test_failure_recovery.py; docs/validation/local-functional.md`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/app.py; suika_elika/scene_manager.py; suika_elika/config.py; suika_elika/__main__.py; main.py; tests/integration/test_app_flow.py; suika_elika/input/manager.py; tests/integration/test_controller_lifecycle.py`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Cobertos contatos de duas fusões no mesmo passo antes da derrota, bloqueio de spawn sem consumir prévia/RNG, pausa sem borda residual, repetição de seed/reinício, JSON corrompido, diretórios indisponíveis e áudio silencioso. 6 testes focados e a suíte completa (189) passaram; Ruff global, mypy configurado (40 arquivos), grafo (34 tarefas) e `git diff --check` passaram. `docs/validation/local-functional.md` registra ambiente Windows 11/AMD64, CPython 3.13.16, Pygame 2.6.1, SDL 2.28.4, Pymunk 7.3.1 e o smoke headless de um quadro. Não executados: Batocera, joystick/display/áudio reais, balanceamento e teste prolongado.
 - Blocker: `none`
 
 **Objetivo:** Verificar cenários de aceitação de PROJECT e registrar limites do teste local.
@@ -502,15 +502,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-023 — Preparar launchers e instruções de distribuição
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-003, SE-020`
 - Writes: `packaging/batocera/**; tests/packaging/test_layout.py; docs/BATOCERA.md`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tools/diagnostics.py; tests/tools/test_diagnostics.py; docs/BATOCERA-ENVIRONMENT.md; suika_elika/app.py; suika_elika/scene_manager.py; suika_elika/config.py; suika_elika/__main__.py; main.py; tests/integration/test_app_flow.py`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Criados launcher `.pygame` com bootstrap relativo à instalação e alternativa Ports `.sh` com LF, caminhos citados, `exec`, `.data/SuikaElika` e sem alterar variáveis SDL. `docs/BATOCERA.md` documenta instalação, dados persistentes, seleção do jogador/controle e limites. 3 testes de packaging passaram; suíte total 189, Ruff global, mypy configurado (40 arquivos), grafo (34 tarefas) e `git diff --check` passaram. Sintaxe POSIX não pôde ser verificada: o `bash.exe` disponível é encaminhador WSL e não encontrou `/bin/bash`. Não executado no Batocera; dependências e compatibilidade da versão 43 seguem pendentes em SE-004/SE-024.
 - Blocker: `none`
 
 **Objetivo:** Preparar a categoria Pygame e a alternativa Ports, sem alegar pacote universal.
