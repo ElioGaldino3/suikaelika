@@ -145,3 +145,19 @@ A validação com drivers simulados não homologa controles físicos nem Batocer
   Regressão usa o módulo real Controller com dispositivo simulado.
 - Limitação: teste físico do usuário e Batocera pendentes. Confirmação usa
   o botão sul/A SDL; o rótulo X depende do mapeamento do controle.
+
+
+## Meta da batalha e hold a 180 BPM — 21/10/2026
+
+- Status: `done`
+- BATALHA abre uma tela com 1000, 2000 e 5000 pontos; seleção define a vitória,
+  o HUD e o resultado. Revanche e retomada preservam a meta. Voltar cancela a
+  seleção; hotplug desabilita o início sem dois controles.
+- Hold reduzido para 180 BPM (1/3 s) no clássico e batalha, mantendo apertos
+  imediatos, interrupção ao soltar/pausar e ausência de rajadas após bloqueio.
+  Ruleset `classic-v5` separa os recordes; catálogo anterior preservado.
+- Evidência: `python -m pytest -q`: 277 passaram; `python -m ruff check .`:
+  aprovado; `python -m mypy`: 46 fontes aprovadas; `git diff --check`: aprovado.
+  Tela de seleção renderizada a 1280x720 e inspecionada visualmente.
+- Limitações: testes de entrada usam dispositivos simulados; controle físico,
+  áudio HDMI e execução no Batocera continuam sem homologação neste lote.

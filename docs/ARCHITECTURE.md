@@ -68,7 +68,7 @@ Ordem de cada passo: consumir comandos válidos → guardar poses anteriores →
 
 Pausa, foco perdido e desconexão congelam tempo de simulação, limpam entradas residuais e zeram o acumulador. Ao retomar, a confirmação é consumida pela UI e não vira soltura. O relógio visual de menus pode continuar.
 
-Apertos físicos novos tentam lançar imediatamente, sem cooldown. `HeldDropRepeater`, pertencente a cada `GameSession`, arma somente a partir de uma borda DROP com `drop_held=True`, agenda tentativas a cada 150 ms de simulação (400 BPM) e desarma ao soltar, pausar, retomar ou reiniciar. Repetições não fabricam bordas nem alteram os números de sequência dos dispositivos. Não há rajada após atraso/bloqueio. `FruitLauncher` mantém somente READY/BLOCKED, consulta a área de nascimento a cada tentativa e cria frutas com velocidade vertical inicial de 520 unidades/s; contatos/fundo não são pré-requisitos para outro lançamento. Ruleset `classic-v4` separa os recordes pela mudança de ritmo e velocidade inicial.
+Apertos físicos novos tentam lançar imediatamente, sem cooldown. `HeldDropRepeater`, pertencente a cada `GameSession`, arma somente a partir de uma borda DROP com `drop_held=True`, agenda tentativas a cada 333,33 ms de simulação (180 BPM) e desarma ao soltar, pausar, retomar ou reiniciar. Repetições não fabricam bordas nem alteram os números de sequência dos dispositivos. Não há rajada após atraso/bloqueio. `FruitLauncher` mantém somente READY/BLOCKED, consulta a área de nascimento a cada tentativa e cria frutas com velocidade vertical inicial de 520 unidades/s; contatos/fundo não são pré-requisitos para outro lançamento. Ruleset `classic-v5` separa os recordes pela mudança de ritmo e velocidade inicial.
 
 Parâmetros de passo, sorteio, massa, pontos, raio e derrota pertencem ao ruleset. Perfis gráficos reduzem efeitos sem mudar a simulação. Alterações que impactem comparabilidade de recordes exigem revisar `ruleset_version`.
 
@@ -124,14 +124,14 @@ Em checkout compartilhado, revisar mudanças no local. Worktrees isolados só se
 | ADR-006 | Batalha coordena duas GameSession independentes | Mesmo catálogo e seed, cestas 480×460, placares e física separados, sem persistência do clássico |
 | ADR-007 | Slots de batalha por instance ID | GUID/nome apenas para reconquistar slot ausente; modelos iguais conectados continuam jogadores distintos |
 | ADR-008 | Teclado somente com `--desktop` | Padrão nativo em todos os sistemas; teclado como fallback explícito, fora da contagem de joysticks |
-| ADR-009 | Bordas imediatas e hold em tempo de simulação | 400 BPM por sessão; `drop_held` propagado pelas cenas, sem repetir confirmações nem depender do repeat do sistema |
+| ADR-009 | Bordas imediatas e hold em tempo de simulação | 180 BPM por sessão; `drop_held` propagado pelas cenas, sem repetir confirmações nem depender do repeat do sistema |
 
 ## 9. Contratos implementados para BATALHA
 
 `game/battle.py` coordena duas sessões e publica `BattleSnapshot` imutável com
 dois snapshots, meta, estado final, vencedor (1/2 ou `None` em empate) e motivo.
 Cada passo avança ambos antes de resolver: transbordamento/escape primeiro,
-meta >=500 depois, empate quando ambos cumprem a mesma condição nesse passo.
+meta selecionada (1000, 2000 ou 5000) depois, empate quando ambos cumprem a mesma condição nesse passo.
 Reutiliza os temporizadores de perigo do clássico. Pausa/conclusão congela ambos.
 
 `input/battle.py` mantém dois `InputManager`, um por slot, sobre os adaptadores
@@ -179,3 +179,17 @@ contrato explícito do jogo, sem alegação de herdar a ordem do EmulationStatio
 apenas vídeo/eventos/joystick e a API Controller opcional, enumera via joystick,
 coleta metadados e libera os dispositivos. Não cria janela nem inicia mixer.
 `--headless` usa vídeo dummy sem substituir o backend nativo de joystick.
+
+
+## 11. Seleção de meta e cadência de soltura
+
+O menu BATALHA abre `battle_setup`, com exatamente 1000, 2000 e 5000 pontos.
+A confirmação envia `target` à transição `battle`; `BattleSession.restart(target=...)`
+valida e define a meta. Reiniciar, revanche e retomar preservam a escolha quando
+não recebem uma nova meta. Snapshot, HUD e resultado usam a meta da sessão.
+A seleção permite voltar ao título e acompanha hotplug, impedindo início sem dois
+controles. A confirmação é consumida pelo menu, sem soltar fruta na nova rodada.
+
+Hold usa 180 BPM (1/3 s de simulação) no clássico e na batalha. Apertos novos
+continuam imediatos. `classic-v5` separa recordes devido à alteração de cadência;
+o catálogo `classic-v4` permanece disponível como arquivo histórico.

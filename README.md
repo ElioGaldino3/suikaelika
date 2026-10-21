@@ -34,7 +34,7 @@ controles estão em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 Para soltar frutas, aperte o botão sul do controle (ou Espaço/Enter com
 `--desktop`). Novos apertos não têm cooldown artificial. Segurar repete a
-**400 BPM**, uma fruta a cada **150 ms**, enquanto a boca da cesta estiver livre.
+**180 BPM**, uma fruta a cada **333,33 ms**, enquanto a boca da cesta estiver livre.
 Soltar interrompe a repetição; após pausar ou retomar, aperte novamente para lançar.
 
 Para conferir quantos controles o Pygame vê pelo terminal:
@@ -62,8 +62,10 @@ Conecte dois controles e escolha **BATALHA** no menu principal. A opção fica
 cinza com menos de dois controles e muda automaticamente ao conectar/remover.
 O primeiro controle é o jogador 1, à esquerda; o segundo é o jogador 2, à direita.
 
+Ao escolher BATALHA, selecione a meta: **1000, 2000 ou 5000 pontos**.
 Cada jogador tem uma cesta menor, sua mira e seu placar. O primeiro a atingir
-**500 pontos** vence. Transbordar a cesta dá a vitória ao adversário, com a mesma
+a meta vence. A revanche mantém o objetivo escolhido. Transbordar a cesta dá
+a vitória ao adversário, com a mesma
 tolerância de perigo do clássico. Se os dois atingirem a meta ou perderem no
 mesmo passo de simulação, há empate. Transbordamento tem prioridade sobre pontos
 obtidos no mesmo passo. Os dois recebem a mesma sequência de frutas.

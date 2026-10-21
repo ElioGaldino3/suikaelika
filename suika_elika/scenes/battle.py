@@ -12,7 +12,7 @@ from suika_elika.contracts import (
     InputFrame,
     SceneTransition,
 )
-from suika_elika.game.battle import BattleSession, BattleSnapshot
+from suika_elika.game.battle import BATTLE_TARGETS, BattleSession, BattleSnapshot
 from suika_elika.scenes.title import MenuItem, MenuScene
 
 
@@ -69,7 +69,7 @@ class BattleResultsScene(MenuScene):
         reason = (
             "Limite da cesta ultrapassado"
             if snapshot.reason == "overflow"
-            else "Meta de 500 pontos alcançada"
+            else f"Meta de {snapshot.target} pontos alcançada"
         )
         super().__init__(
             title,
@@ -81,5 +81,20 @@ class BattleResultsScene(MenuScene):
                 f"{reason}\nJogador 1: {snapshot.players[0].score} pontos"
                 f" · Jogador 2: {snapshot.players[1].score} pontos"
             ),
+            cancel_destination="title",
+        )
+
+
+class BattleSetupScene(MenuScene):
+    """Choose the score goal before starting a new battle."""
+
+    def __init__(self, *, ready: bool) -> None:
+        super().__init__(
+            "Objetivo da batalha",
+            tuple(
+                MenuItem(f"{target} pontos", "battle", (("target", target),), enabled=ready)
+                for target in BATTLE_TARGETS
+            ),
+            subtitle="Escolha quantos pontos serão necessários para vencer.",
             cancel_destination="title",
         )

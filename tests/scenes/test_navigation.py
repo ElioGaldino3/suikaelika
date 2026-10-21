@@ -103,7 +103,7 @@ def test_replayed_edge_sequence_does_not_confirm_again() -> None:
 def test_help_returns_only_to_its_origin(return_to: str) -> None:
     scene = HelpScene(return_to=return_to)
     assert "mova a mira" in scene.snapshot.subtitle.casefold()
-    assert "segure para repetir a 400 BPM" in scene.snapshot.subtitle
+    assert "segure para repetir a 180 BPM" in scene.snapshot.subtitle
 
     transition = scene.handle_actions(_frame(1, InputAction.CANCEL))
     assert transition is not None and transition.destination == return_to

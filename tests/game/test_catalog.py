@@ -12,7 +12,7 @@ from suika_elika.game.catalog import catalog_from_data, load_catalog
 def test_classic_catalog_matches_all_proposed_fruit_rules() -> None:
     catalog = load_catalog()
 
-    assert catalog.ruleset_version == "classic-v4"
+    assert catalog.ruleset_version == "classic-v5"
     assert len(catalog.entries) == 11
     assert [entry.fruit_id for entry in catalog.entries] == [
         "cherry",

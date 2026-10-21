@@ -19,9 +19,9 @@ from suika_elika.game.spawning import (
 )
 
 
-def test_default_drop_interval_matches_400_drops_per_minute() -> None:
-    assert DEFAULT_DROP_RATE_BPM == 400
-    assert DEFAULT_DROP_INTERVAL == pytest.approx(60 / 400)
+def test_default_drop_interval_matches_180_drops_per_minute() -> None:
+    assert DEFAULT_DROP_RATE_BPM == 180
+    assert DEFAULT_DROP_INTERVAL == pytest.approx(60 / 180)
 
 
 @dataclass(frozen=True, slots=True)

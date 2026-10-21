@@ -40,7 +40,7 @@ class BattleRenderer(Renderer):
         for index, player in enumerate(snapshot.players):
             self._draw_player(player, index, snapshot.target)
         label = self._font(24).render(
-            "BATALHA 1x1 · Primeiro a 500 vence · Start: pausar",
+            f"BATALHA 1x1 · Primeiro a {snapshot.target} vence · Start: pausar",
             True,
             (255, 247, 220),
         )

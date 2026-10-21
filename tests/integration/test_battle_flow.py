@@ -41,6 +41,8 @@ def test_title_battle_gate_updates_with_hotplug(tmp_path) -> None:
     )
     assert not manager.current.snapshot.disabled_indices
     manager.handle_actions(frame(2, InputAction.CONFIRM))
+    assert manager.current_name == "battle_setup"
+    manager.handle_actions(frame(3, InputAction.CONFIRM))
     assert manager.current_name == "battle"
 
 
@@ -97,7 +99,7 @@ def test_second_player_can_pause_resume_and_navigate_results(tmp_path) -> None:
     assert manager.current_name == "battle"
     app._advance_simulation(0.02)
     assert all(p.drop_count == 0 for p in manager.battle_session.players)
-    manager.battle_session.players[1]._score = 500
+    manager.battle_session.players[1]._score = 1000
     app._advance_simulation(0.02)
     manager.update(0)
     assert manager.current_name == "battle_results"
@@ -159,6 +161,8 @@ def test_real_app_loop_enters_renders_and_pauses_battle_with_simulated_pads(
         elif counter == 2:
             first.samples.append(InputSample(action_edges=(InputAction.CONFIRM, InputAction.DROP)))
         elif counter == 3:
+            first.samples.append(InputSample(action_edges=(InputAction.CONFIRM, InputAction.DROP)))
+        elif counter == 4:
             first.samples.append(InputSample(action_edges=(InputAction.DROP,)))
             second.samples.append(InputSample(action_edges=(InputAction.DROP,)))
         elif counter == 6:
@@ -174,3 +178,51 @@ def test_real_app_loop_enters_renders_and_pauses_battle_with_simulated_pads(
     assert app.scene_manager.current_name == "battle"
     assert all(p.drop_count == 1 for p in app.scene_manager.battle_session.players)
     assert app._battle_renderer.presentation_rect[2] > 0
+
+
+@pytest.mark.parametrize(("index", "target"), [(0, 1000), (1, 2000), (2, 5000)])
+def test_choose_goal_win_and_rematch_preserve_target(tmp_path, index, target):
+    registry = FakeRegistry({10: FakePad("one"), 20: FakePad("two")}, active=10)
+    _, _, manager = _app(tmp_path, registry)
+    manager.set_controller_count(2)
+    manager.handle_actions(frame(0, InputAction.NAV_DOWN))
+    manager.handle_actions(frame(1, InputAction.CONFIRM))
+    assert manager.current_name == "battle_setup"
+    assert manager.current.snapshot.choices == ("1000 pontos", "2000 pontos", "5000 pontos")
+    assert not manager.battle_mode
+    for step in range(index):
+        manager.handle_actions(frame(2 + step, InputAction.NAV_DOWN))
+    manager.handle_actions(frame(5, InputAction.CONFIRM))
+    assert manager.current_name == "battle"
+    assert manager.battle_session.snapshot.target == target
+    assert all(p.drop_count == 0 for p in manager.battle_session.players)
+    manager.battle_session.players[0]._score = target - 1
+    manager.simulation_step()
+    assert not manager.battle_session.finished
+    manager.battle_session.players[0]._score = target
+    manager.simulation_step()
+    manager.update(0)
+    assert manager.current_name == "battle_results"
+    assert f"Meta de {target} pontos" in manager.current.snapshot.subtitle
+    manager.handle_actions(frame(6, InputAction.CONFIRM))
+    assert manager.current_name == "battle"
+    assert manager.battle_session.target == target
+    assert all(p.score == 0 for p in manager.battle_session.players)
+    manager.transition(SceneTransition("pause"))
+    manager.transition(SceneTransition("battle", (("resume", True),)))
+    assert manager.battle_session.target == target
+
+
+def test_goal_selection_cancel_and_hotplug_gate(tmp_path):
+    registry = FakeRegistry({10: FakePad("one"), 20: FakePad("two")}, active=10)
+    _, _, manager = _app(tmp_path, registry)
+    manager.set_controller_count(2)
+    manager.transition(SceneTransition("battle_setup"))
+    manager.set_controller_count(1)
+    assert manager.current.snapshot.disabled_indices == (0, 1, 2)
+    manager.handle_actions(frame(0, InputAction.CONFIRM))
+    assert manager.current_name == "battle_setup"
+    manager.set_controller_count(2)
+    assert not manager.current.snapshot.disabled_indices
+    manager.handle_actions(frame(1, InputAction.CANCEL))
+    assert manager.current_name == "title" and not manager.battle_mode

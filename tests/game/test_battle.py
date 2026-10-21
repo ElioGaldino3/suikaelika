@@ -24,8 +24,10 @@ def test_boards_have_independent_input_physics_and_identical_sequences() -> None
     assert first._physics is not second._physics
 
 
-@pytest.mark.parametrize(("scores", "winner"), [((500, 0), 1), ((20, 501), 2), ((500, 500), None)])
-def test_target_is_at_least_500_and_result_freezes_both_boards(scores, winner) -> None:
+@pytest.mark.parametrize(
+    ("scores", "winner"), [((1000, 0), 1), ((20, 1001), 2), ((1000, 1000), None)]
+)
+def test_target_is_at_least_1000_and_result_freezes_both_boards(scores, winner) -> None:
     battle = BattleSession()
     for player, score in zip(battle.players, scores, strict=True):
         player._score = score
@@ -36,11 +38,11 @@ def test_target_is_at_least_500_and_result_freezes_both_boards(scores, winner) -
     assert battle.snapshot == before
 
 
-def test_499_does_not_finish_and_a_real_merge_reaches_500() -> None:
+def test_999_does_not_finish_and_a_real_merge_reaches_1000() -> None:
     # Seed 2 starts with two apples. The merge contributes 15 points.
     battle = BattleSession(seed=2)
     player = battle.players[1]
-    player._score = 499
+    player._score = 999
     battle.step((InputFrame(), drop()))
     assert not battle.finished
     first_id = player.snapshot.fruits[0].entity_id
@@ -55,7 +57,7 @@ def test_499_does_not_finish_and_a_real_merge_reaches_500() -> None:
         battle.step((InputFrame(), InputFrame()))
         if battle.finished:
             break
-    assert player.score > 499
+    assert player.score > 999
     assert battle.finished and battle.winner == 2
 
 
@@ -80,7 +82,7 @@ def test_real_overflow_awards_other_player(loser: int) -> None:
 def test_simultaneous_overflow_draws_and_overflow_precedes_target() -> None:
     battle = BattleSession()
     battle.players[0]._round_state = RoundState.GAME_OVER
-    battle.players[1]._score = 500
+    battle.players[1]._score = 1000
     battle.step((InputFrame(), InputFrame()))
     assert battle.winner == 2 and battle.reason == "overflow"
     battle.restart()
@@ -103,3 +105,13 @@ def test_pause_freezes_both_and_restart_clears_result_and_fruits() -> None:
     battle.restart()
     assert not battle.finished
     assert all(not player.snapshot.fruits and player.score == 0 for player in battle.players)
+
+
+@pytest.mark.parametrize("target", [500, 0, -1, 3000, True, 1000.0])
+def test_invalid_target_is_rejected_without_resetting_battle(target):
+    battle = BattleSession()
+    battle.players[0]._score = 50
+    before = battle.snapshot
+    with pytest.raises(ValueError):
+        battle.restart(target=target)
+    assert battle.snapshot == before

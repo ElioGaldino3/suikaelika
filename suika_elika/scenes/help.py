@@ -18,7 +18,7 @@ class HelpScene(MenuScene):
             (MenuItem("Voltar", return_to),),
             subtitle=(
                 "1. Mova a mira com o direcional.\n"
-                "2. Botão sul: aperte para soltar; segure para repetir a 400 BPM.\n"
+                "2. Botão sul: aperte para soltar; segure para repetir a 180 BPM.\n"
                 "3. Combine frutas iguais e evite a linha de perigo."
             ),
             footer="Botão sul: confirmar · botão leste: voltar",

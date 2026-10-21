@@ -128,12 +128,12 @@ class TitleScene(MenuScene):
             "Suika Elika",
             (
                 MenuItem("Jogar", "play"),
-                MenuItem("BATALHA", "battle", enabled=battle_ready),
+                MenuItem("BATALHA", "battle_setup", enabled=battle_ready),
                 MenuItem("Como jogar", "help", (("return_to", "title"),)),
                 MenuItem("Opções", "options", (("return_to", "title"),)),
                 MenuItem("Sair", "exit"),
             ),
-            subtitle=f"{controller_status} · BATALHA: 2 controles · meta de 500 pontos",
+            subtitle=f"{controller_status} · BATALHA: 2 controles · escolha a meta",
             footer=(
                 "Mover: direcional  ·  Confirmar/Soltar: botão sul "
                 "(A Xbox, B Nintendo, cruz PlayStation)"

@@ -176,7 +176,7 @@ Ranking online, serviços de conta e geração de assets durante a partida ficam
 - Menu principal exibe BATALHA, habilitado apenas com pelo menos dois controles nativos distintos; teclado não conta. Hotplug atualiza a disponibilidade sem reiniciar.
 - Tela lógica 1280×720 dividida ao meio, jogador 1 à esquerda e jogador 2 à direita. Cada cesta física mede 480×460, frente aos 800×460 do clássico; o catálogo e os raios são preservados.
 - Cada controle afeta somente sua cesta. Ambas as sessões usam a mesma seed e sequência, com pontuação e mundos físicos independentes.
-- Meta: atingir ou ultrapassar 500 pontos. Transbordar/escapar segundo as regras existentes da cesta dá a vitória ao adversário.
+- Ao escolher BATALHA, abrir a seleção de objetivo: 1000, 2000 ou 5000 pontos. Meta: atingir ou ultrapassar o valor selecionado. Revanche preserva a meta. Transbordar/escapar segundo as regras existentes da cesta dá a vitória ao adversário.
 - Avaliar ambas as sessões após cada passo fixo. Transbordamento tem prioridade sobre meta nesse mesmo passo; ambos transbordarem ou ambos atingirem a meta no mesmo passo resulta em empate, sem vantagem pela ordem de processamento.
 - Congelar ambos ao terminar e mostrar vencedor, motivo, placares, Revanche e Menu. Revanche requer dois controles. Não gravar resultados da batalha no recorde ou nas estatísticas do clássico.
 - Start de qualquer jogador pausa os dois; ambos navegam nos menus da batalha. Desconexão congela ambos; reconectar requer confirmação consumida pela UI, sem soltura residual. Perda de foco também congela ambos.
@@ -247,7 +247,7 @@ O recorde pertence à combinação `modo + ruleset_version`. Mudar raios, sortei
 
 ### 7.1 Lançador
 
-O lançador controla somente a coordenada horizontal da fruta em espera. A fruta em espera é uma prévia desenhada, sem corpo rígido e sem interação com a pilha. Ao soltar, criar um corpo dinâmico na posição escolhida com velocidade horizontal e angular iniciais iguais a zero e velocidade vertical inicial de 520 unidades/s para baixo. Essa velocidade permite liberar a boca entre as tentativas de 400 BPM sem criar frutas sobrepostas.
+O lançador controla somente a coordenada horizontal da fruta em espera. A fruta em espera é uma prévia desenhada, sem corpo rígido e sem interação com a pilha. Ao soltar, criar um corpo dinâmico na posição escolhida com velocidade horizontal e angular iniciais iguais a zero e velocidade vertical inicial de 520 unidades/s para baixo. Essa velocidade permite liberar a boca entre as tentativas de 180 BPM sem criar frutas sobrepostas.
 
 Na área física de largura `W`, limitar o centro a `[r + 4, W - r - 4]`. Recalcular o limite quando a próxima fruta tiver tamanho diferente. O jogador pode deslocar a mira enquanto a fruta anterior cai, respeitando a liberação da próxima soltura.
 
@@ -256,12 +256,12 @@ Na área física de largura `W`, limitar o centro a `[r + 4, W - r - 4]`. Recalc
 Estados do lançador: `READY` e `BLOCKED`. Atualização autorizada em 20/10/2026:
 
 1. Cada nova borda de pressionamento tenta lançar imediatamente, sem cooldown artificial entre apertos. A área de nascimento precisa estar livre.
-2. Se o botão continuar segurado depois desse aperto, repetir a cada 150 ms de simulação (60/400, ou 400 BPM), começando 150 ms após o aperto inicial.
+2. Se o botão continuar segurado depois desse aperto, repetir a cada 333,33 ms de simulação (60/400, ou 180 BPM), começando 333,33 ms após o aperto inicial.
 3. Um temporizador por sessão, separado das bordas físicas, controla as repetições. Novos apertos sempre têm prioridade e reiniciam a cadência do botão segurado.
 4. Soltar o botão interrompe a repetição. Pausa, retomada e reinício desarmam o temporizador; continuar segurando uma confirmação de menu/foco/reconexão não inicia lançamentos. Exigir um novo aperto de gameplay.
 5. Cada repetição ainda consulta a área de nascimento. Tentativas bloqueadas não consomem a sequência nem acumulam uma rajada futura; tentar novamente no próximo batimento enquanto o botão permanecer segurado.
 
-A repetição usa o passo fixo, independentemente dos FPS e do repeat do teclado do sistema. Não repetir eventos de confirmação de menus. A regra é igual no clássico e em cada jogador da batalha. O ruleset padrão passa a `classic-v4`, preservando os arquivos e recordes anteriores.
+A repetição usa o passo fixo, independentemente dos FPS e do repeat do teclado do sistema. Não repetir eventos de confirmação de menus. A regra é igual no clássico e em cada jogador da batalha. O ruleset padrão passa a `classic-v5`, preservando os arquivos e recordes anteriores.
 
 ### 7.3 Área de nascimento bloqueada
 
@@ -866,7 +866,7 @@ suika-elika/
 │   ├── music/
 │   └── fonts/
 ├── data/
-│   ├── rules/classic-v4.json
+│   ├── rules/classic-v5.json
 │   └── controls/
 ├── packaging/batocera/
 │   ├── pygame/SuikaElika.pygame    # entrada Python da categoria Pygame
@@ -1263,6 +1263,6 @@ Consultadas em **20/10/2026**. Links de documentação `latest` podem mudar; a i
 | Correções de apresentação e física | 20/10/2026 | Fullscreen passa a usar a resolução atual do display; colisão e borda visual compartilham o perfil do fundo curvo do balde; damping/atrito/restituição ajustados para reduzir deslizamento e quique. Novo ruleset `classic-v2` mantém recordes da física anterior separados. |
 | Cesta e ritmo de soltura | 20/10/2026 | Cesta aberta com laterais retas, fundo plano e vidro translúcido; cooldown mínimo de 0,2 s entre solturas após contato, equivalente a 300 BPM. |
 | Ritmo de soltura sem espera de contato | 20/10/2026 | Intervalo de 0,2 s (60/300) começa na soltura aceita; contato/fundo não bloqueiam a próxima tentativa, mas a região de nascimento continua protegida. Ruleset `classic-v3` separa os recordes devido ao impacto na cadência de jogo. |
-| Aperto imediato e repetição ao segurar | 20/10/2026 | Sem cooldown manual; segurar repete a cada 150 ms (400 BPM) no passo fixo. Velocidade vertical inicial de 520 unidades/s libera a boca na cadência, mantendo a proteção contra sobreposição. Ruleset `classic-v4` preserva os recordes anteriores. |
+| Aperto imediato e repetição ao segurar | 21/10/2026 | Sem cooldown manual; segurar repete a cada 333,33 ms (180 BPM) no passo fixo. Velocidade vertical inicial de 520 unidades/s libera a boca na cadência, mantendo a proteção contra sobreposição. Ruleset `classic-v5` preserva os recordes anteriores. |
 
 Alterações futuras devem registrar o motivo, o impacto na experiência e a necessidade de mudar `ruleset_version`. O protótipo local continua sujeito a balanceamento e validação no aparelho alvo.

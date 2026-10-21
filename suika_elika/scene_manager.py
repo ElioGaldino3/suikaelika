@@ -16,7 +16,7 @@ from suika_elika.game.battle import BattleSession
 from suika_elika.game.session import GameSession
 from suika_elika.input.manager import InputManager
 from suika_elika.input.profiles import ProfileRepository
-from suika_elika.scenes.battle import BattleResultsScene, BattleScene
+from suika_elika.scenes.battle import BattleResultsScene, BattleScene, BattleSetupScene
 from suika_elika.scenes.help import HelpScene
 from suika_elika.scenes.options import OptionsScene
 from suika_elika.scenes.pause import PauseScene
@@ -85,12 +85,19 @@ class SceneManager:
                 self.current.message = ""
             self.current.items = tuple(
                 MenuItem(item.label, item.destination, item.payload,
-                         self.battle_ready if item.destination == "battle" else item.enabled)
+                         self.battle_ready if item.destination == "battle_setup" else item.enabled)
                 for item in self.current.items
             )
             self.current.subtitle = (
-                f"{self.controller_status} · BATALHA: 2 controles · meta de 500 pontos"
+                f"{self.controller_status} · BATALHA: 2 controles · escolha a meta"
             )
+        elif isinstance(self.current, BattleSetupScene):
+            self.current.items = tuple(
+                MenuItem(item.label, item.destination, item.payload, self.battle_ready)
+                for item in self.current.items
+            )
+            if self.battle_ready:
+                self.current.message = ""
         elif isinstance(self.current, BattleResultsScene):
             self.current.items = (
                 MenuItem("Revanche", "battle", (("restart", True),), self.battle_ready),
@@ -113,13 +120,16 @@ class SceneManager:
             destination = "pause"
 
         payload = dict(transition.payload)
+        if destination in ("battle", "battle_setup") and not self.battle_ready:
+            return
         if destination == "battle":
-            if not self.battle_ready:
-                return
             if payload.get("resume") is True:
                 self.battle_session.resume()
             else:
-                self.battle_session.restart()
+                target = payload.get("target")
+                if target is not None and type(target) is not int:
+                    raise ValueError("battle target must be an integer")
+                self.battle_session.restart(target=target if isinstance(target, int) else None)
             self.battle_mode = True
             self.audio.resume()
         if destination == "play":
@@ -170,6 +180,8 @@ class SceneManager:
             return TitleScene(
                 controller_status=self.controller_status, battle_ready=self.battle_ready
             )
+        if name == "battle_setup":
+            return BattleSetupScene(ready=self.battle_ready)
         if name == "battle":
             return self.battle_scene
         if name == "battle_results":

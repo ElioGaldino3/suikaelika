@@ -10,7 +10,8 @@ from suika_elika.game.session import GameSession
 
 BATTLE_WIDTH = 480.0
 BATTLE_HEIGHT = 460.0
-BATTLE_TARGET = 500
+BATTLE_TARGETS = (1000, 2000, 5000)
+BATTLE_TARGET = BATTLE_TARGETS[0]
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,7 +24,7 @@ class BattleSnapshot:
 
 
 class BattleSession:
-    """Race to 500; overflow loses, simultaneous outcomes draw.
+    """Race to the selected target; overflow loses, simultaneous outcomes draw.
 
     Player numbers are 1 and 2. Overflow takes precedence over scores produced
     in the same tick. Both worlds advance before resolving the outcome, so
@@ -47,6 +48,7 @@ class BattleSession:
                 mode="battle",
             )
 
+        self.target = BATTLE_TARGET
         self.players = (board(), board())
         self.finished = False
         self.winner: int | None = None
@@ -56,13 +58,17 @@ class BattleSession:
     def snapshot(self) -> BattleSnapshot:
         return BattleSnapshot(
             (self.players[0].snapshot, self.players[1].snapshot),
-            BATTLE_TARGET,
+            self.target,
             self.finished,
             self.winner,
             self.reason,
         )
 
-    def restart(self) -> None:
+    def restart(self, *, target: int | None = None) -> None:
+        if target is not None:
+            if type(target) is not int or target not in BATTLE_TARGETS:
+                raise ValueError("battle target must be 1000, 2000 or 5000")
+            self.target = target
         for player in self.players:
             player.restart()
         self.finished = False
@@ -83,7 +89,7 @@ class BattleSession:
             return ()
         events = self.players[0].step(frames[0]) + self.players[1].step(frames[1])
         lost = tuple(p.round_state is RoundState.GAME_OVER for p in self.players)
-        reached = tuple(p.score >= BATTLE_TARGET for p in self.players)
+        reached = tuple(p.score >= self.target for p in self.players)
         if any(lost):
             self.finished = True
             self.winner = None if all(lost) else (2 if lost[0] else 1)

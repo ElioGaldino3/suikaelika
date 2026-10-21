@@ -1,4 +1,4 @@
-"""Immediate taps and 400 BPM holds over real Pymunk worlds and scene queues."""
+"""Immediate taps and 180 BPM holds over real Pymunk worlds and scene queues."""
 
 from collections import defaultdict
 from types import SimpleNamespace
@@ -20,7 +20,7 @@ def press(sequence=0, *, held=True):
 
 @pytest.mark.parametrize("seed", [0, 2, 31])
 @pytest.mark.parametrize("fps", [30, 60, 120])
-def test_hold_launches_on_150ms_beats_with_real_physics_independent_of_render_fps(seed, fps):
+def test_hold_launches_on_333ms_beats_with_real_physics_independent_of_render_fps(seed, fps):
     session = GameSession(PhysicsWorld(), seed=seed)
     scene = PlayScene(session)
     scene.enter()
@@ -32,8 +32,8 @@ def test_hold_launches_on_150ms_beats_with_real_physics_independent_of_render_fp
             events = scene.simulation_step()
             ticks.extend(tick for event in events if event.event_type is EventType.FRUIT_DROPPED)
             tick += 1
-    assert ticks == [0, 18, 36, 54, 72, 90, 108]
-    assert session.drop_count == 7
+    assert ticks == [0, 40, 80]
+    assert session.drop_count == 3
 
 
 def test_taps_are_immediate_even_within_150ms_in_real_world():
@@ -52,7 +52,7 @@ def test_taps_are_immediate_even_within_150ms_in_real_world():
 def test_release_and_pause_disarm_hold_until_a_fresh_press():
     session = GameSession(PhysicsWorld())
     session.step(press())
-    for _ in range(17):
+    for _ in range(39):
         session.step(InputFrame(drop_held=True))
     session.pause()
     for _ in range(120):
@@ -84,15 +84,15 @@ def test_blocked_repeat_is_skipped_without_backlog_or_burst(monkeypatch):
     monkeypatch.setattr(world, "overlaps", lambda *_: ("pile",) if blocked else ())
     session = GameSession(world)
     session.step(press())
-    for _ in range(18):
+    for _ in range(40):
         session.step(InputFrame(drop_held=True))
     assert session.drop_count == 0
     blocked = False
-    for _ in range(17):
+    for _ in range(39):
         session.step(InputFrame(drop_held=True))
     assert session.drop_count == 0
     session.step(InputFrame(drop_held=True))
-    assert session.drop_count == 1  # tick 36, rather than a burst when the mouth clears
+    assert session.drop_count == 1  # tick 80, rather than a burst when the mouth clears
 
 
 def test_battle_holds_and_releases_are_independent_for_both_players():
@@ -107,7 +107,7 @@ def test_battle_holds_and_releases_are_independent_for_both_players():
             )
         )
         scene.simulation_step()
-    assert [player.drop_count for player in battle.players] == [7, 2]
+    assert [player.drop_count for player in battle.players] == [3, 1]
 
 
 def test_keyboard_reports_hold_separately_and_ignores_operating_system_repeat():
