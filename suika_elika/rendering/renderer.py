@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from importlib import import_module
 from math import degrees, isfinite, pi, sin
 from typing import Any
@@ -24,6 +25,8 @@ LAUNCH_Y = -18.0
 BACKGROUND = (112, 201, 235)
 INK = (24, 59, 78)
 DANGER = (228, 85, 85)
+_ROTATION_STEPS = 24
+_ROTATED_SURFACE_CACHE_LIMIT = 96
 
 
 class Renderer:
@@ -67,6 +70,9 @@ class Renderer:
         self._fonts: dict[int, Any] = {}
         self._fruit_surfaces = self.art.fruit_surfaces(self.catalog)
         self._small_fruit_surfaces: dict[str, Surface] = {}
+        self._rotated_fruit_surfaces: OrderedDict[
+            tuple[str, tuple[int, int], int], Surface
+        ] = OrderedDict()
         self._background = self.art.background_surface(
             (int(LOGICAL_WIDTH), int(LOGICAL_HEIGHT))
         )
@@ -261,9 +267,22 @@ class Renderer:
                     self._small_fruit_surfaces[definition.visual_key] = sprite
             else:
                 sprite = pygame.transform.smoothscale(sprite, size)
-        if angle:
-            # Pygame rotates counter-clockwise; the Y-down game view flips that sign.
-            sprite = pygame.transform.rotate(sprite, -degrees(angle))
+        rotation_step = round(degrees(angle) * _ROTATION_STEPS / 360) % _ROTATION_STEPS
+        if rotation_step:
+            key = (definition.visual_key, sprite.get_size(), rotation_step)
+            rotated = self._rotated_fruit_surfaces.get(key)
+            if rotated is None:
+                # Quantized rotations reuse surfaces as fruit settle and move.
+                # Pygame rotates counter-clockwise; the Y-down view flips the sign.
+                rotated = pygame.transform.rotate(
+                    sprite, -(rotation_step * 360 / _ROTATION_STEPS)
+                )
+                self._rotated_fruit_surfaces[key] = rotated
+                if len(self._rotated_fruit_surfaces) > _ROTATED_SURFACE_CACHE_LIMIT:
+                    self._rotated_fruit_surfaces.popitem(last=False)
+            else:
+                self._rotated_fruit_surfaces.move_to_end(key)
+            sprite = rotated
         px = position.x + (WORLD_ORIGIN.x if world_coordinates else 0.0)
         py = position.y + (WORLD_ORIGIN.y if world_coordinates else 0.0)
         rect = sprite.get_rect(center=(round(px), round(py)))

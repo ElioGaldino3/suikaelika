@@ -414,7 +414,7 @@ Definir ordem estável de processamento, IDs monotônicos, logs de fusões e ver
 
 ### 10.1 Detecção sem alterar o mundo dentro do contato
 
-Usar os callbacks de colisão para coletar pares de IDs e informações mínimas do contato. Não guardar o objeto `Arbiter` para uso posterior. O sistema de fusões confirma as alterações depois que `space.step()` retornar.
+Usar os callbacks de colisão para coletar pares de IDs e informações mínimas do contato. Não guardar o objeto `Arbiter` para uso posterior. Depois de `space.step()`, confirmar as fusões também pela distância entre círculos do mesmo nível, com tolerância de 1,5 unidade e uma grade espacial para limitar as comparações a vizinhos próximos. Isso cobre o caso em que Pymunk não chama `post_solve` para contatos adormecidos e absorve pequenas diferenças numéricas no toque. As alterações no mundo continuam depois do passo.
 
 A API atual usa `Space.on_collision(...)`; exemplos antigos com `add_collision_handler(...)` pertencem a outra geração de API. Caso seja necessário ignorar um contato na API atual, usar a propriedade documentada `arbiter.process_collision`, sem transportar convenções de retorno booleano de exemplos antigos. Fonte: [API atual](https://www.pymunk.org/en/latest/pymunk.html#pymunk.Space.on_collision).
 
@@ -456,7 +456,7 @@ Não aumentar gradualmente o raio físico durante uma animação de crescimento.
 
 ### 10.5 Cadeias
 
-A fruta criada participa da física no próximo passo; ela não é fundida repetidamente por uma função recursiva durante a mesma transação. Contatos são reconsiderados no passo seguinte, inclusive contatos persistentes relevantes. Para isso, a coleta não pode depender exclusivamente de um evento que só acontece uma vez no início do contato.
+A fruta criada participa da física no próximo passo; ela não é fundida repetidamente por uma função recursiva durante a mesma transação. A cada passo, contatos informados pelo motor e proximidade geométrica são reconsiderados, inclusive para frutas que já repousam encostadas. A grade espacial evita comparar todos os pares possíveis.
 
 Dois filhos criados no mesmo passo podem se fundir a partir do passo seguinte. Um filho nunca volta a usar os pais removidos. Uma dupla de melancias usa o mesmo mecanismo de reserva e remoção, sem criação de filho.
 

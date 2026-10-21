@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from math import atan2, cos, hypot, isfinite, sin, sqrt
+from math import atan2, cos, floor, hypot, isfinite, sin, sqrt
 
 from suika_elika.contracts import (
     ContactSnapshot,
@@ -21,6 +21,7 @@ from suika_elika.game.catalog import FruitCatalog
 _MERGE_DAMPING = 0.75
 _ANGULAR_DAMPING = 0.5
 _POSITION_SEARCH_LIMIT = 12.0
+_MERGE_CONTACT_TOLERANCE = 1.5
 _DIRECTIONS: tuple[tuple[float, float], ...] = (
     (0.0, -1.0),
     (-1.0, 0.0),
@@ -118,13 +119,13 @@ class MergeSystem:
             raise ValueError("active fruit entity IDs must be unique")
 
         snapshots = contacts if contacts is not None else self._physics.contacts()
-        pair_keys = sorted(
-            {
-                tuple(sorted((contact.first_entity_id, contact.second_entity_id)))
-                for contact in snapshots
-                if contact.first_entity_id != contact.second_entity_id
-            }
-        )
+        candidate_pairs = {
+            tuple(sorted((contact.first_entity_id, contact.second_entity_id)))
+            for contact in snapshots
+            if contact.first_entity_id != contact.second_entity_id
+        }
+        candidate_pairs.update(self._nearby_equal_fruit_pairs(fruits))
+        pair_keys = sorted(candidate_pairs)
         reserved: set[str] = set()
         plans: list[tuple[MergeFruit, MergeFruit, FruitDefinition | None]] = []
         for first_id, second_id in pair_keys:
@@ -251,6 +252,52 @@ class MergeSystem:
             events=tuple(events),
             score_delta=score_delta,
         )
+
+    @staticmethod
+    def _nearby_equal_fruit_pairs(
+        fruits: tuple[MergeFruit, ...],
+    ) -> set[tuple[str, str]]:
+        """Find same-level circles that touch, even when Pymunk emitted no event.
+
+        Pymunk's ``post_solve`` callback is omitted for sleeping contacts. A
+        level-specific spatial grid keeps this fallback proportional to nearby
+        fruit counts instead of comparing every fruit with every other fruit.
+        """
+        by_level: dict[int, list[MergeFruit]] = {}
+        for fruit in fruits:
+            by_level.setdefault(fruit.definition.level, []).append(fruit)
+
+        pairs: set[tuple[str, str]] = set()
+        for level_fruits in by_level.values():
+            cell_size = (
+                2 * max(fruit.definition.radius for fruit in level_fruits)
+                + _MERGE_CONTACT_TOLERANCE
+            )
+            cells: dict[tuple[int, int], list[MergeFruit]] = {}
+            for fruit in level_fruits:
+                x, y = fruit.pose.position.x, fruit.pose.position.y
+                cell = (floor(x / cell_size), floor(y / cell_size))
+                for cell_x in range(cell[0] - 1, cell[0] + 2):
+                    for cell_y in range(cell[1] - 1, cell[1] + 2):
+                        for other in cells.get((cell_x, cell_y), ()):
+                            if fruit.definition.fruit_id != other.definition.fruit_id:
+                                continue
+                            reach = (
+                                fruit.definition.radius
+                                + other.definition.radius
+                                + _MERGE_CONTACT_TOLERANCE
+                            )
+                            dx = x - other.pose.position.x
+                            dy = y - other.pose.position.y
+                            if dx * dx + dy * dy <= reach * reach:
+                                pairs.add(
+                                    (
+                                        min(other.entity_id, fruit.entity_id),
+                                        max(other.entity_id, fruit.entity_id),
+                                    )
+                                )
+                cells.setdefault(cell, []).append(fruit)
+        return pairs
 
     def _result_definition(self, definition: FruitDefinition) -> FruitDefinition | None:
         if definition.level == 11:

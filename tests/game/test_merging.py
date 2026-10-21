@@ -161,6 +161,35 @@ def test_three_equal_contacts_reserve_one_pair_and_ignore_duplicates() -> None:
     assert all(not hasattr(event, "arbiter") for event in result.events)
 
 
+def test_touching_equal_fruits_merge_without_a_solver_contact_callback() -> None:
+    catalog = load_catalog()
+    radius = catalog.get("cherry").definition.radius
+    fruits = (
+        _fruit(catalog, "a", "cherry", 100, 100),
+        _fruit(catalog, "b", "cherry", 2 * radius + 1.0 + 100, 100),
+    )
+    world = _world(fruits)
+
+    result = _system(world).resolve(fruits, step_index=1, contacts=())
+
+    assert result.merged_pairs == (("a", "b"),)
+    assert {fruit.entity_id for fruit in result.fruits} == {"merge-001"}
+
+
+def test_equal_fruits_outside_contact_tolerance_do_not_merge() -> None:
+    catalog = load_catalog()
+    radius = catalog.get("cherry").definition.radius
+    fruits = (
+        _fruit(catalog, "a", "cherry", 100, 100),
+        _fruit(catalog, "b", "cherry", 2 * radius + 1.6 + 100, 100),
+    )
+
+    result = _system(_world(fruits)).resolve(fruits, step_index=1, contacts=())
+
+    assert result.merged_pairs == ()
+    assert {fruit.entity_id for fruit in result.fruits} == {"a", "b"}
+
+
 def test_independent_pairs_merge_in_one_step_with_mass_weighted_damped_velocity() -> None:
     catalog = load_catalog()
     fruits = (
@@ -258,7 +287,7 @@ def test_same_contact_on_later_step_does_not_award_points_twice_and_chain_uses_c
     fruits = (
         _fruit(catalog, "a", "cherry", 200, 100),
         _fruit(catalog, "b", "cherry", 220, 100),
-        _fruit(catalog, "c", "strawberry", 240, 100),
+        _fruit(catalog, "c", "strawberry", 300, 100),
     )
     world = _world(fruits)
     system = _system(world)

@@ -104,13 +104,20 @@ def predict_aim(
 
     first_y = height - fruit_radius
     first_entity_id: str | None = None
-    for fruit in sorted(fruits, key=lambda candidate: candidate.entity_id):
+    for fruit in fruits:
         combined_radius = fruit.radius + fruit_radius
         dx = abs(x - fruit.center.x)
         if dx >= combined_radius:
             continue
         contact_y = fruit.center.y - sqrt(combined_radius**2 - dx**2)
-        if launch_y <= contact_y < first_y:
+        if launch_y <= contact_y and (
+            contact_y < first_y
+            or (
+                contact_y == first_y
+                and first_entity_id is not None
+                and fruit.entity_id < first_entity_id
+            )
+        ):
             first_y = contact_y
             first_entity_id = fruit.entity_id
     return AimPrediction(x=x, y=first_y, target_entity_id=first_entity_id)

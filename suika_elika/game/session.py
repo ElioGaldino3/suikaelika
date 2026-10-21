@@ -365,7 +365,10 @@ class GameSession:
     def _advance_physics_and_rules(
         self, *, launch_contacted: bool, events: list[DomainEvent]
     ) -> None:
-        previous_poses = {entity_id: state.pose for entity_id, state in self._fruits.items()}
+        ordered_states = tuple(sorted(self._fruits.items()))
+        previous_poses = {
+            entity_id: state.pose for entity_id, state in ordered_states
+        }
         self._physics.step()
         contacts = self._physics.contacts()
         contact_pairs = {
@@ -373,11 +376,11 @@ class GameSession:
             for contact in contacts
             for entity_id in (contact.first_entity_id, contact.second_entity_id)
         }
-        body_snapshots = self._physics.poses(tuple(sorted(self._fruits)))
+        body_snapshots = self._physics.poses(tuple(previous_poses))
         body_by_id = {body.entity_id: body for body in body_snapshots}
 
         merge_input: list[MergeFruit] = []
-        for entity_id, state in sorted(self._fruits.items()):
+        for entity_id, state in ordered_states:
             body = body_by_id.get(entity_id)
             if body is None:
                 continue

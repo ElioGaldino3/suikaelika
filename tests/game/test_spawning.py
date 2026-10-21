@@ -192,6 +192,19 @@ def test_aim_uses_first_vertical_circle_contact_or_floor_only() -> None:
     assert floor.target_entity_id is None
 
 
+def test_aim_tie_break_is_stable_without_sorting_the_input() -> None:
+    circles = (
+        AimCircle("z", Vector2(400, 100), 30),
+        AimCircle("a", Vector2(400, 100), 30),
+    )
+
+    forward = predict_aim(400, 14, circles)
+    reversed_order = predict_aim(400, 14, tuple(reversed(circles)))
+
+    assert forward.target_entity_id == reversed_order.target_entity_id == "a"
+    assert forward.y == reversed_order.y
+
+
 def test_aim_uses_sum_of_radii_strict_horizontal_intersection_and_skips_above_launch() -> None:
     tangent = predict_aim(
         400,

@@ -162,6 +162,7 @@ def test_merge_precedes_danger_evaluation_and_scores_once() -> None:
 
     # A second physical press has no timer to wait for.
     assert session.snapshot.drop_ready
+    session._launcher.set_launcher_x(600)
     session.step(_drop_frame(2))
     second_id = max(physics.bodies)
     assert physics.bodies[first_id].definition == physics.bodies[second_id].definition
@@ -209,6 +210,7 @@ def test_immediate_second_press_and_pause_freezes_state() -> None:
     session.step(_drop_frame(1))
     launch_id = next(iter(physics.bodies))
     assert session.snapshot.drop_ready
+    session._launcher.set_launcher_x(600)
     session.step(_drop_frame(2))
     assert session.drop_count == 2
 

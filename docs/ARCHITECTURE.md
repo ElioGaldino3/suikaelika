@@ -127,6 +127,7 @@ Em checkout compartilhado, revisar mudanças no local. Worktrees isolados só se
 | ADR-009 | Bordas imediatas e hold em tempo de simulação | 180 BPM por sessão; `drop_held` propagado pelas cenas, sem repetir confirmações nem depender do repeat do sistema |
 | ADR-010 | Bootstrap de Pymunk no Batocera | O launcher instala `pymunk>=7.3,<8` via pip em `/userdata/system/configs/suika-elika`; cria pip por `ensurepip` e, se necessário, pelo bootstrap PyPA. Só grava no espaço do usuário; a primeira instalação exige internet e pode depender de wheel/compilador compatível. |
 | ADR-011 | X e sul como confirmação/soltura | SDL Controller reconhece A e X; joysticks genéricos usam apenas índice 0 como posição sul comum. Não presumir índice 2 como X, pois varia por dispositivo. |
+| ADR-012 | Confirmação geométrica de fusão e superfícies rotacionadas em cache | A fusão combina contatos do Pymunk com uma busca local de círculos iguais dentro de 1,5 unidade, pois `post_solve` não é emitido para contatos adormecidos. A grade espacial restringe comparações a vizinhos. O renderer evita ordenar a pilha para prever a mira, quantiza rotações em 24 passos e mantém até 96 superfícies em cache LRU limitado para reduzir transformações por quadro sem crescimento ilimitado de memória. |
 
 ## 9. Contratos implementados para BATALHA
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from math import pi
+
 import pytest
 
 pygame = pytest.importorskip("pygame")
@@ -47,6 +49,38 @@ def test_renderer_reuses_fixed_size_presentation_and_pause_surfaces() -> None:
     assert renderer._state_veil is state_veil
     assert renderer._state_veil.get_size() == (1280, 720)
     assert len(renderer._small_fruit_surfaces) <= 1
+
+
+def test_renderer_reuses_quantized_fruit_rotation_surfaces() -> None:
+    renderer = Renderer(pygame.Surface((1280, 720)))
+    definition = load_catalog().get("cherry").definition
+
+    renderer._draw_fruit(
+        definition, Vector2(100, 100), angle=0.20, world_coordinates=False
+    )
+    cached = next(iter(renderer._rotated_fruit_surfaces.values()))
+    renderer._draw_fruit(
+        definition, Vector2(100, 100), angle=0.21, world_coordinates=False
+    )
+
+    assert len(renderer._rotated_fruit_surfaces) == 1
+    assert next(iter(renderer._rotated_fruit_surfaces.values())) is cached
+
+
+def test_renderer_rotation_surface_cache_stays_bounded() -> None:
+    renderer = Renderer(pygame.Surface((1280, 720)))
+    entries = load_catalog().entries[:5]
+
+    for entry in entries:
+        for rotation_step in range(1, 24):
+            renderer._draw_fruit(
+                entry.definition,
+                Vector2(100, 100),
+                angle=rotation_step * 2 * pi / 24,
+                world_coordinates=False,
+            )
+
+    assert len(renderer._rotated_fruit_surfaces) == 96
 
 
 def test_effect_particle_memory_remains_capped_after_many_events() -> None:
