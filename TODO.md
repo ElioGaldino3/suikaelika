@@ -130,7 +130,7 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; tools/diagnostics.py; docs/BATOCERA-ENVIRONMENT.md; tests/tools/test_diagnostics.py`
 - Owner: `unassigned`
 - Attempts: `0`
-- Evidence: Relato do usuário: Batocera 43 em notebook x86, com `python3` disponível. Ainda sem saída do diagnóstico no equipamento e sem versões confirmadas de Python, Pygame/Pymunk, ABI/libc ou probes de áudio/joystick.
+- Evidence: Relato do usuário (20/10/2026): Batocera 43 em notebook x86, com `python3` disponível. Registro parcial em `docs/validation/batocera-runtime.md`; ainda sem saída do diagnóstico no equipamento nem versões confirmadas de runtime, bibliotecas ou probes.
 - Blocker: `O usuário informa Batocera 43, notebook x86 e python3; falta executar tools/diagnostics.py no equipamento para confirmar arquitetura, runtime e dependências. Joystick físico continua necessário para a etapa de homologação.`
 
 **Objetivo:** Executar a prova de Pygame, joystick e Pymunk no destino e identificar a matriz efetiva do equipamento.
@@ -342,14 +342,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-015 — Implementar lançamento e previsão estática da mira
 
-- Status: `pending`
+- Status: `in_progress`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-005, SE-007`
 - Writes: `suika_elika/game/spawning.py; tests/game/test_spawning.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; suika_elika/game/physics.py; tests/game/test_physics.py`
-- Owner: `unassigned`
-- Attempts: `0`
+- Owner: `se015`
+- Attempts: `1`
 - Evidence: Ainda não executada.
 - Blocker: `none`
 
