@@ -36,6 +36,33 @@ o arquivo `SuikaElika.pygame` que fica dentro dele; esse lançador chama
 `main.py`. O build não é um executável compilado; reúne os pontos de entrada, o
 pacote Python e seus dados. Ele não baixa nem inclui Python, Pygame ou SDL.
 
+## Instalar e atualizar um checkout do GitHub
+
+Para manter uma cópia do repositório no Batocera e atualizá-la com Git, clone-o
+em uma pasta própria dentro de `/userdata/roms/pygame` (substitua a URL pelo
+endereço do repositório):
+
+```sh
+cd /userdata/roms/pygame
+git clone https://github.com/USUARIO/REPOSITORIO.git SuikaElika.pygame
+```
+
+Troque `USUARIO/REPOSITORIO` pelo caminho do projeto no GitHub.
+
+O arquivo `main.pygame` na raiz do checkout é a entrada do EmulationStation.
+Ele reutiliza `packaging/batocera/pygame/main.py` e `bootstrap.py`, mantendo o
+jogo e seus assets no diretório do repositório. Atualize a lista de jogos no
+EmulationStation e inicie **Pygame → main**. Para receber mudanças publicadas
+no GitHub:
+
+```sh
+git -C /userdata/roms/pygame/SuikaElika.pygame pull --ff-only
+```
+
+O primeiro lançamento ainda exige internet para instalar Pymunk caso ele não
+esteja disponível. Esse método mantém `.git` no aparelho; para uma cópia pronta
+sem histórico Git, use o build descrito acima.
+
 ## Copiar para o Batocera
 
 Copie a pasta **inteira** `dist/SuikaElika.pygame` para `/userdata/roms/pygame/`.

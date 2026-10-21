@@ -117,6 +117,30 @@ compartilhamento de rede do Batocera, normalmente
 Depois, atualize a lista de jogos no EmulationStation e inicie **Pygame →
 SuikaElika**.
 
+### Atualizar diretamente com GitHub
+
+Também é possível clonar o repositório na pasta de ROMs do Batocera. O arquivo
+`main.pygame` na raiz do projeto inicia o jogo usando o bootstrap de Pymunk
+existente. No Batocera, clone o repositório em uma pasta própria (substitua a
+URL pelo endereço do repositório no GitHub):
+
+```sh
+cd /userdata/roms/pygame
+git clone https://github.com/USUARIO/REPOSITORIO.git SuikaElika.pygame
+```
+
+Troque `USUARIO/REPOSITORIO` pelo caminho do projeto no GitHub.
+
+Após atualizar a lista de jogos, inicie `main.pygame` em **Pygame**. Para
+atualizar o jogo depois, use:
+
+```sh
+git -C /userdata/roms/pygame/SuikaElika.pygame pull --ff-only
+```
+
+Esse fluxo precisa de acesso à rede no Batocera. O pacote produzido pelo build
+continua disponível para instalações sem checkout Git.
+
 O arquivo `SuikaElika.pygame` dentro da pasta é o lançador do sistema; `main.py`
 é a entrada Python principal. Nenhum deles é `.exe` ou binário independente:
 o aparelho ainda precisa de uma versão compatível de Python e Pygame/SDL. Na
