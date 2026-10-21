@@ -18,6 +18,7 @@ class AppConfig:
     fullscreen: bool = True
     allow_keyboard_fallback: bool = False
     player_indexes: tuple[int, int] | None = None
+    debug_colliders: bool = False
 
     def __post_init__(self) -> None:
         if (
@@ -36,8 +37,12 @@ class AppConfig:
             raise ValueError("frame timing values must be finite and positive")
         if type(self.max_simulation_steps) is not int or self.max_simulation_steps <= 0:
             raise ValueError("max_simulation_steps must be a positive integer")
-        if type(self.fullscreen) is not bool or type(self.allow_keyboard_fallback) is not bool:
-            raise TypeError("fullscreen and keyboard fallback must be booleans")
+        if (
+            type(self.fullscreen) is not bool
+            or type(self.allow_keyboard_fallback) is not bool
+            or type(self.debug_colliders) is not bool
+        ):
+            raise TypeError("fullscreen, keyboard fallback, and debug colliders must be booleans")
         if self.player_indexes is not None and (
             len(self.player_indexes) != 2
             or any(type(index) is not int or index < 0 for index in self.player_indexes)

@@ -27,6 +27,8 @@ INK = (24, 59, 78)
 DANGER = (228, 85, 85)
 _ROTATION_STEPS = 24
 _ROTATED_SURFACE_CACHE_LIMIT = 128
+DEBUG_COLLIDER_COLOR = (40, 255, 120)
+DEBUG_BOUNDS_COLOR = (255, 220, 30)
 
 
 class Renderer:
@@ -45,17 +47,19 @@ class Renderer:
         safe_area_fraction: float = 0.05,
         effect_seed: int = 0,
         reduced_effects: bool = False,
+        debug_colliders: bool = False,
     ) -> None:
         try:
             self._pygame = import_module("pygame")
         except ImportError as error:
             raise RuntimeError("Pygame is required to construct the renderer") from error
-        if type(reduced_effects) is not bool:
-            raise TypeError("reduced_effects must be a boolean")
+        if type(reduced_effects) is not bool or type(debug_colliders) is not bool:
+            raise TypeError("reduced_effects and debug_colliders must be booleans")
         self.target = target
         self.catalog = catalog or load_catalog()
         self.art = art or GameArt()
         self.reduced_effects = reduced_effects
+        self.debug_colliders = debug_colliders
         self._logical = self._pygame.Surface(
             (int(LOGICAL_WIDTH), int(LOGICAL_HEIGHT)), self._pygame.SRCALPHA, 32
         )
@@ -237,6 +241,7 @@ class Renderer:
                     position,
                     angle=angle,
                     danger=fruit.danger_eligible and fruit.danger_seconds > 0,
+                    debug_collider=self.debug_colliders,
                 )
         finally:
             self._logical.set_clip(previous_clip)
@@ -250,6 +255,7 @@ class Renderer:
         scale: float = 1.0,
         danger: bool = False,
         world_coordinates: bool = True,
+        debug_collider: bool = False,
     ) -> None:
         pygame = self._pygame
         sprite = self._fruit_surfaces[definition.visual_key]
@@ -296,6 +302,18 @@ class Renderer:
                 max(2, round(2 + pulse * 2)),
             )
         self._logical.blit(sprite, rect)
+        if debug_collider:
+            center = (round(px), round(py))
+            radius = round(definition.radius)
+            diameter = radius * 2
+            bounds = pygame.Rect(
+                center[0] - radius,
+                center[1] - radius,
+                diameter,
+                diameter,
+            )
+            pygame.draw.rect(self._logical, DEBUG_BOUNDS_COLOR, bounds, 1)
+            pygame.draw.circle(self._logical, DEBUG_COLLIDER_COLOR, center, radius, 2)
 
     def _draw_effects(self) -> None:
         pygame = self._pygame

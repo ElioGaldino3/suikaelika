@@ -13,14 +13,16 @@ from suika_elika.input.manager import InputBackend, InputSample
 
 
 @pytest.mark.parametrize(
-    "args,desktop,indexes",
+    "args,desktop,indexes,debug",
     [
-        ([], False, None),
-        (["--desktop"], True, None),
-        (["--p1-index", "2", "--p2-index", "0"], False, (2, 0)),
+        ([], False, None, False),
+        (["--desktop"], True, None, False),
+        (["--p1-index", "2", "--p2-index", "0"], False, (2, 0), False),
+        (["--debug"], False, None, True),
+        (["--desktop", "--debug"], True, None, True),
     ],
 )
-def test_cli_constructs_expected_config(monkeypatch, args, desktop, indexes):
+def test_cli_constructs_expected_config(monkeypatch, args, desktop, indexes, debug):
     configs = []
 
     class App:
@@ -34,6 +36,7 @@ def test_cli_constructs_expected_config(monkeypatch, args, desktop, indexes):
     assert app_module.main(args) == 0
     assert configs[0].allow_keyboard_fallback is desktop
     assert configs[0].player_indexes == indexes
+    assert configs[0].debug_colliders is debug
 
 
 @pytest.mark.parametrize(

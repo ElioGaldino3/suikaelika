@@ -178,6 +178,9 @@ erro visível. Depois de iniciar, os slots continuam usando IDs e identidades de
 reconexão; não reinterpretar índices que mudaram durante a partida. Este é um
 contrato explícito do jogo, sem alegação de herdar a ordem do EmulationStation.
 
+`--debug` configura `AppConfig.debug_colliders`; os renderers desenham o círculo
+físico e o retângulo envolvente das frutas ativas sem alterar a simulação.
+
 `tools/check_controllers.py` é independente dos módulos de gameplay. Inicializa
 apenas vídeo/eventos/joystick e a API Controller opcional, enumera via joystick,
 coleta metadados e libera os dispositivos. Não cria janela nem inicia mixer.

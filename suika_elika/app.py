@@ -406,11 +406,13 @@ class App:
             self._screen,
             safe_area_fraction=self._settings.safe_area_fraction,
             reduced_effects=self._settings.effects_reduced,
+            debug_colliders=self.config.debug_colliders,
         )
         self._menu_canvas = _MenuCanvas(pygame, self._screen)
         self._battle_renderer = BattleRenderer(
             self._screen, safe_area_fraction=self._settings.safe_area_fraction,
             reduced_effects=self._settings.effects_reduced,
+            debug_colliders=self.config.debug_colliders,
         )
         self._clock = pygame.time.Clock()
         self._manager = SceneManager(
@@ -703,11 +705,13 @@ class App:
                 self._screen,
                 safe_area_fraction=options.safe_area_fraction,
                 reduced_effects=options.effects_reduced,
+                debug_colliders=self.config.debug_colliders,
             )
             self._menu_canvas = _MenuCanvas(self._pygame, self._screen)
             self._battle_renderer = BattleRenderer(
                 self._screen, safe_area_fraction=options.safe_area_fraction,
                 reduced_effects=options.effects_reduced,
+                debug_colliders=self.config.debug_colliders,
             )
         self._applied_settings = options
 
@@ -805,6 +809,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--desktop", action="store_true",
         help="permitir teclado no clássico/menu quando nenhum controle estiver conectado",
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="desenhar colisores e limites das frutas para análise visual",
+    )
     parser.add_argument("--p1-index", type=int, help="índice Pygame do controle do jogador 1")
     parser.add_argument("--p2-index", type=int, help="índice Pygame do controle do jogador 2")
     args = parser.parse_args(argv)
@@ -815,7 +824,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         if min(args.p1_index, args.p2_index) < 0 or args.p1_index == args.p2_index:
             parser.error("P1 e P2 precisam de índices distintos e não negativos")
         indexes = (args.p1_index, args.p2_index)
-    return App(AppConfig(allow_keyboard_fallback=args.desktop, player_indexes=indexes)).run()
+    return App(
+        AppConfig(
+            allow_keyboard_fallback=args.desktop,
+            player_indexes=indexes,
+            debug_colliders=args.debug,
+        )
+    ).run()
 
 
 __all__ = ["App", "main"]

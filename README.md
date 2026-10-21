@@ -32,6 +32,10 @@ iniciar com `--desktop` e não houver joystick, o teclado funciona como fallback
 de desenvolvimento. Sem essa opção, somente controles nativos são aceitos. Os
 controles estão em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
+Para visualizar os colisores durante a partida, execute `python main.py --debug`.
+O círculo verde mostra a hitbox física; o retângulo amarelo mostra seus limites.
+Sem joystick no computador, combine com `--desktop`.
+
 Para soltar frutas, aperte o botão sul/A ou o botão X do controle (ou Espaço/Enter
 com `--desktop`). Novos apertos não têm cooldown artificial. Segurar repete a
 **180 BPM**, uma fruta a cada **333,33 ms**, enquanto a boca da cesta estiver livre.

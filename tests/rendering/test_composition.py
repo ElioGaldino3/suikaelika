@@ -24,7 +24,12 @@ from suika_elika.contracts import (  # noqa: E402
 )
 from suika_elika.game.session import GameSession  # noqa: E402
 from suika_elika.rendering.effects import MAX_PARTICLES, EffectSystem  # noqa: E402
-from suika_elika.rendering.renderer import Renderer  # noqa: E402
+from suika_elika.rendering.renderer import (  # noqa: E402
+    DEBUG_BOUNDS_COLOR,
+    DEBUG_COLLIDER_COLOR,
+    WORLD_ORIGIN,
+    Renderer,
+)
 from suika_elika.scenes.play import PlayScene  # noqa: E402
 
 _ZERO = Vector2(0, 0)
@@ -130,6 +135,29 @@ def test_renderer_applies_safe_area_to_the_presentation_bounds() -> None:
     assert y == pytest.approx(36, abs=1)
     assert width == pytest.approx(1152, abs=1)
     assert height == pytest.approx(648, abs=1)
+
+
+def test_debug_renderer_draws_physics_circle_and_bounding_box() -> None:
+    renderer = Renderer(pygame.Surface((1280, 720)), debug_colliders=True)
+    snapshot = _snapshot()
+    fruit = snapshot.fruits[0]
+    definition = renderer.catalog.get(fruit.fruit_id).definition
+    center = (
+        round(WORLD_ORIGIN.x + fruit.current_pose.position.x),
+        round(WORLD_ORIGIN.y + fruit.current_pose.position.y),
+    )
+    radius = round(definition.radius)
+
+    renderer.draw_session(snapshot, ())
+
+    assert (
+        renderer._logical.get_at((center[0] + radius - 1, center[1]))[:3]
+        == DEBUG_COLLIDER_COLOR
+    )
+    assert (
+        renderer._logical.get_at((center[0] - radius, center[1] - radius))[:3]
+        == DEBUG_BOUNDS_COLOR
+    )
 
 
 def test_effects_are_bounded_independent_and_consume_each_event_once() -> None:

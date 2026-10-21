@@ -19,9 +19,13 @@ class BattleRenderer(Renderer):
         *,
         safe_area_fraction: float = 0.05,
         reduced_effects: bool = False,
+        debug_colliders: bool = False,
     ) -> None:
         super().__init__(
-            target, safe_area_fraction=safe_area_fraction, reduced_effects=reduced_effects
+            target,
+            safe_area_fraction=safe_area_fraction,
+            reduced_effects=reduced_effects,
+            debug_colliders=debug_colliders,
         )
         self._battle_background = GameArt().background_surface((1280, 720), battle=True)
         self._battle_container = self.art.container_surface((int(BATTLE_WIDTH), int(BATTLE_HEIGHT)))
@@ -123,6 +127,7 @@ class BattleRenderer(Renderer):
                 angle=first.angle + delta * alpha,
                 danger=fruit.danger_seconds > 0,
                 world_coordinates=False,
+                debug_collider=self.debug_colliders,
             )
         self._logical.set_clip(old_clip)
         pygame.draw.lines(

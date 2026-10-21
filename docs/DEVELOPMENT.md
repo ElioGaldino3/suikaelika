@@ -29,6 +29,11 @@ teclado como fallback quando não há controle ativo; um controle conectado tem
 prioridade. Ao removê-lo, a partida pausa e o teclado pode confirmar a retomada.
 Teclado nunca conta como joystick nem habilita BATALHA com um só controle.
 
+Para depurar as colisões, inicie com `python main.py --debug`. O círculo verde é
+o colisor físico e o retângulo amarelo é seu limite; ambos aparecem sobre as
+frutas da simulação no clássico e na BATALHA. Para usar teclado sem joystick,
+combine `--debug` com `--desktop`.
+
 - Teclas de seta: mover a mira e navegar pelos menus.
 - Espaço ou Enter: cada novo aperto tenta soltar imediatamente; segurar repete a
   400 BPM (150 ms). Enter também confirma a opção selecionada nos menus.

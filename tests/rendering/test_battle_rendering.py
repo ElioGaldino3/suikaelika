@@ -11,6 +11,7 @@ from suika_elika.contracts import FruitSnapshot, Pose, Vector2  # noqa: E402
 from suika_elika.game.battle import BattleSession  # noqa: E402
 from suika_elika.rendering.assets import ASSET_ROOT, GameArt, cover_surface  # noqa: E402
 from suika_elika.rendering.battle import BattleRenderer  # noqa: E402
+from suika_elika.rendering.renderer import DEBUG_COLLIDER_COLOR  # noqa: E402
 from suika_elika.scenes.title import TitleScene  # noqa: E402
 
 
@@ -54,6 +55,24 @@ def test_battle_has_two_baskets_and_uses_safe_viewport(size) -> None:
     x, y, width, height = renderer.presentation_rect
     assert 0 <= x < size[0] and 0 <= y < size[1]
     assert x + width <= size[0] and y + height <= size[1]
+
+
+def test_battle_debug_flag_draws_active_fruit_colliders() -> None:
+    renderer = BattleRenderer(pygame.Surface((1280, 720)), debug_colliders=True)
+    snapshot = demo_snapshot()
+    fruit = snapshot.players[0].fruits[-1]
+    definition = renderer.catalog.get(fruit.fruit_id).definition
+    center = (
+        80 + round(fruit.current_pose.position.x),
+        180 + round(fruit.current_pose.position.y),
+    )
+
+    renderer.draw_battle(snapshot)
+
+    assert (
+        renderer._logical.get_at((center[0] + round(definition.radius) - 1, center[1]))[:3]
+        == DEBUG_COLLIDER_COLOR
+    )
 
 
 def test_title_renders_disabled_battle_without_hiding_it() -> None:
