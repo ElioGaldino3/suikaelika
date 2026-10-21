@@ -133,3 +133,15 @@ A validação com drivers simulados não homologa controles físicos nem Batocer
 - Repetição para ao soltar e desarma em pausa/retomada/reinício, sem repetir confirmação nem gerar rajada após bloqueio.
 - Área de nascimento continua protegida; velocidade inicial permite a cadência sem sobreposição. Ruleset classic-v4 separa os recordes.
 - Testes de física/entrada/cenas e regressões aprovados; lint, tipos, build e evidências registrados; homologação física permanece pendente.
+
+
+## Correção de controles no menu — 21/10/2026
+
+- Status: `done`
+- Corrigida a leitura das constantes SDL no namespace do Pygame 2.6.1:
+  confirmação/soltura, voltar, Start, direcional digital e ajuste fino.
+- Evidência: `python -m pytest -q`: 267 testes passaram;
+  `python -m ruff check .`: aprovado; `python -m mypy`: 46 fontes aprovadas.
+  Regressão usa o módulo real Controller com dispositivo simulado.
+- Limitação: teste físico do usuário e Batocera pendentes. Confirmação usa
+  o botão sul/A SDL; o rótulo X depende do mapeamento do controle.

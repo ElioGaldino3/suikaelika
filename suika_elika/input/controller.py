@@ -142,7 +142,7 @@ class SDLControllerAdapter:
             quit_controller()
 
     def _pressed_constant(self, name: str) -> bool:
-        value = getattr(self.controller_api, name, None)
+        value = _constant(self.controller_api, name)
         return value is not None and bool(self.controller.get_button(value))
 
 
@@ -315,9 +315,9 @@ def _load_controller_api() -> Any | None:
 
 def _default_controller_actions(api: Any) -> dict[int, tuple[InputAction, ...]]:
     actions: dict[int, tuple[InputAction, ...]] = {}
-    button_a = getattr(api, "CONTROLLER_BUTTON_A", None)
-    button_b = getattr(api, "CONTROLLER_BUTTON_B", None)
-    button_start = getattr(api, "CONTROLLER_BUTTON_START", None)
+    button_a = _constant(api, "CONTROLLER_BUTTON_A")
+    button_b = _constant(api, "CONTROLLER_BUTTON_B")
+    button_start = _constant(api, "CONTROLLER_BUTTON_START")
     if button_a is not None:
         # The south face button confirms menus and releases fruit in gameplay;
         # scenes consume only the action relevant to their current state.
@@ -329,9 +329,13 @@ def _default_controller_actions(api: Any) -> dict[int, tuple[InputAction, ...]]:
     return actions
 
 
-def _constant(api: Any, name: str, fallback: int) -> int:
-    value = getattr(api, name, fallback)
-    return int(value)
+def _constant(api: Any, name: str, fallback: int = 0) -> int:
+    # Pygame 2.6 exposes SDL constants on pygame, not _sdl2.controller.
+    # Keep injected API constants available for alternate backends and tests.
+    value = getattr(api, name, None)
+    if value is None:
+        value = getattr(importlib.import_module("pygame"), name, fallback)
+    return int(value) if value is not None else fallback
 
 
 def _event_type(pygame_module: Any, name: str) -> Any:

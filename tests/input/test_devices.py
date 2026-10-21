@@ -309,3 +309,25 @@ def test_two_native_pads_are_distinct_despite_duplicate_sdl_add_events(both_mapp
     assert any(edge.action is InputAction.DROP for edge in second.edges)
     assert controls.poll(0)[0].edges == controls.poll(0)[1].edges == ()
     registry.close()
+
+
+def test_controller_api_without_constants_uses_real_pygame_namespace() -> None:
+    import pygame
+    from pygame._sdl2 import controller as controller_api
+
+    device = FakeController(FakeJoystick(42))
+    adapter = SDLControllerAdapter(device, controller_api=controller_api, device_index=0)
+    device.buttons.update({
+        pygame.CONTROLLER_BUTTON_A: True,
+        pygame.CONTROLLER_BUTTON_DPAD_DOWN: True,
+        pygame.CONTROLLER_BUTTON_LEFTSHOULDER: True,
+    })
+    sample = adapter.poll()
+    assert sample.action_edges == (InputAction.CONFIRM, InputAction.DROP)
+    assert sample.down and sample.fine_adjust and sample.drop_held
+    assert adapter.poll().action_edges == ()
+    device.buttons.clear()
+    adapter.poll()
+    device.buttons[pygame.CONTROLLER_BUTTON_B] = True
+    device.buttons[pygame.CONTROLLER_BUTTON_START] = True
+    assert adapter.poll().action_edges == (InputAction.CANCEL, InputAction.PAUSE)
