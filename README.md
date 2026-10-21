@@ -169,9 +169,24 @@ instalação acima:
 Coloque a arte em `/userdata/roms/pygame/images/SuikaElika.png`; o tema do
 EmulationStation precisa exibir imagens da lista.
 
+## Android TV
+
+O jogo também pode ser empacotado em APK para Android TV. No Windows, com o
+Docker Desktop aberto, gere o pacote com:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File packaging/android/build.ps1
+```
+
+O APK fica em `dist/android/`. Copie-o para a TV e instale-o por sideload. Os
+detalhes de build, ícone Android e instalação estão em
+[docs/ANDROID-TV.md](docs/ANDROID-TV.md). A homologação de controles físicos e
+desempenho depende da TV real.
+
 ## Documentação
 
 - [Build e instalação no Batocera](docs/BATOCERA.md)
+- [Build e instalação no Android TV](docs/ANDROID-TV.md)
 - [Requisitos e regras do jogo](docs/PROJECT.md)
 - [Arquitetura](docs/ARCHITECTURE.md)
 - [Desenvolvimento e comandos de qualidade](docs/DEVELOPMENT.md)

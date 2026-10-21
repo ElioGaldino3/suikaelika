@@ -1,6 +1,6 @@
 # Arquitetura de Suika Elika
 
-**Revisão:** 0.1, 20/10/2026. **Estado:** contratos e limites usados pelo runtime local; homologação no Batocera continua pendente.
+**Revisão:** 0.2, 21/10/2026. **Estado:** contratos do runtime local e pacotes Batocera/Android TV; homologação de hardware continua pendente.
 
 O produto e os parâmetros de gameplay estão em [PROJECT.md](PROJECT.md). Este documento organiza dependências e contratos para permitir implementação paralela. Não substitui nem duplica as tabelas de regras de `PROJECT.md`.
 
@@ -128,6 +128,7 @@ Em checkout compartilhado, revisar mudanças no local. Worktrees isolados só se
 | ADR-010 | Bootstrap de Pymunk no Batocera | O launcher instala `pymunk>=7.3,<8` via pip em `/userdata/system/configs/suika-elika`; cria pip por `ensurepip` e, se necessário, pelo bootstrap PyPA. Só grava no espaço do usuário; a primeira instalação exige internet e pode depender de wheel/compilador compatível. |
 | ADR-011 | X e sul como confirmação/soltura | SDL Controller reconhece A e X; joysticks genéricos usam apenas índice 0 como posição sul comum. Não presumir índice 2 como X, pois varia por dispositivo. |
 | ADR-012 | Confirmação geométrica de fusão e superfícies rotacionadas em cache | A fusão combina contatos do Pymunk com uma busca local de círculos iguais dentro de 1,5 unidade, pois `post_solve` não é emitido para contatos adormecidos. A grade espacial restringe comparações a vizinhos. O renderer evita ordenar a pilha para prever a mira, quantiza rotações em 24 passos e mantém até 128 superfícies em cache LRU limitado para reduzir transformações por quadro sem crescimento ilimitado de memória. |
+| ADR-013 | APK Android TV baseado em SDL2 com receitas locais | Buildozer/python-for-android empacotam o mesmo jogo Pygame; receitas locais fixam CPython, Pygame CE 2.5.8 e Pymunk 7.3.1, desativando depuração remota opcional para manter API mínima 23. O manifesto oferece Leanback, não exige toque e inicia em paisagem. Dados usam `ANDROID_PRIVATE`; o APK inclui ARM64 e ARMv7. Construir não homologa joystick, áudio ou desempenho na TV física. |
 
 ## 9. Contratos implementados para BATALHA
 
@@ -199,3 +200,22 @@ controles. A confirmação é consumida pelo menu, sem soltar fruta na nova roda
 Hold usa 180 BPM (1/3 s de simulação) no clássico e na batalha. Apertos novos
 continuam imediatos. `classic-v5` separa recordes devido à alteração de cadência;
 o catálogo `classic-v4` permanece disponível como arquivo histórico.
+
+## 12. Pacote Android TV
+
+`buildozer.spec` define o app fullscreen em paisagem, o SDL2 bootstrap e ABIs
+ARM64/ARMv7. `packaging/android/p4a-recipes/` fornece versões Android dos
+componentes nativos; a compilação via Buildozer não instala as dependências de
+desktop declaradas no `pyproject.toml`. O script `packaging/android/build.ps1`
+executa o build Linux no container oficial do Buildozer e grava o APK em
+`dist/android/`.
+
+O manifesto declara as funcionalidades Leanback e touchscreen como opcionais e
+acrescenta `LEANBACK_LAUNCHER` à atividade SDL. O ícone de loja, as camadas
+adaptativas e o banner 16:9 vêm de `raw_assets/icons/android/`. Em runtime,
+`ANDROID_PRIVATE` determina as pastas internas de configuração e dados; o app
+não grava em armazenamento compartilhado.
+
+O suporte de joystick depende de como o controle da TV é exposto pelo SDL do
+Android. Testes de build e controles simulados não substituem a instalação e a
+partida em um aparelho Android TV real.

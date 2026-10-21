@@ -7,6 +7,8 @@ venv/
 .mypy_cache/
 build/
 dist/
+.buildozer/
+bin/
 *.egg-info/
 .env
 .env.*

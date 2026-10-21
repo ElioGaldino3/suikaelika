@@ -42,6 +42,7 @@ Uma observação visual não revela o motor físico, o algoritmo de sorteio, os 
 | R06 | Visual inspirado em Fruit Match da Play.Works | Direção de arte descrita na seção 12 |
 | R07 | Começar sem imagens | Formas, cores, rostos e interface desenhados por código |
 | R08 | Documentação detalhada antes da implementação | Este arquivo é a referência para as próximas etapas |
+| R09 | Disponibilizar Suika Elika para Android TV em APK instalável | Launcher Leanback, paisagem, joystick nativo e ícone Android fornecido em `raw_assets/icons` |
 
 ### 1.2 Escopo desta entrega
 
@@ -1024,6 +1025,34 @@ Não assumir que o mapeamento do EmulationStation será automaticamente visível
 Em saída normal, salvar pendências, parar vibração/áudio, fechar dispositivos e executar `pygame.quit()`. Em exceção inesperada, registrar traceback em log e encerrar com código de erro, permitindo retorno ao frontend. Não manter uma janela vazia prendendo o jogador.
 
 Quando a inicialização gráfica estiver disponível, erros conhecidos de pacote devem exibir uma mensagem curta e instrução para voltar ao sistema. O log pode conter detalhes técnicos; a tela comum de jogo não precisa mostrar versões, caminhos ou stack traces.
+
+### Android TV — destino adicional autorizado em 21/10/2026
+
+O jogo deve manter a base Python/Pygame e ser distribuído como APK instalável.
+O caminho escolhido empacota Pygame CE/Pymunk pelo SDL2 bootstrap do
+python-for-android e Buildozer; receitas locais fixam versões compatíveis com
+o projeto: a receita Pygame mantida pelo python-for-android usa outra linha do
+Pygame, e a receita Pygame CE segue como proposta upstream. O APK inclui
+`arm64-v8a` e `armeabi-v7a`.
+
+O manifesto registra `LEANBACK_LAUNCHER`, declara `android.software.leanback`
+e `android.hardware.touchscreen` como opcionais e fixa a apresentação em
+paisagem. O jogo mantém joystick como entrada padrão; o teclado `--desktop` não
+é ativado no pacote. Os dados persistentes ficam no armazenamento interno
+privado do app Android.
+
+O ícone quadrado, as camadas adaptativas e o banner 16:9 do launcher vêm de
+`raw_assets/icons/android/`. Comandos e instruções de instalação estão em
+[ANDROID-TV.md](ANDROID-TV.md).
+Build local aprovado não comprova funcionamento do controle, áudio ou
+desempenho na TV; esses itens exigem uma homologação física.
+
+Fontes primárias consultadas em 21/10/2026: [criar e executar um app Android
+TV](https://developer.android.com/training/tv/get-started/create), [opções de
+build do python-for-android](https://python-for-android.readthedocs.io/en/latest/buildoptions.html),
+[receita SDL2 do Pygame no python-for-android](https://github.com/kivy/python-for-android/blob/develop/pythonforandroid/recipes/pygame/__init__.py),
+[proposta da receita Android para Pygame CE](https://github.com/kivy/python-for-android/pull/2971),
+[suporte do Pymunk no Android](https://www.pymunk.org/en/latest/installation.html).
 
 ## 19. Desempenho e diagnóstico
 

@@ -62,3 +62,29 @@ def test_batocera_paths_and_explicit_overrides(tmp_path: Path) -> None:
         path.is_dir()
         for path in (overridden.config_dir, overridden.data_dir, overridden.log_dir)
     )
+
+
+def test_android_paths_stay_in_the_app_private_directory(tmp_path: Path) -> None:
+    private = tmp_path / "app-files"
+    paths = resolve_user_paths(
+        system="Linux",
+        environment={"ANDROID_PRIVATE": str(private)},
+        home=tmp_path,
+        batocera=False,
+    )
+
+    assert paths.config_dir == private / "suika-elika" / "config"
+    assert paths.data_dir == private / "suika-elika" / "data"
+    assert paths.log_dir == paths.config_dir / "logs"
+
+
+def test_android_ignores_a_relative_private_directory(tmp_path: Path) -> None:
+    paths = resolve_user_paths(
+        system="Linux",
+        environment={"ANDROID_PRIVATE": "relative/files"},
+        home=tmp_path,
+        batocera=False,
+    )
+
+    assert paths.config_dir == tmp_path / "files" / "suika-elika" / "config"
+    assert paths.data_dir == tmp_path / "files" / "suika-elika" / "data"

@@ -61,9 +61,14 @@ def resolve_user_paths(
     if is_batocera is None:
         is_batocera = current_system == "Linux" and Path("/userdata").is_dir()
 
+    android_private = env.get("ANDROID_PRIVATE")
     if is_batocera:
         default_config = Path("/userdata/system/configs/suika-elika")
         default_data = Path("/userdata/saves/suika-elika")
+    elif current_system in {"Android", "Linux"} and android_private:
+        private_root = _absolute_env_path(env, "ANDROID_PRIVATE", home_path / "files")
+        default_config = private_root / "suika-elika" / "config"
+        default_data = private_root / "suika-elika" / "data"
     elif current_system == "Windows":
         default_config = _absolute_env_path(
             env, "APPDATA", home_path / "AppData" / "Roaming"

@@ -1,6 +1,6 @@
 # TODO — Suika Elika
 
-Atualizado em 20/10/2026. O jogo clássico está funcional e jogável localmente.
+Atualizado em 21/10/2026. O jogo clássico está funcional e jogável localmente.
 O histórico detalhado do MVP foi arquivado em [docs/archive/TODO-classic.md](docs/archive/TODO-classic.md).
 Este arquivo concentra BATALHA, entrada/diagnóstico e os bloqueios reais de homologação.
 A validação com drivers simulados não homologa controles físicos nem Batocera.
@@ -161,3 +161,41 @@ A validação com drivers simulados não homologa controles físicos nem Batocer
   Tela de seleção renderizada a 1280x720 e inspecionada visualmente.
 - Limitações: testes de entrada usam dispositivos simulados; controle físico,
   áudio HDMI e execução no Batocera continuam sem homologação neste lote.
+
+
+## Android TV
+
+### SE-042 — Gerar APK instalável para Android TV
+
+- Status: `in_review`
+- Scope: `android-tv`
+- Priority: `P1`
+- Depends: `none`
+- Writes: `buildozer.spec; packaging/android/; raw_assets/icons/android/; suika_elika/platform.py; tests/services/test_platform.py; README.md; docs/ANDROID-TV.md; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/validation/android-tv.md; TODO.md`
+- Reads: `pyproject.toml; raw_assets/icons/android/; docs/PROJECT.md; docs/ARCHITECTURE.md`
+- Owner: `unassigned`
+- Attempts: `1`
+- Evidence: Configuração, receitas Android, manifesto Leanback, ícones adaptativos, banner do launcher e persistência privada implementados; build Android e verificações aguardando conclusão neste lote.
+- Blocker: `none`
+
+**Aceitação:**
+
+- Gerar APK instalável com launcher Leanback, paisagem, controles nativos, ícone e banner Android fornecidos; incluir as versões Pygame CE/Pymunk do runtime do jogo.
+- Rodar testes relacionados, lint, tipos e validar manifesto/ABIs/arquivos no pacote. Documentar o comando Windows e limites do hardware.
+
+### SE-043 — Homologar o APK em Android TV
+
+- Status: `blocked`
+- Scope: `android-tv`
+- Priority: `P1`
+- Depends: `SE-042`
+- Writes: `docs/validation/android-tv-hardware.md`
+- Reads: `docs/ANDROID-TV.md; docs/ARCHITECTURE.md`
+- Owner: `unassigned`
+- Attempts: `0`
+- Evidence: Homologação em aparelho real ainda não executada.
+- Blocker: `Necessário acesso à Android TV e a um controle físico.`
+
+**Aceitação:**
+
+- Instalar e iniciar pelo launcher da TV; jogar clássico e batalha com controles, testar desconexão/reconexão, áudio e desempenho no aparelho real.
