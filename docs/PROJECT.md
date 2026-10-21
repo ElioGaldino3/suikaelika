@@ -1,6 +1,6 @@
 # Suika Elika — especificação do projeto
 
-**Revisão:** 0.1 — pesquisa e proposta inicial
+**Revisão:** 0.2 — modo BATALHA local acrescentado em 20/10/2026
 
 **Data da pesquisa:** 20 de outubro de 2026
 
@@ -47,7 +47,7 @@ Uma observação visual não revela o motor físico, o algoritmo de sorteio, os 
 
 **Atualização de governança em 20/10/2026:** foram acrescentados `AGENTS.md`, `TODO.md`, `docs/ARCHITECTURE.md` e a skill versionada `skills/todo-orchestrator/`. O backlog descreve tarefas futuras; a criação desses arquivos não iniciou a implementação do jogo. A arquitetura complementar organiza os contratos da seção 15 e o trabalho paralelo.
 
-Foi criada a pasta do projeto, este documento, um README e um `.gitignore`. O Context7 foi instalado no ambiente de desenvolvimento e usado na pesquisa. Não há ainda jogo executável, dependências do jogo instaladas, assets finais, instalador ou validação no Batocera.
+O clássico está implementado e jogável localmente, com sprites e cenários fornecidos pelo usuário. O modo BATALHA local amplia o escopo conforme a seção 5.3. O histórico do MVP está em `docs/archive/TODO-classic.md`; o TODO atual concentra a batalha e as pendências reais. A homologação no Batocera continua pendente.
 
 ## 2. Pesquisa de Suika Game
 
@@ -169,7 +169,19 @@ Quando uma fruta permanece na zona de perigo, o jogo sinaliza o risco e mostra u
 
 Temas visuais, mascote original chamado Elika, objetivos por estágio, modo cronometrado, itens e progressão cosmética podem ser adicionados depois. Cada modo deve ter recordes separados e regras próprias. A presença de moedas e itens em Fruit Match é uma referência observada, sem implicar sua inclusão na primeira versão.
 
-Multijogador, ranking online, serviços de conta e geração de assets durante a partida ficam fora do plano inicial. O jogo distribuído deve operar integralmente offline.
+Ranking online, serviços de conta e geração de assets durante a partida ficam fora do plano inicial. O jogo distribuído deve operar integralmente offline. O multijogador local foi autorizado como novo escopo na seção seguinte.
+
+### 5.3 BATALHA 1x1 local — escopo autorizado
+
+- Menu principal exibe BATALHA, habilitado apenas com pelo menos dois controles nativos distintos; teclado não conta. Hotplug atualiza a disponibilidade sem reiniciar.
+- Tela lógica 1280×720 dividida ao meio, jogador 1 à esquerda e jogador 2 à direita. Cada cesta física mede 480×460, frente aos 800×460 do clássico; o catálogo e os raios são preservados.
+- Cada controle afeta somente sua cesta. Ambas as sessões usam a mesma seed e sequência, com pontuação e mundos físicos independentes.
+- Meta: atingir ou ultrapassar 500 pontos. Transbordar/escapar segundo as regras existentes da cesta dá a vitória ao adversário.
+- Avaliar ambas as sessões após cada passo fixo. Transbordamento tem prioridade sobre meta nesse mesmo passo; ambos transbordarem ou ambos atingirem a meta no mesmo passo resulta em empate, sem vantagem pela ordem de processamento.
+- Congelar ambos ao terminar e mostrar vencedor, motivo, placares, Revanche e Menu. Revanche requer dois controles. Não gravar resultados da batalha no recorde ou nas estatísticas do clássico.
+- Start de qualquer jogador pausa os dois; ambos navegam nos menus da batalha. Desconexão congela ambos; reconectar requer confirmação consumida pela UI, sem soltura residual. Perda de foco também congela ambos.
+- Fundo fornecido: `raw_assets/battle_background.png`; cópia 16:9 para distribuição em `assets/backgrounds/battle.png`.
+- Verificações locais com controles simulados não homologam dois dispositivos reais, áudio HDMI, desempenho nem Batocera.
 
 ## 6. Regras das frutas e da pontuação
 

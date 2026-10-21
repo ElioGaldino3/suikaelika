@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from suika_elika.contracts.input import InputAction
+from suika_elika.input.battle import BattleControls
 from suika_elika.input.controller import (
     NativeInputRegistry,
     SDLControllerAdapter,
@@ -267,3 +268,37 @@ def test_generic_device_removal_uses_instance_id_not_current_index() -> None:
     assert registry.devices == {}
     assert joystick.quit_calls == 1
     assert registry.active_instance_id is None
+
+
+@pytest.mark.parametrize("both_mapped", [False, True])
+def test_two_native_pads_are_distinct_despite_duplicate_sdl_add_events(both_mapped) -> None:
+    api = FakeControllerApi()
+    if both_mapped:
+        api.is_controller = lambda index: True
+    generic = FakeJoystick(900, buttons=(False,))
+    module = FakeJoystickModule((FakeJoystick(99), generic))
+    registry = NativeInputRegistry(
+        _pygame(module), controller_api=api,
+        joystick_bindings=JoystickBindings(button_actions={0: (InputAction.DROP,)}),
+    )
+    registry.process_events(tuple(
+        SimpleNamespace(type=event_type, device_index=index)
+        for index in (0, 1) for event_type in (100, 101)
+    ))
+    assert len(registry.devices) == 2
+    controls = BattleControls(registry)
+    controls.sync(locked=False)
+    api.controllers[0].buttons[api.CONTROLLER_BUTTON_A] = True
+    api.controllers[0].axes[0] = -32768
+    if both_mapped:
+        api.controllers[1].buttons[api.CONTROLLER_BUTTON_A] = True
+        api.controllers[1].axes[0] = 32767
+    else:
+        generic.buttons = (True,)
+        generic.axes = (1.0, 0.0)
+    first, second = controls.poll(0)
+    assert first.move_x == -1 and second.move_x == 1
+    assert any(edge.action is InputAction.DROP for edge in first.edges)
+    assert any(edge.action is InputAction.DROP for edge in second.edges)
+    assert controls.poll(0)[0].edges == controls.poll(0)[1].edges == ()
+    registry.close()

@@ -31,6 +31,33 @@ Não é preciso gerar um `.exe`: `main.py` inicia o jogo pelo Python. Se não
 houver joystick, o teclado funciona como fallback de desenvolvimento. Os
 controles estão em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
+## BATALHA 1x1 local
+
+Conecte dois controles e escolha **BATALHA** no menu principal. A opção fica
+cinza com menos de dois controles e muda automaticamente ao conectar/remover.
+O primeiro controle é o jogador 1, à esquerda; o segundo é o jogador 2, à direita.
+
+Cada jogador tem uma cesta menor, sua mira e seu placar. O primeiro a atingir
+**500 pontos** vence. Transbordar a cesta dá a vitória ao adversário, com a mesma
+tolerância de perigo do clássico. Se os dois atingirem a meta ou perderem no
+mesmo passo de simulação, há empate. Transbordamento tem prioridade sobre pontos
+obtidos no mesmo passo. Os dois recebem a mesma sequência de frutas.
+
+Cada controle move e solta apenas na sua cesta; **Start** de qualquer jogador
+pausa ambos. Ambos podem operar os menus de pausa, resultado e revanche.
+Remover qualquer controle congela as duas cestas até reconectar e confirmar;
+o botão de voltar do controle restante permite retornar ao menu. A confirmação
+de retomada é consumida sem soltar fruta. Controles com mapeamento SDL usam o
+botão sul para confirmar/soltar; joysticks genéricos dependem de bindings explícitos.
+O teclado de desenvolvimento não conta como segundo controle.
+
+O fundo vem de `raw_assets/battle_background.png`. A cópia preparada em
+`assets/backgrounds/battle.png` segue no pacote Batocera. Para regenerar as artes,
+execute `python tools/process_art_assets.py`.
+
+Testes locais com dispositivos simulados não substituem a homologação de dois
+controles físicos no Batocera. Evidências em [docs/validation/battle.md](docs/validation/battle.md).
+
 ## Build para o sistema Pygame do Batocera
 
 O build monta a pasta `SuikaElika.pygame`. Dentro dela, `main.py` inicia o jogo

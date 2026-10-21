@@ -7,13 +7,22 @@ from typing import Any
 
 from suika_elika.audio import create_audio_manager
 from suika_elika.config import AppConfig
-from suika_elika.contracts import InputAction, RoundState, SettingsData
+from suika_elika.contracts import (
+    InputAction,
+    InputEdge,
+    InputFrame,
+    RoundState,
+    SceneTransition,
+    SettingsData,
+)
 from suika_elika.game.physics import PhysicsConfig, PhysicsWorld
 from suika_elika.game.session import GameSession
+from suika_elika.input.battle import BattleControls
 from suika_elika.input.controller import NativeInputRegistry
 from suika_elika.input.manager import InputBackend, InputManager, InputSample
 from suika_elika.persistence import JsonPersistence
 from suika_elika.rendering.assets import ASSET_ROOT, cover_surface
+from suika_elika.rendering.battle import BattleRenderer
 from suika_elika.rendering.renderer import Renderer
 from suika_elika.scene_manager import SceneManager
 
@@ -124,7 +133,10 @@ class _MenuCanvas:
 
         for index, label in enumerate(snapshot.choices):
             selected = index == snapshot.selected_index
-            color = (255, 229, 121) if selected else (255, 247, 220)
+            disabled = index in snapshot.disabled_indices
+            color = (145, 155, 157) if disabled else (
+                (255, 229, 121) if selected else (255, 247, 220)
+            )
             text = body_font.render(("›  " if selected else "   ") + label, True, color)
             item_y = layout.choices_y + index * layout.choice_spacing
             surface.blit(text, text.get_rect(center=(width // 2, round(item_y))))
@@ -235,6 +247,12 @@ class App:
         self._manager: SceneManager | None = None
         self._screen: Any = None
         self._renderer: Renderer | None = None
+        self._battle_renderer: BattleRenderer | None = None
+        self._battle_controls: BattleControls | None = None
+        self._battle_connection_lock = False
+        self._battle_resume_gameplay = False
+        self._battle_focus_resume = False
+        self._battle_menu_sequence = 0
         self._menu_canvas: _MenuCanvas | None = None
         self._clock: Any = None
 
@@ -335,6 +353,8 @@ class App:
 
         self._registry = NativeInputRegistry(pygame)
         devices = self._registry.discover()
+        self._battle_controls = BattleControls(self._registry)
+        self._battle_controls.sync(locked=False)
         if devices:
             self._registry.select(devices[0])
             self._selected_controller_identity = self._controller_identity(
@@ -369,6 +389,10 @@ class App:
             reduced_effects=self._settings.effects_reduced,
         )
         self._menu_canvas = _MenuCanvas(pygame, self._screen)
+        self._battle_renderer = BattleRenderer(
+            self._screen, safe_area_fraction=self._settings.safe_area_fraction,
+            reduced_effects=self._settings.effects_reduced,
+        )
         self._clock = pygame.time.Clock()
         self._manager = SceneManager(
             self._session,
@@ -376,7 +400,9 @@ class App:
             self._input,
             self._audio,
             controller_status=controller_status,
+            fixed_dt=self.config.fixed_dt,
         )
+        self._manager.set_controller_count(len(self._registry.devices))
 
     def _create_display(self) -> None:
         pygame = self._pygame
@@ -391,8 +417,26 @@ class App:
         if self._registry is not None:
             active_before = self._registry.active_instance_id
             added = self._registry.process_events(events)
-            if active_before is not None and self._registry.active_instance_id is None:
+            battle_mode = self._manager is not None and self._manager.battle_mode
+            if self._battle_controls is not None:
+                self._battle_controls.sync(locked=battle_mode)
+            if self._manager is not None:
+                self._manager.set_controller_count(len(self._registry.devices))
+            if battle_mode:
+                self._update_battle_connection()
+            elif active_before is not None and self._registry.active_instance_id is None:
                 self._handle_active_controller_removal()
+            elif (
+                not self._controller_reconnect_lock
+                and self._registry.active_instance_id is None and self._registry.devices
+            ):
+                selected_id = next(iter(self._registry.devices))
+                self._registry.select(selected_id)
+                self._input.register_adapter(InputBackend.NATIVE, self._registry)
+                self._input.select_backend(InputBackend.NATIVE)
+                self._selected_controller_identity = self._controller_identity(
+                    self._registry.devices[selected_id]
+                )
             if self._controller_reconnect_lock:
                 for instance_id in added:
                     device = self._registry.devices.get(instance_id)
@@ -432,6 +476,9 @@ class App:
         self._focused = False
         self._focus_lock = True
         self._accumulator = 0.0
+        if self._manager is not None and self._manager.current_name == "battle":
+            self._battle_focus_resume = not self._battle_connection_lock
+            self._manager.battle_session.pause()
         self._focus_resume_gameplay = (
             self._manager is not None
             and self._manager.current_name == "play"
@@ -451,6 +498,8 @@ class App:
 
     def _clear_input_states(self) -> None:
         self._input.reset()
+        if self._battle_controls is not None:
+            self._battle_controls.reset()
         if self._keyboard is not None:
             self._keyboard.clear()
         if self._registry is not None:
@@ -483,6 +532,42 @@ class App:
     def _poll_and_dispatch(self, ui_delta: float, events: tuple[Any, ...]) -> None:
         del events
         assert self._manager is not None
+        if self._manager.battle_mode and self._battle_controls is not None:
+            frames = self._battle_controls.poll(ui_delta)
+            if self._battle_connection_lock:
+                if any(edge.action is InputAction.CANCEL for f in frames for edge in f.edges):
+                    self._manager.transition(SceneTransition("title"))
+                    self._battle_connection_lock = False
+                    self._battle_resume_gameplay = False
+                    self._clear_input_states()
+                elif self._battle_controls.ready and any(
+                    edge.action is InputAction.CONFIRM for f in frames for edge in f.edges
+                ):
+                    self._battle_connection_lock = False
+                    self._clear_input_states()
+                    self._manager.reset_input()
+                    if self._battle_resume_gameplay:
+                        self._manager.battle_session.resume()
+                        self._audio.resume()
+                    self._battle_resume_gameplay = False
+                return
+            if self._manager.current_name == "battle":
+                self._manager.handle_battle_actions(frames)
+            else:
+                # Both players may navigate shared battle menus. One source per
+                # frame prevents a simultaneous confirm from choosing two items.
+                frame = frames[0] if (
+                    frames[0].edges or frames[0].move_x or frames[0].move_y
+                ) else frames[1]
+                edges = []
+                for edge in frame.edges:
+                    edges.append(InputEdge(self._battle_menu_sequence, edge.action))
+                    self._battle_menu_sequence += 1
+                self._manager.handle_actions(InputFrame(
+                    move_x=frame.move_x, move_y=frame.move_y,
+                    fine_adjust=frame.fine_adjust, edges=tuple(edges),
+                ))
+            return
         managed = self._input.poll(ui_delta)
         if self._controller_reconnect_lock:
             confirmed = any(
@@ -504,9 +589,31 @@ class App:
             # to CONFIRM and DROP cannot resume and launch in the same frame.
             return
         self._manager.handle_actions(managed.frame)
+        if self._manager.current_name == "battle":
+            # Player two may have held a button while player one chose the mode.
+            self._clear_input_states()
+            self._manager.reset_input()
 
     def _poll_focus_confirmation(self, ui_delta: float, events: tuple[Any, ...]) -> None:
         del events
+        if (
+            self._manager is not None and self._manager.battle_mode
+            and self._battle_controls is not None
+        ):
+            frames = self._battle_controls.poll(ui_delta)
+            if not self._focused or not any(
+                edge.action is InputAction.CONFIRM for f in frames for edge in f.edges
+            ):
+                return
+            self._focus_lock = False
+            self._accumulator = 0.0
+            self._clear_input_states()
+            self._manager.reset_input()
+            if self._battle_focus_resume and not self._battle_connection_lock:
+                self._manager.battle_session.resume()
+                self._audio.resume()
+            self._battle_focus_resume = False
+            return
         managed = self._input.poll(ui_delta)
         if not self._focused or not any(
             edge.action is InputAction.CONFIRM for edge in managed.frame.edges
@@ -522,7 +629,10 @@ class App:
         self._focus_resume_gameplay = False
 
     def _advance_simulation(self, elapsed: float) -> int:
-        if self._manager is None or self._manager.current_name != "play":
+        if (
+            self._manager is None or self._manager.current_name not in {"play", "battle"}
+            or self._battle_connection_lock
+        ):
             self._accumulator = 0.0
             return 0
         self._accumulator += min(elapsed, self.config.max_frame_delta)
@@ -539,6 +649,10 @@ class App:
             self._accumulator %= self.config.fixed_dt
         if self._renderer is not None:
             self._renderer.set_interpolation_alpha(self._accumulator / self.config.fixed_dt)
+        if self._battle_renderer is not None:
+            self._battle_renderer.set_interpolation_alpha(
+                self._accumulator / self.config.fixed_dt
+            )
         return steps
 
     def _apply_current_settings(self) -> None:
@@ -554,6 +668,9 @@ class App:
         )
         self._renderer.safe_area_fraction = options.safe_area_fraction
         self._renderer.set_reduced_effects(options.effects_reduced)
+        if self._battle_renderer is not None:
+            self._battle_renderer.safe_area_fraction = options.safe_area_fraction
+            self._battle_renderer.set_reduced_effects(options.effects_reduced)
         if options.fullscreen != self._settings.fullscreen:
             self._settings = options
             self._create_display()
@@ -563,6 +680,10 @@ class App:
                 reduced_effects=options.effects_reduced,
             )
             self._menu_canvas = _MenuCanvas(self._pygame, self._screen)
+            self._battle_renderer = BattleRenderer(
+                self._screen, safe_area_fraction=options.safe_area_fraction,
+                reduced_effects=options.effects_reduced,
+            )
         self._applied_settings = options
 
     def _draw(self) -> None:
@@ -571,14 +692,13 @@ class App:
         if self._manager.current_name == "play":
             assert self._renderer is not None
             self._manager.current.draw(self._renderer)
+        elif self._manager.current_name == "battle":
+            assert self._battle_renderer is not None
+            self._manager.current.draw(self._battle_renderer)
         else:
             assert self._menu_canvas is not None
             self._manager.current.draw(self._menu_canvas)
-        if (
-            self._focus_lock
-            and self._session is not None
-            and self._session.round_state is RoundState.PAUSED
-        ):
+        if self._focus_lock:
             assert self._pygame is not None
             text = self._pygame.font.Font(None, 38).render(
                 "Foco perdido · pressione confirmar para continuar",
@@ -586,6 +706,17 @@ class App:
                 (24, 59, 78),
             )
             self._screen.blit(text, text.get_rect(center=(self._screen.get_width() // 2, 52)))
+        elif self._battle_connection_lock and self._battle_controls is not None:
+            assert self._pygame is not None
+            message = (
+                "Controles reconectados · confirme para continuar"
+                if self._battle_controls.ready else
+                f"Reconecte jogador {self._battle_controls.missing_players} · Voltar: menu"
+            )
+            text = self._pygame.font.Font(None, 34).render(message, True, (255, 247, 220))
+            rect = text.get_rect(center=(self._screen.get_width() // 2, 26))
+            self._pygame.draw.rect(self._screen, (20, 30, 48), rect.inflate(24, 12))
+            self._screen.blit(text, rect)
         elif self._controller_reconnect_lock:
             assert self._pygame is not None
             connected = (
@@ -614,6 +745,30 @@ class App:
             return f"guid:{guid}"
         name = str(getattr(device, "name", "")).strip().casefold()
         return f"name:{name}" if name else None
+
+    def _update_battle_connection(self) -> None:
+        assert self._battle_controls is not None
+        assert self._registry is not None
+        assert self._manager is not None
+        # Keep menu ownership on player one, or the surviving pad while waiting.
+        available = [slot for slot in self._battle_controls.slots if slot is not None]
+        selected = available[0] if available else None
+        if self._registry.active_instance_id != selected:
+            self._registry.select(selected)
+            self._input.register_adapter(InputBackend.NATIVE, self._registry)
+            self._input.select_backend(InputBackend.NATIVE if selected is not None else None)
+        if selected is not None:
+            self._selected_controller_identity = self._controller_identity(
+                self._registry.devices[selected]
+            )
+        if not self._battle_controls.ready and not self._battle_connection_lock:
+            self._battle_connection_lock = True
+            self._battle_resume_gameplay = self._manager.current_name == "battle"
+            self._manager.battle_session.pause()
+            self._audio.pause()
+            self._accumulator = 0.0
+            self._clear_input_states()
+            self._manager.reset_input()
 
 
 def main() -> int:

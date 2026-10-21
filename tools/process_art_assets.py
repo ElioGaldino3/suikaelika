@@ -89,6 +89,7 @@ def main() -> None:
         for source_name, output_name in (
             ("background_menu.png", "menu.png"),
             ("background_jogo.png", "gameplay.png"),
+            ("battle_background.png", "battle.png"),
         ):
             background = pygame.image.load(SOURCE / source_name)
             pygame.image.save(

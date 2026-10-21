@@ -16,6 +16,7 @@ class MenuItem:
     label: str
     destination: str
     payload: tuple[tuple[str, str | int | float | bool | None], ...] = ()
+    enabled: bool = True
 
     def __post_init__(self) -> None:
         if not self.label or not self.destination:
@@ -32,6 +33,7 @@ class MenuSnapshot:
     subtitle: str = ""
     footer: str = ""
     message: str = ""
+    disabled_indices: tuple[int, ...] = ()
 
 
 class MenuCanvas(Protocol):
@@ -74,6 +76,7 @@ class MenuScene:
             self.subtitle,
             self.footer,
             self.message,
+            tuple(index for index, item in enumerate(self.items) if not item.enabled),
         )
 
     def enter(self) -> None:
@@ -108,23 +111,29 @@ class MenuScene:
                 return SceneTransition(self.cancel_destination, self.cancel_payload)
         return None
 
-    def _choose(self, item: MenuItem) -> SceneTransition:
+    def _choose(self, item: MenuItem) -> SceneTransition | None:
+        if not item.enabled:
+            self.message = "Conecte dois controles para jogar BATALHA."
+            return None
         return SceneTransition(item.destination, item.payload)
 
 
 class TitleScene(MenuScene):
     """Landing menu with physical-position instructions and device status."""
 
-    def __init__(self, *, controller_status: str = "Controle não conectado") -> None:
+    def __init__(
+        self, *, controller_status: str = "Controle não conectado", battle_ready: bool = False
+    ) -> None:
         super().__init__(
             "Suika Elika",
             (
                 MenuItem("Jogar", "play"),
+                MenuItem("BATALHA", "battle", enabled=battle_ready),
                 MenuItem("Como jogar", "help", (("return_to", "title"),)),
                 MenuItem("Opções", "options", (("return_to", "title"),)),
                 MenuItem("Sair", "exit"),
             ),
-            subtitle=f"{controller_status} · versão inicial",
+            subtitle=f"{controller_status} · BATALHA: 2 controles · meta de 500 pontos",
             footer=(
                 "Mover: direcional  ·  Confirmar/Soltar: botão sul "
                 "(A Xbox, B Nintendo, cruz PlayStation)"

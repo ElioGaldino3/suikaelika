@@ -82,7 +82,9 @@ def test_title_menu_uses_semantic_navigation_and_describes_physical_confirm() ->
     scene.handle_actions(_frame(1, InputAction.NAV_DOWN))
     assert scene.snapshot.selected_index == 1
 
-    transition = scene.handle_actions(_frame(2, InputAction.CONFIRM))
+    scene.handle_actions(_frame(2, InputAction.NAV_DOWN))
+
+    transition = scene.handle_actions(_frame(3, InputAction.CONFIRM))
     assert transition is not None
     assert transition.destination == "help"
     assert transition.payload == (("return_to", "title"),)

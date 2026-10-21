@@ -64,11 +64,16 @@ class GameArt:
         return result
 
     def background_surface(
-        self, size: tuple[int, int] = (1280, 720), *, menu: bool = False
+        self, size: tuple[int, int] = (1280, 720), *, menu: bool = False,
+        battle: bool = False,
     ) -> Surface:
         """Return a cached imported background or the procedural fallback."""
-        name = "menu.png" if menu else "gameplay.png"
+        name = "battle.png" if battle else "menu.png" if menu else "gameplay.png"
         path = self._asset_root / "backgrounds" / name
+        if battle:
+            raw_path = self._asset_root.parent / "raw_assets" / "battle_background.png"
+            if raw_path.is_file():
+                path = raw_path
         if not path.is_file():
             return self._fallback.background_surface(size)
         key = (name, size)

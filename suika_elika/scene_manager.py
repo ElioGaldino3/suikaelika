@@ -12,15 +12,17 @@ from suika_elika.contracts import (
     PersistencePort,
     SceneTransition,
 )
+from suika_elika.game.battle import BattleSession
 from suika_elika.game.session import GameSession
 from suika_elika.input.manager import InputManager
 from suika_elika.input.profiles import ProfileRepository
+from suika_elika.scenes.battle import BattleResultsScene, BattleScene
 from suika_elika.scenes.help import HelpScene
 from suika_elika.scenes.options import OptionsScene
 from suika_elika.scenes.pause import PauseScene
 from suika_elika.scenes.play import PlayScene
 from suika_elika.scenes.results import ResultsScene, ResultSummary
-from suika_elika.scenes.title import TitleScene
+from suika_elika.scenes.title import MenuItem, TitleScene
 
 
 class SceneManager:
@@ -34,12 +36,17 @@ class SceneManager:
         audio: AudioPort | None = None,
         *,
         controller_status: str = "Controle não conectado",
+        fixed_dt: float = 1 / 120,
     ) -> None:
         self.session = session
         self.persistence = persistence
         self.input_manager = input_manager
         self.audio = audio or NullAudioManager()
         self.controller_status = controller_status
+        self.battle_ready = False
+        self.battle_mode = False
+        self.battle_session = BattleSession(fixed_dt=fixed_dt)
+        self.battle_scene = BattleScene(self.battle_session)
         self.profile_repository = ProfileRepository(persistence)
         self.play_scene = PlayScene(session)
         self._current_name = "title"
@@ -63,6 +70,33 @@ class SceneManager:
         if transition is not None:
             self.transition(transition)
 
+    def set_controller_count(self, count: int) -> None:
+        was_ready = self.battle_ready
+        self.battle_ready = count >= 2
+        self.controller_status = f"{count} controle(s) conectado(s)"
+        if isinstance(self.current, TitleScene):
+            if self.battle_ready and not was_ready:
+                self.current.message = ""
+            self.current.items = tuple(
+                MenuItem(item.label, item.destination, item.payload,
+                         self.battle_ready if item.destination == "battle" else item.enabled)
+                for item in self.current.items
+            )
+            self.current.subtitle = (
+                f"{self.controller_status} · BATALHA: 2 controles · meta de 500 pontos"
+            )
+        elif isinstance(self.current, BattleResultsScene):
+            self.current.items = (
+                MenuItem("Revanche", "battle", (("restart", True),), self.battle_ready),
+                MenuItem("Menu", "title"),
+            )
+
+    def handle_battle_actions(self, frames: tuple[InputFrame, InputFrame]) -> None:
+        if self._current_name == "battle":
+            transition = self.battle_scene.handle_players(frames)
+            if transition is not None:
+                self.transition(transition)
+
     def transition(self, transition: SceneTransition) -> None:
         destination = transition.destination
         if destination == "exit":
@@ -73,7 +107,17 @@ class SceneManager:
             destination = "pause"
 
         payload = dict(transition.payload)
+        if destination == "battle":
+            if not self.battle_ready:
+                return
+            if payload.get("resume") is True:
+                self.battle_session.resume()
+            else:
+                self.battle_session.restart()
+            self.battle_mode = True
+            self.audio.resume()
         if destination == "play":
+            self.battle_mode = False
             if payload.get("resume") is True:
                 self.session.resume()
                 self.audio.resume()
@@ -85,6 +129,9 @@ class SceneManager:
             self.audio.resume()
         elif destination == "options" and payload.get("return_to") == "paused":
             pass
+        if destination == "title":
+            self.battle_mode = False
+            self.audio.resume()
 
         next_scene = self._make_scene(destination, payload)
         self.current.exit()
@@ -94,6 +141,10 @@ class SceneManager:
 
     def simulation_step(self) -> tuple[DomainEvent, ...]:
         """Advance the active game scene once and send its copied events to audio."""
+        if self._current_name == "battle":
+            events = self.battle_scene.simulation_step()
+            self.audio.consume(events)
+            return events
         if self._current_name != "play":
             return ()
         events = self.play_scene.simulation_step()
@@ -102,6 +153,7 @@ class SceneManager:
 
     def reset_input(self) -> None:
         self.input_manager.reset()
+        self.battle_scene.exit()
         if self._current_name == "play":
             self.play_scene.exit()
             self.play_scene.enter()
@@ -109,7 +161,13 @@ class SceneManager:
     def _make_scene(self, name: str, payload: dict[str, Any] | None = None) -> Any:
         values = payload or {}
         if name == "title":
-            return TitleScene(controller_status=self.controller_status)
+            return TitleScene(
+                controller_status=self.controller_status, battle_ready=self.battle_ready
+            )
+        if name == "battle":
+            return self.battle_scene
+        if name == "battle_results":
+            return BattleResultsScene(self.battle_session.snapshot, ready=self.battle_ready)
         if name == "play":
             return self.play_scene
         if name == "help":
@@ -122,7 +180,7 @@ class SceneManager:
             )
         if name == "pause":
             self.audio.pause()
-            return PauseScene()
+            return PauseScene(play_destination="battle" if self.battle_mode else "play")
         if name == "results":
             return ResultsScene(self._result_summary(values))
         raise ValueError(f"unknown scene destination: {name}")

@@ -90,6 +90,7 @@ def test_menu_canvas_uses_menu_background_behind_readable_panel() -> None:
         choices=("Jogar",),
         selected_index=0,
         title="Suika Elika",
+        disabled_indices=(),
     )
 
     canvas.draw_menu(snapshot)

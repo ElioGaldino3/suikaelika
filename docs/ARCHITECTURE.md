@@ -12,7 +12,7 @@ O produto e os parâmetros de gameplay estão em [PROJECT.md](PROJECT.md). Este 
 | Pymunk para física | Contatos circulares e empilhamento | Candidato; pacote no alvo pendente |
 | Passo fixo de simulação, apresentação independente | Consistência e estabilidade | Contrato; parâmetros em PROJECT |
 | Imagens procedurais inicialmente | Primeiro protótipo independente de assets externos | Definida |
-| Uma sessão individual offline | Escopo do modo clássico | Definida |
+| Clássico individual e batalha local 1x1 offline | Batalha autorizada em 20/10/2026 | Implementados localmente |
 | Entrada por ações, com adaptadores de dispositivos | Joystick, remapeamento e prevenção de duplicidade | Definida |
 | Configurações e recordes em JSON | Persistência simples e inspecionável | Proposta |
 
@@ -121,5 +121,39 @@ Em checkout compartilhado, revisar mudanças no local. Worktrees isolados só se
 | ADR-003 | TODO com escritor único e evidências | Subagentes entregam para revisão; orquestrador conclui |
 | ADR-004 | Arte procedural no MVP | Produção de imagens finais é tarefa futura separada |
 | ADR-005 | Versões e recordes por ruleset | Ajustes de física não misturam silenciosamente resultados incomparáveis |
+| ADR-006 | Batalha coordena duas GameSession independentes | Mesmo catálogo e seed, cestas 480×460, placares e física separados, sem persistência do clássico |
+| ADR-007 | Slots de batalha por instance ID | GUID/nome apenas para reconquistar slot ausente; modelos iguais conectados continuam jogadores distintos |
+
+## 9. Contratos implementados para BATALHA
+
+`game/battle.py` coordena duas sessões e publica `BattleSnapshot` imutável com
+dois snapshots, meta, estado final, vencedor (1/2 ou `None` em empate) e motivo.
+Cada passo avança ambos antes de resolver: transbordamento/escape primeiro,
+meta >=500 depois, empate quando ambos cumprem a mesma condição nesse passo.
+Reutiliza os temporizadores de perigo do clássico. Pausa/conclusão congela ambos.
+
+`input/battle.py` mantém dois `InputManager`, um por slot, sobre os adaptadores
+de `NativeInputRegistry`. Não altera o dispositivo ativo para fazer cada poll:
+consulta cada adaptador uma vez por quadro. A registry continua abrindo cada
+conexão uma vez, preferindo SDL Controller e eliminando duplicidade de eventos
+Controller/Joystick. A atribuição fica fixa durante batalha, pausa e resultado;
+remover P1 nunca transforma P2 em P1. Na reconexão, um ID novo de mesma identidade
+ocupa somente um slot ausente. Dois controles de mesmo GUID continuam separados.
+Se ambos forem removidos e forem do mesmo modelo, não é possível distinguir as
+unidades pelo GUID: os slots são recuperados na ordem de conexão.
+
+`scenes/battle.py` enfileira bordas separadamente por jogador e consome cada uma
+uma vez no passo elegível. `SceneManager` mantém o modo ativo ao abrir pausa e
+opções, escolhe o destino correto de retomada/reinício e protege o início/revanche
+com disponibilidade de dois controles. `MenuItem.enabled` e
+`MenuSnapshot.disabled_indices` expõem opções desabilitadas ao renderer.
+
+`App` mantém o acumulador fixo compartilhado, suspende ambos em desconexão/foco,
+consome confirmação sem repassá-la ao gameplay e permite menus da batalha pelos
+dois controles, selecionando uma fonte por quadro e renumerando as bordas da UI.
+O teclado permanece apenas no fluxo de desenvolvimento do clássico.
+`BattleRenderer` usa snapshots, geometria e viewport existentes; mundo e desenho
+usam as mesmas dimensões. O fundo bruto tem prioridade na árvore de fontes;
+o pacote usa a cópia preparada em `assets/backgrounds/battle.png`.
 
 Atualize esta tabela com motivo e impactos quando uma decisão realmente mudar. Não registre uma arquitetura planejada como implementação já existente.

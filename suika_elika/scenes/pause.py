@@ -10,11 +10,12 @@ from .title import MenuItem, MenuScene, MenuSnapshot
 class PauseScene(MenuScene):
     """Pause choices; destructive actions open a dialog focused on Cancel."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, play_destination: str = "play") -> None:
+        self.play_destination = play_destination
         super().__init__(
             "Pausado",
             (
-                MenuItem("Continuar", "play", (("resume", True),)),
+                MenuItem("Continuar", play_destination, (("resume", True),)),
                 MenuItem("Reiniciar", "restart"),
                 MenuItem("Opções", "options", (("return_to", "paused"),)),
                 MenuItem("Voltar ao menu", "abandon"),
@@ -53,7 +54,7 @@ class PauseScene(MenuScene):
                     action = self.confirmation
                     self.confirmation = None
                     if action == "restart":
-                        return SceneTransition("play", (("restart", True),))
+                        return SceneTransition(self.play_destination, (("restart", True),))
                     return SceneTransition("title", (("abandoned", True),))
             return None
 
@@ -63,7 +64,7 @@ class PauseScene(MenuScene):
             elif edge.action is InputAction.NAV_DOWN:
                 self.selected_index = (self.selected_index + 1) % len(self.items)
             elif edge.action is InputAction.CANCEL:
-                return SceneTransition("play", (("resume", True),))
+                return SceneTransition(self.play_destination, (("resume", True),))
             elif edge.action is InputAction.CONFIRM:
                 item = self.items[self.selected_index]
                 if item.destination in {"restart", "abandon"}:
