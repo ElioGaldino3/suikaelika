@@ -34,6 +34,9 @@ class MenuSnapshot:
     footer: str = ""
     message: str = ""
     disabled_indices: tuple[int, ...] = ()
+    preview_fruit_id: str | None = None
+    preview_hitbox_scale: float = 1.0
+    preview_base_radius: float = 0.0
 
 
 class MenuCanvas(Protocol):

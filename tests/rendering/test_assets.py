@@ -116,6 +116,7 @@ def test_menu_canvas_uses_menu_background_behind_readable_panel() -> None:
         selected_index=0,
         title="Suika Elika",
         disabled_indices=(),
+        preview_fruit_id=None,
     )
 
     canvas.draw_menu(snapshot)
@@ -124,6 +125,34 @@ def test_menu_canvas_uses_menu_background_behind_readable_panel() -> None:
     expected = pygame.image.load(ASSET_ROOT / "backgrounds" / "menu.png")
     assert target.get_at((4, 4)) == expected.get_at((4, 4))
     assert target.get_at((640, 360)) != expected.get_at((640, 360))
+
+
+def test_menu_canvas_draws_selected_fruit_and_scaled_hitbox_preview() -> None:
+    target = pygame.Surface((1280, 720))
+    canvas = _MenuCanvas(pygame, target)
+    snapshot = SimpleNamespace(
+        message="",
+        footer="←/→ Ajustar",
+        subtitle="Maçã: raio 39.7 · padrão 37.8 · aplica ao reiniciar",
+        choices=tuple(f"Fruta {index}: 105%" for index in range(11))
+        + ("Restaurar padrões", "Voltar às opções"),
+        selected_index=4,
+        title="Ajustar hitboxes",
+        disabled_indices=(),
+        preview_fruit_id="apple",
+        preview_hitbox_scale=1.05,
+        preview_base_radius=37.8,
+    )
+
+    canvas.draw_menu(snapshot)
+
+    assert canvas._preview_art is not None
+    assert canvas._preview_surfaces["apple"] is not None
+    assert any(
+        target.get_at((x, y))[:3] == (40, 255, 120)
+        for x in range(900, 1000)
+        for y in range(250, 450)
+    )
 
 
 def test_renderer_draws_the_gameplay_background_and_imported_sprites() -> None:

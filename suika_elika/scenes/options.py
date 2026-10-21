@@ -248,6 +248,23 @@ class OptionsScene(MenuScene):
             subtitle,
             "←/→ Ajustar · Confirmar · Cancelar: opções",
             self.message,
+            preview_fruit_id=(
+                self.catalog.entries[self.selected_index].fruit_id
+                if self.selected_index < fruit_count
+                else None
+            ),
+            preview_hitbox_scale=(
+                scale_by_id.get(
+                    self.catalog.entries[self.selected_index].fruit_id, 1.0
+                )
+                if self.selected_index < fruit_count
+                else 1.0
+            ),
+            preview_base_radius=(
+                self.catalog.entries[self.selected_index].definition.radius
+                if self.selected_index < fruit_count
+                else 0.0
+            ),
         )
 
     def _handle_collider_actions(

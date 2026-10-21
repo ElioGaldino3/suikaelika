@@ -25,7 +25,7 @@ from suika_elika.input.battle import BattleControls
 from suika_elika.input.controller import NativeInputRegistry
 from suika_elika.input.manager import InputBackend, InputManager, InputSample
 from suika_elika.persistence import JsonPersistence
-from suika_elika.rendering.assets import ASSET_ROOT, cover_surface
+from suika_elika.rendering.assets import ASSET_ROOT, GameArt, cover_surface
 from suika_elika.rendering.battle import BattleRenderer
 from suika_elika.rendering.renderer import Renderer
 from suika_elika.scene_manager import SceneManager
@@ -90,6 +90,8 @@ class _MenuCanvas:
         self._scaled_size: tuple[int, int] | None = None
         self._panel: Any = None
         self._panel_size: tuple[int, int] | None = None
+        self._preview_art: GameArt | None = None
+        self._preview_surfaces: dict[str, Any] = {}
 
     def draw_menu(self, snapshot: Any) -> None:
         surface = self.target
@@ -144,7 +146,49 @@ class _MenuCanvas:
             )
             text = body_font.render(("›  " if selected else "   ") + label, True, color)
             item_y = layout.choices_y + index * layout.choice_spacing
-            surface.blit(text, text.get_rect(center=(width // 2, round(item_y))))
+            choice_center_x = round(width * 0.38) if snapshot.preview_fruit_id else width // 2
+            surface.blit(text, text.get_rect(center=(choice_center_x, round(item_y))))
+
+        if snapshot.preview_fruit_id is not None and snapshot.preview_base_radius > 0:
+            if self._preview_art is None:
+                self._preview_art = GameArt()
+                self._preview_surfaces = self._preview_art.fruit_surfaces(load_catalog())
+            sprite = self._preview_surfaces.get(snapshot.preview_fruit_id)
+            if sprite is not None:
+                preview_radius = min(height * 0.105, width * 0.085, 64)
+                preview_side = max(
+                    1,
+                    round(sprite.get_width() * preview_radius / snapshot.preview_base_radius),
+                )
+                preview_sprite = self.pygame.transform.smoothscale(
+                    sprite, (preview_side, preview_side)
+                )
+                choices_center = layout.choices_y + (
+                    len(snapshot.choices) - 1
+                ) * layout.choice_spacing / 2
+                center = (round(width * 0.74), round(choices_center))
+                surface.blit(preview_sprite, preview_sprite.get_rect(center=center))
+                collider_radius = max(
+                    1, round(preview_radius * snapshot.preview_hitbox_scale)
+                )
+                self.pygame.draw.circle(
+                    surface,
+                    (40, 255, 120),
+                    center,
+                    collider_radius,
+                    max(2, round(height / 360)),
+                )
+                label = small_font.render(
+                    f"HITBOX {snapshot.preview_hitbox_scale:.0%}",
+                    True,
+                    (190, 255, 207),
+                )
+                surface.blit(
+                    label,
+                    label.get_rect(
+                        center=(center[0], center[1] + round(preview_radius * 1.45))
+                    ),
+                )
 
         footer_text = [line for line in (snapshot.message, snapshot.footer) if line]
         first_footer_y = layout.footer_y - (len(footer_text) - 1) * layout.footer_spacing

@@ -182,8 +182,11 @@ def test_collider_menu_adjusts_apple_and_saves_the_scale() -> None:
     assert scene.snapshot.title == "Ajustar hitboxes"
     assert scene.snapshot.selected_index == 4
     assert scene.snapshot.choices[4] == "Maçã: 100%"
+    assert scene.snapshot.preview_fruit_id == "apple"
+    assert scene.snapshot.preview_hitbox_scale == 1.0
     scene.handle_actions(InputFrame(move_x=1.0))
     assert scene.snapshot.choices[4] == "Maçã: 105%"
+    assert scene.snapshot.preview_hitbox_scale == 1.05
     assert "37.8" in scene.snapshot.subtitle
 
     scene.handle_actions(_frame(9, InputAction.CANCEL))
