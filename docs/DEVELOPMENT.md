@@ -30,10 +30,17 @@ prioridade. Ao removê-lo, a partida pausa e o teclado pode confirmar a retomada
 Teclado nunca conta como joystick nem habilita BATALHA com um só controle.
 
 - Teclas de seta: mover a mira e navegar pelos menus.
-- Espaço ou Enter: soltar fruta; Enter também confirma a opção selecionada.
+- Espaço ou Enter: cada novo aperto tenta soltar imediatamente; segurar repete a
+  400 BPM (150 ms). Enter também confirma a opção selecionada nos menus.
 - **Esc:** abrir o menu de pausa durante a partida; no menu, voltar/continuar.
 - **P:** atalho adicional para abrir a pausa.
 - No controle, o botão **Start** abre a pausa.
+
+O botão sul do controle usa a mesma regra de aperto/hold, inclusive na batalha.
+Não há cooldown artificial entre apertos novos. Nascer sobre outra fruta continua
+bloqueado. Confirmações de menu/foco/reconexão são consumidas sem armar repetição;
+solte e aperte novamente após retomar. O repeat do teclado do sistema não altera
+a cadência. `classic-v4` mantém os novos recordes separados das regras anteriores.
 
 Diagnóstico: `python tools/check_controllers.py` lista os joysticks nativos que
 SDL enumera, sem abrir janela de jogo nem iniciar áudio. Também aceita

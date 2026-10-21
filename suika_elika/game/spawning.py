@@ -21,15 +21,15 @@ DEFAULT_WIDTH = 800.0
 DEFAULT_HEIGHT = 460.0
 DEFAULT_LAUNCH_Y = -18.0
 DEFAULT_SIDE_MARGIN = 4.0
-DEFAULT_DROP_RATE_BPM = 300
+DEFAULT_DROP_RATE_BPM = 400
 DEFAULT_DROP_INTERVAL = 60.0 / DEFAULT_DROP_RATE_BPM
+DEFAULT_LAUNCH_SPEED = 520.0
 DEFAULT_SPAWN_TOLERANCE = 0.5
 _TIMER_EPSILON = 1e-9
 
 
 class LauncherState(str, Enum):
     READY = "ready"
-    COOLDOWN = "cooldown"
     BLOCKED = "blocked"
 
 
@@ -116,8 +116,39 @@ def predict_aim(
     return AimPrediction(x=x, y=first_y, target_entity_id=first_entity_id)
 
 
+class HeldDropRepeater:
+    """Repeat only an explicitly pressed-and-held action on simulation time."""
+
+    def __init__(self) -> None:
+        self.reset()
+
+    def reset(self) -> None:
+        self._armed = False
+        self._remaining = DEFAULT_DROP_INTERVAL
+
+    def advance(self, delta_seconds: float, *, held: bool, pressed: bool) -> bool:
+        if not isfinite(delta_seconds) or delta_seconds < 0:
+            raise ValueError("simulation delta must be finite and non-negative")
+        if pressed:
+            self._armed = held
+            self._remaining = DEFAULT_DROP_INTERVAL
+            return False
+        if not held:
+            self.reset()
+        if not self._armed:
+            return False
+        self._remaining -= delta_seconds
+        if self._remaining > _TIMER_EPSILON:
+            return False
+        # One attempt per eligible step, no burst of overdue drops after a stall.
+        self._remaining += DEFAULT_DROP_INTERVAL
+        if self._remaining <= _TIMER_EPSILON:
+            self._remaining = DEFAULT_DROP_INTERVAL
+        return True
+
+
 class FruitLauncher:
-    """Own bodyless preview, a timed drop interval, and spawn-area safety checks."""
+    """Own bodyless preview and immediate, overlap-safe launch attempts."""
 
     def __init__(
         self,
@@ -129,7 +160,6 @@ class FruitLauncher:
         height: float = DEFAULT_HEIGHT,
         launch_y: float = DEFAULT_LAUNCH_Y,
         side_margin: float = DEFAULT_SIDE_MARGIN,
-        drop_interval: float = DEFAULT_DROP_INTERVAL,
         spawn_tolerance: float = DEFAULT_SPAWN_TOLERANCE,
     ) -> None:
         values = (
@@ -137,7 +167,6 @@ class FruitLauncher:
             height,
             launch_y,
             side_margin,
-            drop_interval,
             spawn_tolerance,
         )
         if any(not isfinite(value) for value in values):
@@ -146,7 +175,6 @@ class FruitLauncher:
             width <= 0
             or height <= 0
             or side_margin < 0
-            or drop_interval <= 0
             or spawn_tolerance < 0
         ):
             raise ValueError("launcher dimensions and timers are invalid")
@@ -157,13 +185,11 @@ class FruitLauncher:
         self._height = height
         self._launch_y = launch_y
         self._side_margin = side_margin
-        self._drop_interval = drop_interval
         self._spawn_tolerance = spawn_tolerance
         self._launcher_x = width / 2
         self._state = LauncherState.READY
         self._last_edge_sequence = -1
         self._launch_entity_id: str | None = None
-        self._elapsed_since_launch = 0.0
         self._blocked_by: tuple[str, ...] = ()
 
     @property
@@ -200,9 +226,10 @@ class FruitLauncher:
         if edge.sequence <= self._last_edge_sequence:
             return DropResult(False, reason="duplicate_edge")
         self._last_edge_sequence = edge.sequence
-        if self._state is not LauncherState.READY:
-            return DropResult(False, reason="launcher_not_ready")
+        return self.try_drop()
 
+    def try_drop(self) -> DropResult:
+        """Try a scheduled repetition or a fresh press without artificial cooldown."""
         definition = self._sequence.current
         self.set_launcher_x(self._launcher_x)
         spawn_center = Vector2(self._launcher_x, self._launch_y)
@@ -220,12 +247,12 @@ class FruitLauncher:
             entity_id,
             definition,
             Pose(spawn_center),
+            velocity=Vector2(0.0, DEFAULT_LAUNCH_SPEED),
         )
         self._sequence.try_consume_drop(accepted=True)
         self._launch_entity_id = entity_id
-        self._elapsed_since_launch = 0.0
         self._blocked_by = ()
-        self._state = LauncherState.COOLDOWN
+        self._state = LauncherState.READY
         # Clamp again because the newly revealed preview may be a different size.
         self.set_launcher_x(self._launcher_x)
         return DropResult(True, entity_id=entity_id)
@@ -234,7 +261,7 @@ class FruitLauncher:
         self,
         delta_seconds: float,
     ) -> LauncherState:
-        """Advance the release interval; contacts do not delay another drop."""
+        """Refresh a blocked mouth; only geometry can delay a manual launch."""
         if not isfinite(delta_seconds) or delta_seconds < 0:
             raise ValueError("simulation delta must be finite and non-negative")
 
@@ -249,13 +276,6 @@ class FruitLauncher:
                 self._state = LauncherState.READY
             return self._state
 
-        if self._state is not LauncherState.COOLDOWN:
-            return self._state
-
-        self._elapsed_since_launch += delta_seconds
-        if self._elapsed_since_launch + _TIMER_EPSILON >= self._drop_interval:
-            self._state = LauncherState.READY
-            self._launch_entity_id = None
         return self._state
 
 
@@ -264,6 +284,7 @@ __all__ = [
     "AimPrediction",
     "DropResult",
     "FruitLauncher",
+    "HeldDropRepeater",
     "LauncherSnapshot",
     "LauncherState",
     "predict_aim",

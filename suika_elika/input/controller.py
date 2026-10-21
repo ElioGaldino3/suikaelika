@@ -92,12 +92,15 @@ class SDLControllerAdapter:
         fine_adjust = self._pressed_constant("CONTROLLER_BUTTON_LEFTSHOULDER")
 
         edges: list[InputAction] = []
+        drop_held = False
         for button, actions in self._button_actions.items():
             is_down = bool(self.controller.get_button(button))
             was_down = self._button_states.get(button, False)
             if is_down and not was_down:
                 edges.extend(actions)
             self._button_states[button] = is_down
+            if is_down and InputAction.DROP in actions:
+                drop_held = True
 
         return InputSample(
             analog_x=axis_x,
@@ -108,6 +111,7 @@ class SDLControllerAdapter:
             down=down,
             fine_adjust=fine_adjust,
             action_edges=tuple(edges),
+            drop_held=drop_held,
         )
 
     def reset_edges(self) -> None:

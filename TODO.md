@@ -112,3 +112,24 @@ A validação com drivers simulados não homologa controles físicos nem Batocer
 - Teclado comum fora da contagem. Entrada nativa por padrão; --desktop autoriza fallback no clássico/menu, sem substituir o segundo controle da batalha.
 - Seleção explícita de P1/P2 por índices SDL distintos; não presumir que a ordem do EmulationStation seja transmitida pelo lançador Pygame.
 - Regressões, lint, tipos, build e smoke local aprovados; limitações de hardware registradas.
+
+
+### SE-041 — Aperto imediato e lançamento ao segurar a 400 BPM
+
+- Status: `done`
+- Scope: `input`
+- Priority: `P1`
+- Depends: `SE-035, SE-036, SE-040`
+- Writes: `suika_elika/contracts/input.py; suika_elika/input/manager.py; suika_elika/input/controller.py; suika_elika/input/joystick.py; suika_elika/app.py; suika_elika/game/spawning.py; suika_elika/game/session.py; suika_elika/game/catalog.py; suika_elika/scenes/play.py; suika_elika/scenes/battle.py; suika_elika/scenes/help.py; data/rules/classic-v4.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; tests/game/test_session.py; tests/game/test_spawning.py; tests/input/test_actions.py; tests/input/test_devices.py; tests/integration/test_drop_repeat.py; tests/packaging/test_layout.py; tests/scenes/test_navigation.py; README.md; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/DEVELOPMENT.md; docs/BATOCERA.md; docs/validation/drop-repeat.md; TODO.md`
+- Reads: `suika_elika/game/physics.py; suika_elika/scene_manager.py`
+- Owner: `unassigned`
+- Attempts: `1`
+- Evidence: Implementado e revisado. 266 testes passaram; Ruff e mypy (46 fontes) aprovados; grafo válido, build e smoke do pacote com código 0. Física real confirmou intervalos de 150 ms a 30/60/120 FPS. Comandos, critérios e limites em docs/validation/drop-repeat.md; homologação física permanece em SE-038/039.
+- Blocker: `none`
+
+**Aceitação:**
+
+- Cada novo aperto tenta lançar sem cooldown artificial; segurar repete a cada 150 ms de simulação, no teclado autorizado e nos dois controles.
+- Repetição para ao soltar e desarma em pausa/retomada/reinício, sem repetir confirmação nem gerar rajada após bloqueio.
+- Área de nascimento continua protegida; velocidade inicial permite a cadência sem sobreposição. Ruleset classic-v4 separa os recordes.
+- Testes de física/entrada/cenas e regressões aprovados; lint, tipos, build e evidências registrados; homologação física permanece pendente.

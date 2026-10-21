@@ -19,9 +19,9 @@ from suika_elika.game.spawning import (
 )
 
 
-def test_default_drop_interval_matches_300_drops_per_minute() -> None:
-    assert DEFAULT_DROP_RATE_BPM == 300
-    assert DEFAULT_DROP_INTERVAL == pytest.approx(60 / 300)
+def test_default_drop_interval_matches_400_drops_per_minute() -> None:
+    assert DEFAULT_DROP_RATE_BPM == 400
+    assert DEFAULT_DROP_INTERVAL == pytest.approx(60 / 400)
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,7 +103,7 @@ def test_preview_is_bodyless_and_only_accepted_drop_advances_sequence() -> None:
     assert result.accepted and result.entity_id == "spawn-001"
     assert sequence.accepted_drops == 1
     assert sequence.current == initial_next
-    assert launcher.snapshot.state is LauncherState.COOLDOWN
+    assert launcher.snapshot.state is LauncherState.READY
     assert physics.bodies[result.entity_id].definition == initial_current
     assert physics.bodies[result.entity_id].pose == Pose(
         Vector2(800 - initial_current.radius - 4, -18)
@@ -136,39 +136,33 @@ def test_blocked_birth_rejects_without_body_or_sequence_consumption() -> None:
     assert sequence.accepted_drops == 1
 
 
-def test_drop_interval_releases_without_contact_and_busy_edges_are_not_queued() -> None:
+def test_fresh_manual_edges_are_immediate_but_replayed_edges_are_ignored() -> None:
     launcher, sequence, _ = _launcher()
     assert launcher.handle_drop(InputEdge(20, InputAction.DROP)).accepted
 
-    busy = launcher.handle_drop(InputEdge(21, InputAction.DROP))
-    assert not busy.accepted and busy.reason == "launcher_not_ready"
-    assert launcher.advance(0.1) is LauncherState.COOLDOWN
-    assert launcher.advance(0.099) is LauncherState.COOLDOWN
-    assert launcher.advance(0.001) is LauncherState.READY
-    assert sequence.accepted_drops == 1
+    assert launcher.handle_drop(InputEdge(21, InputAction.DROP)).accepted
+    assert sequence.accepted_drops == 2
 
     # Replaying the same edge after readiness cannot turn a held button into a drop.
     replayed = launcher.handle_drop(InputEdge(21, InputAction.DROP))
     assert not replayed.accepted and replayed.reason == "duplicate_edge"
     assert launcher.handle_drop(InputEdge(22, InputAction.DROP)).accepted
-    assert sequence.accepted_drops == 2
+    assert sequence.accepted_drops == 3
 
 
-def test_release_interval_does_not_wait_for_a_contact_or_timeout() -> None:
+def test_new_presses_never_wait_for_contact_or_timeout() -> None:
     launcher, _, _ = _launcher()
     assert launcher.handle_drop(InputEdge(30, InputAction.DROP)).accepted
-    assert launcher.advance(0.199) is LauncherState.COOLDOWN
-    assert launcher.advance(0.001) is LauncherState.READY
+    assert launcher.advance(0) is LauncherState.READY
 
     assert launcher.handle_drop(InputEdge(31, InputAction.DROP)).accepted
-    assert launcher.advance(0.199) is LauncherState.COOLDOWN
-    assert launcher.advance(0.001) is LauncherState.READY
+    assert launcher.advance(0) is LauncherState.READY
 
 
-def test_ready_after_rate_limit_still_rejects_an_overlapping_spawn() -> None:
+def test_immediate_attempt_still_rejects_an_overlapping_spawn() -> None:
     launcher, sequence, physics = _launcher()
     assert launcher.handle_drop(InputEdge(40, InputAction.DROP)).accepted
-    assert launcher.advance(0.2) is LauncherState.READY
+    assert launcher.advance(0) is LauncherState.READY
 
     physics.blocked_by = ("falling-fruit",)
     blocked = launcher.handle_drop(InputEdge(41, InputAction.DROP))

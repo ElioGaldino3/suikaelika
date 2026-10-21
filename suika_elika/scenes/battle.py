@@ -47,7 +47,8 @@ class BattleScene:
     def simulation_step(self) -> tuple[DomainEvent, ...]:
         frames = tuple(
             InputFrame(
-                move_x=frame.move_x, fine_adjust=frame.fine_adjust, edges=queue.consume_for_step()
+                move_x=frame.move_x, fine_adjust=frame.fine_adjust, edges=queue.consume_for_step(),
+                drop_held=frame.drop_held,
             )
             for frame, queue in zip(self._frames, self._queues, strict=True)
         )

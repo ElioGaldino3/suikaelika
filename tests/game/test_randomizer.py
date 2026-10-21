@@ -10,7 +10,7 @@ def test_same_seed_and_ruleset_reproduce_sequence() -> None:
     second = FruitSequence(8675309)
 
     assert first.seed == 8675309
-    assert first.ruleset_version == "classic-v3"
+    assert first.ruleset_version == "classic-v4"
     for accepted in (True, False, True, True, False, True, True):
         assert first.try_consume_drop(accepted=accepted) == accepted
         assert second.try_consume_drop(accepted=accepted) == accepted

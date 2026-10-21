@@ -183,6 +183,8 @@ def test_controller_uses_device_index_to_open_and_instance_id_for_runtime() -> N
     assert sample.analog_x == -1.0
     assert sample.analog_y == pytest.approx(0.5, abs=2e-5)
     assert sample.action_edges == (InputAction.CONFIRM, InputAction.DROP)
+    assert sample.drop_held
+    assert registry.poll().drop_held
     assert registry.poll().action_edges == ()
 
 
@@ -238,6 +240,11 @@ def test_generic_button_mapping_emits_one_edge_and_rumble_is_optional() -> None:
 
     assert adapter.poll().action_edges == (InputAction.DROP,)
     assert adapter.poll().action_edges == ()
+    assert adapter.poll().drop_held
+    adapter.reset_edges()
+    assert adapter.poll().action_edges == ()
+    joystick.buttons = (False,)
+    assert not adapter.poll().drop_held
     assert adapter.rumble(0.2, 0.7, 150)
 
 

@@ -32,6 +32,11 @@ iniciar com `--desktop` e não houver joystick, o teclado funciona como fallback
 de desenvolvimento. Sem essa opção, somente controles nativos são aceitos. Os
 controles estão em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
+Para soltar frutas, aperte o botão sul do controle (ou Espaço/Enter com
+`--desktop`). Novos apertos não têm cooldown artificial. Segurar repete a
+**400 BPM**, uma fruta a cada **150 ms**, enquanto a boca da cesta estiver livre.
+Soltar interrompe a repetição; após pausar ou retomar, aperte novamente para lançar.
+
 Para conferir quantos controles o Pygame vê pelo terminal:
 
 ```powershell

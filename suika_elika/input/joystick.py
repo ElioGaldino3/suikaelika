@@ -79,12 +79,15 @@ class JoystickAdapter:
 
         pressed = self._button(self.bindings.fine_adjust_button)
         edges: list[InputAction] = []
+        drop_held = False
         for button, actions in (self.bindings.button_actions or {}).items():
             is_down = self._button(button)
             was_down = self._button_states.get(button, False)
             if is_down and not was_down:
                 edges.extend(actions)
             self._button_states[button] = is_down
+            if is_down and InputAction.DROP in actions:
+                drop_held = True
 
         return InputSample(
             analog_x=axis_x,
@@ -95,11 +98,14 @@ class JoystickAdapter:
             down=down,
             fine_adjust=pressed,
             action_edges=tuple(edges),
+            drop_held=drop_held,
         )
 
     def reset_edges(self) -> None:
-        """Forget held buttons after a remap or a focus/device lifecycle change."""
-        self._button_states.clear()
+        """Synchronize held buttons so lifecycle changes cannot create new presses."""
+        self._button_states = {
+            button: self._button(button) for button in (self.bindings.button_actions or {})
+        }
 
     def rumble(self, low_frequency: float, high_frequency: float, duration_ms: int) -> bool:
         """Try optional rumble and report unsupported/failed devices as False."""

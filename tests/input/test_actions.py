@@ -128,16 +128,19 @@ def test_manager_polls_only_selected_backend_and_exposes_semantic_actions() -> N
 
 
 def test_manager_emits_action_edges_once_without_a_residual_queue() -> None:
-    adapter = FakeAdapter(InputSample(action_edges=(InputAction.DROP,)))
+    adapter = FakeAdapter(InputSample(action_edges=(InputAction.DROP,), drop_held=True))
     manager = InputManager()
     manager.register_adapter(InputBackend.NATIVE, adapter)
     manager.select_backend(InputBackend.NATIVE)
 
     first = manager.poll(0.0)
-    adapter.sample = InputSample()
+    adapter.sample = InputSample(drop_held=True)
     second = manager.poll(0.0)
     assert tuple(edge.action for edge in first.frame.edges) == (InputAction.DROP,)
     assert second.frame.edges == ()
+    assert first.frame.drop_held and second.frame.drop_held
+    adapter.sample = InputSample()
+    assert not manager.poll(0.0).frame.drop_held
     assert first.frame.edges[0].sequence == 0
 
 

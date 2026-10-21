@@ -12,6 +12,7 @@ from suika_elika.contracts import (
     FruitDefinition,
     FruitSnapshot,
     InputAction,
+    InputEdge,
     InputEdgeQueue,
     InputFrame,
     PersistencePort,
@@ -35,8 +36,10 @@ from suika_elika.game.merging import MergeFruit, MergeResolution, MergeSystem
 from suika_elika.game.randomizer import FruitSequence
 from suika_elika.game.spawning import (
     DEFAULT_HEIGHT,
+    DEFAULT_LAUNCH_SPEED,
     DEFAULT_WIDTH,
     FruitLauncher,
+    HeldDropRepeater,
     LauncherState,
 )
 
@@ -73,7 +76,8 @@ class GameSession:
     for wall/floor contacts: the current PhysicsPort reports fruit-to-fruit
     contacts only, so this class never guesses static geometry collisions from
     a body's position. Fruit-pair contacts and consumption by a merge are
-    detected internally. The launcher release interval is independent of contact.
+    detected internally. Fresh presses are immediate; a held press repeats on
+    simulation time, independently of contacts and render cadence.
     """
 
     def __init__(
@@ -249,30 +253,15 @@ class GameSession:
         self._edges.enqueue_frame(frame)
         self._move_launcher(frame.move_x, frame.fine_adjust)
         step_events: list[DomainEvent] = []
-        for edge in self._edges.consume_for_step():
-            if edge.action is not InputAction.DROP:
-                continue
-            dropped_definition = self._launcher.snapshot.current
-            dropped_x = self._launcher.launcher_x
-            result = self._launcher.handle_drop(edge)
-            if result.accepted:
-                assert result.entity_id is not None
-                definition = dropped_definition
-                pose = Pose(Vector2(dropped_x, self._launcher_y))
-                self._fruits[result.entity_id] = _FruitState(definition, pose, pose, Vector2(0, 0))
-                self._danger.register_spawn(result.entity_id)
-                self._drop_count += 1
-                self._best_fruit_level = max(self._best_fruit_level, definition.level)
-                self._round_state = RoundState.PLAYING
-                step_events.append(
-                    make_event(
-                        EventType.FRUIT_DROPPED,
-                        self._step_index,
-                        entity_ids=(result.entity_id,),
-                        position=pose.position,
-                        payload=(("fruit_id", definition.fruit_id),),
-                    )
-                )
+        drops = tuple(edge for edge in self._edges.consume_for_step()
+                      if edge.action is InputAction.DROP)
+        repeat = self._drop_repeater.advance(
+            self._fixed_dt, held=frame.drop_held, pressed=bool(drops),
+        )
+        for edge in drops:
+            self._try_drop(edge, step_events)
+        if repeat:
+            self._try_drop(None, step_events)
 
         old_danger_progress = self._danger_progress
         if self._round_state is RoundState.PLAYING:
@@ -296,6 +285,7 @@ class GameSession:
             self._round_state = RoundState.PAUSED
             self._edges.clear()
             self._events = ()
+            self._drop_repeater.reset()
 
     def resume(self) -> None:
         """Resume the same round without consuming the confirmation press."""
@@ -303,6 +293,7 @@ class GameSession:
             self._round_state = RoundState.PLAYING if self._drop_count else RoundState.READY
             self._edges.clear()
             self._events = ()
+            self._drop_repeater.reset()
 
     def restart(self, seed: int | str | bytes | bytearray | None = None) -> None:
         """Start an empty round and clear all bodies and residual commands."""
@@ -314,6 +305,7 @@ class GameSession:
     def _reset_round(self, seed: int | str | bytes | bytearray) -> None:
         self._seed = seed
         self._sequence = FruitSequence(seed, self._catalog)
+        self._drop_repeater = HeldDropRepeater()
         self._danger = DangerSystem(DangerConfig(width=self._width, height=self._height))
         self._launcher_y = -18.0
         self._launcher = FruitLauncher(
@@ -344,6 +336,25 @@ class GameSession:
         self._warning_entity_id = None
         self._step_index = 0
         self._events = ()
+
+    def _try_drop(self, edge: InputEdge | None, events: list[DomainEvent]) -> None:
+        definition = self._launcher.snapshot.current
+        dropped_x = self._launcher.launcher_x
+        result = self._launcher.handle_drop(edge) if edge is not None else self._launcher.try_drop()
+        if not result.accepted:
+            return
+        assert result.entity_id is not None
+        pose = Pose(Vector2(dropped_x, self._launcher_y))
+        velocity = Vector2(0.0, DEFAULT_LAUNCH_SPEED)
+        self._fruits[result.entity_id] = _FruitState(definition, pose, pose, velocity)
+        self._danger.register_spawn(result.entity_id)
+        self._drop_count += 1
+        self._best_fruit_level = max(self._best_fruit_level, definition.level)
+        self._round_state = RoundState.PLAYING
+        events.append(make_event(
+            EventType.FRUIT_DROPPED, self._step_index, entity_ids=(result.entity_id,),
+            position=pose.position, payload=(("fruit_id", definition.fruit_id),),
+        ))
 
     def _move_launcher(self, move_x: float, fine_adjust: bool) -> None:
         speed = self._fine_speed if fine_adjust else self._digital_speed

@@ -31,8 +31,11 @@ class InputSample:
     down: bool = False
     fine_adjust: bool = False
     action_edges: tuple[InputAction, ...] = ()
+    drop_held: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.drop_held) is not bool:
+            raise TypeError("drop_held must be a boolean")
         if not isfinite(self.analog_x) or not -1.0 <= self.analog_x <= 1.0:
             raise ValueError("analog_x must be finite and normalized to [-1, 1]")
         if not isfinite(self.analog_y) or not -1.0 <= self.analog_y <= 1.0:
@@ -133,6 +136,7 @@ class InputManager:
                 move_y=move_y,
                 fine_adjust=sample.fine_adjust,
                 edges=tuple(edges),
+                drop_held=sample.drop_held,
             ),
             horizontal_velocity=horizontal_velocity,
         )

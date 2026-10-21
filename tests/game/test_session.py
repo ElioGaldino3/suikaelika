@@ -145,7 +145,7 @@ def test_drop_snapshot_and_current_next_follow_the_accepted_fruit() -> None:
     assert session.round_state is RoundState.PLAYING
     assert session.snapshot.current_fruit == next_fruit
     assert session.snapshot.next_fruit is not None
-    assert session.snapshot.drop_ready is False
+    assert session.snapshot.drop_ready is True
     assert len(session.snapshot.fruits) == 1
     dropped = session.snapshot.fruits[0]
     assert dropped.fruit_id == current.fruit_id
@@ -160,11 +160,7 @@ def test_merge_precedes_danger_evaluation_and_scores_once() -> None:
     session.step(_drop_frame(1))
     first_id = next(iter(physics.bodies))
 
-    # The 0.2 s release interval expires while the first fruit is still airborne.
-    for _ in range(22):
-        session.step()
-    assert not session.snapshot.drop_ready
-    session.step()
+    # A second physical press has no timer to wait for.
     assert session.snapshot.drop_ready
     session.step(_drop_frame(2))
     second_id = max(physics.bodies)
@@ -207,16 +203,11 @@ def test_merge_precedes_danger_evaluation_and_scores_once() -> None:
     )
 
 
-def test_drop_interval_unlocks_before_contact_and_pause_freezes_state() -> None:
+def test_immediate_second_press_and_pause_freezes_state() -> None:
     physics = FakePhysics()
     session = GameSession(physics, seed=0)
     session.step(_drop_frame(1))
     launch_id = next(iter(physics.bodies))
-    # One initial step plus 23 steps is still below 300 drops per minute.
-    for _ in range(22):
-        session.step()
-    assert not session.snapshot.drop_ready
-    session.step()
     assert session.snapshot.drop_ready
     session.step(_drop_frame(2))
     assert session.drop_count == 2
@@ -256,7 +247,7 @@ def test_record_is_scoped_by_mode_and_ruleset() -> None:
     persistence = FakePersistence(
         (
             RecordData(catalog.ruleset_version, 700, 4, 0, mode="other"),
-            RecordData("old-rules", 900, 8, 1),
+            RecordData("classic-v3", 900, 8, 1),
             RecordData(catalog.ruleset_version, 5, 2, 0),
         )
     )

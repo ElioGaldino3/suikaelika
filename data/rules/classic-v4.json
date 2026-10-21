@@ -1,0 +1,23 @@
+{
+  "ruleset_version": "classic-v4",
+  "fruits": [
+    {"id": "cherry", "level": 1, "name": "Cereja", "radius": 14, "mass": 1.0, "points_on_spawn": 0, "color": "#D92D59"},
+    {"id": "strawberry", "level": 2, "name": "Morango", "radius": 19, "mass": 1.8418367346938775, "points_on_spawn": 1, "color": "#F34B58"},
+    {"id": "grape", "level": 3, "name": "Uva", "radius": 24, "mass": 2.938775510204082, "points_on_spawn": 3, "color": "#9454C4"},
+    {"id": "lemon", "level": 4, "name": "Limão amarelo", "radius": 30, "mass": 4.591836734693878, "points_on_spawn": 6, "color": "#F4D54A"},
+    {"id": "apple", "level": 5, "name": "Maçã", "radius": 36, "mass": 6.612244897959184, "points_on_spawn": 10, "color": "#E95B45"},
+    {"id": "orange", "level": 6, "name": "Laranja", "radius": 43, "mass": 9.433673469387756, "points_on_spawn": 15, "color": "#F59B32"},
+    {"id": "pear", "level": 7, "name": "Pera", "radius": 51, "mass": 13.270408163265307, "points_on_spawn": 21, "color": "#A3CE4B"},
+    {"id": "peach", "level": 8, "name": "Pêssego", "radius": 61, "mass": 18.984693877551017, "points_on_spawn": 28, "color": "#F6A0A1"},
+    {"id": "pineapple", "level": 9, "name": "Abacaxi", "radius": 73, "mass": 27.18877551020408, "points_on_spawn": 36, "color": "#E9AE39"},
+    {"id": "melon", "level": 10, "name": "Melão", "radius": 88, "mass": 39.51020408163265, "points_on_spawn": 45, "color": "#C8DA76"},
+    {"id": "watermelon", "level": 11, "name": "Melancia", "radius": 106, "mass": 57.326530612244895, "points_on_spawn": 55, "color": "#49A75F"}
+  ],
+  "spawn_weights": [
+    {"fruit_id": "cherry", "weight": 30},
+    {"fruit_id": "strawberry", "weight": 25},
+    {"fruit_id": "grape", "weight": 20},
+    {"fruit_id": "lemon", "weight": 15},
+    {"fruit_id": "apple", "weight": 10}
+  ]
+}

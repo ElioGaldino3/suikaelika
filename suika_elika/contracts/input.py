@@ -42,8 +42,11 @@ class InputFrame:
     fine_adjust: bool = False
     edges: tuple[InputEdge, ...] = ()
     move_y: float = 0.0
+    drop_held: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.drop_held) is not bool:
+            raise TypeError("drop_held must be a boolean")
         if not isfinite(self.move_x) or not -1.0 <= self.move_x <= 1.0:
             raise ValueError("move_x must be finite and normalized to [-1, 1]")
         if not isfinite(self.move_y) or not -1.0 <= self.move_y <= 1.0:

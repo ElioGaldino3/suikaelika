@@ -45,7 +45,7 @@ A tarefa SE-002 cria os modelos e interfaces em `suika_elika/contracts/`, com ti
 
 | Contrato | Dados e operações mínimas |
 |---|---|
-| `InputFrame` | `move_x` e `move_y` normalizados, ajuste fino e bordas de `drop`, `confirm`, `cancel`, `pause`, `nav_up`, `nav_down`; sem referências SDL |
+| `InputFrame` | `move_x` e `move_y` normalizados, ajuste fino, estado contínuo `drop_held` e bordas de `drop`, `confirm`, `cancel`, `pause`, `nav_up`, `nav_down`; sem referências SDL |
 | `DomainEvent` | Tipo, passo de simulação, IDs relevantes, posição e payload tipado/copied; sem `Arbiter` |
 | `FruitDefinition` | ID, nível, raio, massa, pontos de criação e chave visual |
 | `FruitSnapshot` | ID, tipo, pose anterior/atual e estado visual de perigo; sem corpo mutável |
@@ -56,7 +56,7 @@ A tarefa SE-002 cria os modelos e interfaces em `suika_elika/contracts/`, com ti
 | `SettingsData` / `ControllerProfileData` / `RecordData` / `StatisticsData` | Preferências de áudio, vídeo, acessibilidade e área segura; perfil por plataforma/GUID com bindings e calibração; recorde por modo e ruleset com duração; estatísticas acumuladas |
 | `Scene` | Entrar/sair, receber ações, atualizar interface e desenhar; retorno de transição explícito |
 
-`InputFrame` é um snapshot por quadro de entrada. Bordas para gameplay são enfileiradas com número de sequência e consumidas uma vez no primeiro passo elegível; nenhum subpasso repete uma soltura. Ações inválidas são descartadas segundo as regras do lançador, sem fila oculta para uma queda posterior. A navegação em menus usa `move_y` normalizado e gera `nav_up`/`nav_down` com limiar, histerese e repetição medidos pelo relógio da interface.
+`InputFrame` é um snapshot por quadro de entrada. Bordas para gameplay são enfileiradas com número de sequência e consumidas uma vez no primeiro passo elegível; nenhum subpasso reaplica uma borda. O estado contínuo `drop_held` permite repetições separadas geradas pela sessão em tempo de simulação. Ações inválidas são descartadas segundo as regras do lançador, sem fila oculta para uma queda posterior. A navegação em menus usa `move_y` normalizado e gera `nav_up`/`nav_down` com limiar, histerese e repetição medidos pelo relógio da interface.
 
 Eventos pertencem ao passo que os produziu. O `Renderer` recebe snapshots e eventos de apresentação; não modifica entidades. Uma UI que precisa de configuração envia um comando à aplicação. Não altera silenciosamente as regras da sessão ativa.
 
@@ -68,7 +68,7 @@ Ordem de cada passo: consumir comandos válidos → guardar poses anteriores →
 
 Pausa, foco perdido e desconexão congelam tempo de simulação, limpam entradas residuais e zeram o acumulador. Ao retomar, a confirmação é consumida pela UI e não vira soltura. O relógio visual de menus pode continuar.
 
-O lançador libera novas tentativas a cada 0,2 s de simulação (60/300, ou 300 por minuto), contados desde a última soltura aceita, sem esperar contato ou chegada ao fundo. A consulta da área de nascimento continua rejeitando qualquer lançamento que começaria sobreposto à pilha.
+Apertos físicos novos tentam lançar imediatamente, sem cooldown. `HeldDropRepeater`, pertencente a cada `GameSession`, arma somente a partir de uma borda DROP com `drop_held=True`, agenda tentativas a cada 150 ms de simulação (400 BPM) e desarma ao soltar, pausar, retomar ou reiniciar. Repetições não fabricam bordas nem alteram os números de sequência dos dispositivos. Não há rajada após atraso/bloqueio. `FruitLauncher` mantém somente READY/BLOCKED, consulta a área de nascimento a cada tentativa e cria frutas com velocidade vertical inicial de 520 unidades/s; contatos/fundo não são pré-requisitos para outro lançamento. Ruleset `classic-v4` separa os recordes pela mudança de ritmo e velocidade inicial.
 
 Parâmetros de passo, sorteio, massa, pontos, raio e derrota pertencem ao ruleset. Perfis gráficos reduzem efeitos sem mudar a simulação. Alterações que impactem comparabilidade de recordes exigem revisar `ruleset_version`.
 
@@ -124,6 +124,7 @@ Em checkout compartilhado, revisar mudanças no local. Worktrees isolados só se
 | ADR-006 | Batalha coordena duas GameSession independentes | Mesmo catálogo e seed, cestas 480×460, placares e física separados, sem persistência do clássico |
 | ADR-007 | Slots de batalha por instance ID | GUID/nome apenas para reconquistar slot ausente; modelos iguais conectados continuam jogadores distintos |
 | ADR-008 | Teclado somente com `--desktop` | Padrão nativo em todos os sistemas; teclado como fallback explícito, fora da contagem de joysticks |
+| ADR-009 | Bordas imediatas e hold em tempo de simulação | 400 BPM por sessão; `drop_held` propagado pelas cenas, sem repetir confirmações nem depender do repeat do sistema |
 
 ## 9. Contratos implementados para BATALHA
 

@@ -26,7 +26,7 @@ dist/SuikaElika.pygame/
 ├── SuikaElika.pygame       # arquivo ROM reconhecido pelo sistema Batocera
 ├── README-BATOCERA.txt
 ├── suika_elika/            # código do jogo
-├── data/                   # regras classic-v3
+├── data/                   # regras classic-v4 e versões anteriores
 └── assets/                 # imagens do jogo
 ```
 

@@ -46,6 +46,7 @@ class PlayScene:
         self._edges = InputEdgeQueue()
         self._move_x = 0.0
         self._fine_adjust = False
+        self._drop_held = False
         self._scene_transition_pending = False
         self._presentation_canvas: object | None = None
 
@@ -57,6 +58,7 @@ class PlayScene:
         self._edges.clear()
         self._move_x = 0.0
         self._fine_adjust = False
+        self._drop_held = False
         self._scene_transition_pending = False
         self._presentation_canvas = None
 
@@ -64,6 +66,7 @@ class PlayScene:
         self._edges.clear()
         self._move_x = 0.0
         self._fine_adjust = False
+        self._drop_held = False
 
     def handle_actions(self, frame: InputFrame) -> SceneTransition | None:
         if any(edge.action is InputAction.PAUSE for edge in frame.edges):
@@ -81,6 +84,7 @@ class PlayScene:
                 self._edges.enqueue(edge)
         self._move_x = frame.move_x
         self._fine_adjust = frame.fine_adjust
+        self._drop_held = frame.drop_held
         return None
 
     def simulation_step(
@@ -99,6 +103,7 @@ class PlayScene:
             move_x=self._move_x,
             fine_adjust=self._fine_adjust,
             edges=self._edges.consume_for_step(),
+            drop_held=self._drop_held,
         )
         return self.session.step(frame, launch_contacted=launch_contacted)
 

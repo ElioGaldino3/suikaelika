@@ -66,6 +66,7 @@ class _KeyboardAdapter:
             down=down,
             fine_adjust=fine,
             action_edges=edges,
+            drop_held=bool(keys[self.pygame.K_SPACE] or keys[self.pygame.K_RETURN]),
         )
 
     def clear(self) -> None:
