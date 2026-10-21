@@ -24,10 +24,13 @@ central e preservação da proporção.
 | 10 | `melon` | melão, inferior 4 |
 | 11 | `watermelon` | melancia, inferior 5 |
 
-Os sprites originais variam em proporção e escala. O jogo preserva a proporção,
-centraliza cada desenho dentro do envelope visual correspondente ao raio do
-catálogo e mantém as superfícies em cache. Os PNGs gerados são os recursos de
-runtime; a folha original não é necessária na instalação.
+Os sprites originais variam em proporção e escala. No carregamento, o runtime
+mede o contorno opaco e o ajusta para que sua maior distância ao centro coincida
+com o raio físico da fruta. Isso mantém a arte alinhada à colisão circular sem
+forçar cada silhueta a virar um círculo perfeito. A imagem recebe margem
+transparente para rotação e as superfícies processadas ficam em cache. As
+rotações usam transformação filtrada com cache limitado. Os PNGs gerados são os
+recursos de runtime; a folha original não é necessária na instalação.
 
 `assets/backgrounds/menu.png` vem de `raw_assets/background_menu.png` e
 `assets/backgrounds/gameplay.png` vem de `raw_assets/background_jogo.png`.

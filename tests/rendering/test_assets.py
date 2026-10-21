@@ -35,7 +35,7 @@ def test_art_pipeline_uses_new_transparent_sheet_and_nonoverlapping_crop_cells()
             assert x2 <= other_x1 or other_x2 <= x1 or y2 <= other_y1 or other_y2 <= y1
 
 
-def test_v3_sheet_generates_all_native_resolution_transparent_sprites(tmp_path) -> None:
+def test_v3_sheet_generates_sprites_and_keeps_manual_upscales(tmp_path) -> None:
     sheet = pygame.image.load(FRUIT_SHEET)
     sprite_dir = tmp_path / "sprites"
 
@@ -45,12 +45,16 @@ def test_v3_sheet_generates_all_native_resolution_transparent_sprites(tmp_path) 
     for fruit_id in FRUIT_CELLS:
         generated = pygame.image.load(sprite_dir / f"{fruit_id}.png")
         packaged = pygame.image.load(ASSET_ROOT / "sprites" / f"{fruit_id}.png")
-        assert generated.get_size() == packaged.get_size()
         bounds = generated.get_bounding_rect(min_alpha=32)
         assert bounds.width > 0
         assert bounds.left >= 8 and bounds.top >= 8
         assert bounds.right <= generated.get_width() - 8
         assert bounds.bottom <= generated.get_height() - 8
+        width_scale = packaged.get_width() / generated.get_width()
+        height_scale = packaged.get_height() / generated.get_height()
+        assert width_scale == pytest.approx(height_scale)
+        assert width_scale >= 1
+        assert width_scale == pytest.approx(round(width_scale))
 
 
 def test_larger_fruit_source_pngs_retain_high_resolution_crop() -> None:
@@ -79,6 +83,31 @@ def test_imported_fruit_sprites_match_catalog_and_have_transparency() -> None:
         assert sprite.get_at((0, 0)).a == 0
         assert sprite.get_at((sprite.get_width() // 2, sprite.get_height() // 2)).a > 0
         assert art.fruit_surfaces(catalog)[entry.fruit_id] is sprite
+
+
+def test_imported_fruit_silhouettes_fit_their_physics_circles() -> None:
+    catalog = load_catalog()
+    sprites = GameArt().fruit_surfaces(catalog)
+
+    for entry in catalog.entries:
+        sprite = sprites[entry.fruit_id]
+        mask = pygame.mask.from_surface(sprite, 32)
+        center_x = sprite.get_width() / 2
+        center_y = sprite.get_height() / 2
+        outline = (
+            point
+            for component in mask.connected_components()
+            for point in component.outline()
+        )
+        visible_radius = max(
+            (
+                ((x + 0.5 - center_x) ** 2 + (y + 0.5 - center_y) ** 2) ** 0.5
+                for x, y in outline
+            ),
+            default=0.0,
+        )
+
+        assert visible_radius == pytest.approx(entry.definition.radius, abs=1.5)
 
 
 def test_missing_assets_use_the_existing_procedural_art(tmp_path) -> None:

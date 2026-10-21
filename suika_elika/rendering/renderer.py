@@ -290,8 +290,10 @@ class Renderer:
             if rotated is None:
                 # Quantized rotations reuse surfaces as fruit settle and move.
                 # Pygame rotates counter-clockwise; the Y-down view flips the sign.
-                rotated = pygame.transform.rotate(
-                    sprite, -(rotation_step * 360 / _ROTATION_STEPS)
+                rotated = pygame.transform.rotozoom(
+                    sprite,
+                    -(rotation_step * 360 / _ROTATION_STEPS),
+                    1.0,
                 )
                 self._rotated_fruit_surfaces[key] = rotated
                 if len(self._rotated_fruit_surfaces) > _ROTATED_SURFACE_CACHE_LIMIT:

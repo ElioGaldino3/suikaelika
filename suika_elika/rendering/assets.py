@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from importlib import import_module
+from math import hypot
 from pathlib import Path
 from typing import Any
 
@@ -32,7 +33,7 @@ class GameArt:
         self._pygame = import_module("pygame")
         self._asset_root = asset_root
         self._fallback = ProceduralArt()
-        self._fruit_cache: dict[tuple[str, int], Surface] = {}
+        self._fruit_cache: dict[tuple[str, float], Surface] = {}
         self._background_cache: dict[tuple[str, tuple[int, int]], Surface] = {}
 
     def fruit_surfaces(self, catalog: FruitCatalog) -> dict[str, Surface]:
@@ -47,13 +48,35 @@ class GameArt:
             radius = max(12, round(entry.definition.radius))
             margin = max(7, round(radius * 0.28))
             side = (radius + margin) * 2
-            key = (entry.fruit_id, side)
+            collision_radius = float(entry.definition.radius)
+            key = (entry.fruit_id, round(collision_radius, 4))
             surface = self._fruit_cache.get(key)
             if surface is None:
                 source = self._pygame.image.load(path)
                 width, height = source.get_size()
-                scale = min(side / width, side / height)
-                size = (max(1, round(width * scale)), max(1, round(height * scale)))
+                silhouette = self._pygame.mask.from_surface(source, 32)
+                center_x = width / 2
+                center_y = height / 2
+                outline_points = (
+                    point
+                    for component in silhouette.connected_components()
+                    for point in component.outline()
+                )
+                silhouette_radius = max(
+                    (
+                        hypot(x + 0.5 - center_x, y + 0.5 - center_y)
+                        for x, y in outline_points
+                    ),
+                    default=0.0,
+                )
+                if silhouette_radius <= 0:
+                    result[entry.fruit_id] = self._fallback.fruit_surface(entry)
+                    continue
+                scale = collision_radius / silhouette_radius
+                size = (
+                    max(1, round(width * scale)),
+                    max(1, round(height * scale)),
+                )
                 fitted = self._pygame.transform.smoothscale(source, size)
                 surface = self._pygame.Surface(
                     (side, side), self._pygame.SRCALPHA, 32
