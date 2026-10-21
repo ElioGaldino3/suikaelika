@@ -77,7 +77,7 @@ class ProceduralArt:
         return {entry.fruit_id: self.fruit_surface(entry) for entry in catalog.entries}
 
     def container_surface(self, size: tuple[int, int] = (800, 460)) -> Surface:
-        """Return a transparent bowl overlay sized for the logical playfield."""
+        """Return a translucent square-sided glass basket overlay."""
         self._validate_size(size)
         width, height = size
         cached = self._container_cache.get(size)
@@ -87,25 +87,30 @@ class ProceduralArt:
         pygame = self._pygame
         surface = pygame.Surface(size, pygame.SRCALPHA, 32)
         edge = bowl_edge(width, height)
-        rim = (62, 137, 191)
-        inner = (192, 231, 241, 110)
+        rim = (62, 137, 191, 205)
+        glass = (192, 231, 241, 64)
         points = [
             tuple(round(value) for value in point)
             for point in bowl_outline_points(width, height, edge)
         ]
-        pygame.draw.polygon(surface, inner, points)
-        pygame.draw.line(surface, rim, points[0], points[-1], edge)
+        pygame.draw.polygon(surface, glass, points)
+        pygame.draw.line(surface, rim, points[0], points[3], edge)
         pygame.draw.line(surface, rim, points[1], points[2], edge)
         pygame.draw.line(surface, rim, points[2], points[3], edge)
-        pygame.draw.line(surface, rim, points[3], points[4], edge)
-        pygame.draw.line(surface, rim, points[4], points[5], edge)
-        pygame.draw.arc(
+        highlight = (245, 255, 255, 175)
+        pygame.draw.line(
             surface,
-            (124, 190, 220),
-            (edge, -edge, width - 2 * edge, edge * 5),
-            0.08,
-            pi - 0.08,
-            max(2, edge // 2),
+            highlight,
+            (edge, edge * 2),
+            (width - edge, edge * 2),
+            max(2, edge // 3),
+        )
+        pygame.draw.line(
+            surface,
+            highlight,
+            (edge, edge * 2),
+            (edge, height - edge * 2),
+            max(2, edge // 3),
         )
         self._container_cache[size] = surface
         return surface

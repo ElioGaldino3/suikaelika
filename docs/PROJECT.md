@@ -240,7 +240,7 @@ Estados do lançador: `READY`, `WAIT_CONTACT`, `COOLDOWN` e `BLOCKED`.
 1. Em `READY`, aceitar uma única borda de pressionamento da ação de soltar.
 2. Criar a fruta, atualizar a prévia e entrar em `WAIT_CONTACT`.
 3. Esperar o primeiro contato com outra fruta, parede ou fundo; se a fruta for consumida por uma fusão, isso também conta como contato.
-4. Liberar a próxima soltura quando houver contato e tiverem passado pelo menos 0,35 s desde o lançamento.
+4. Liberar a próxima soltura quando houver contato e tiverem passado pelo menos 0,2 s desde o lançamento (300 BPM).
 5. Usar 1,0 s como limite máximo de espera por contato, apenas para evitar travamento do lançador; a regra de perigo continua ativa.
 6. Exigir soltar o botão antes de poder produzir outro lançamento. Não acumular comandos de queda durante bloqueio, menus ou transição.
 
@@ -852,11 +852,11 @@ suika-elika/
 │   ├── rules/classic-v2.json
 │   └── controls/
 ├── packaging/batocera/
-│   ├── Suika Elika.pygame          # futuro: entrada Python, não shell
-│   ├── Suika Elika.sh              # futuro: alternativa Ports
-│   └── README.md
+│   ├── pygame/SuikaElika.pygame    # entrada Python da categoria Pygame
+│   └── README-BATOCERA.txt         # gerado pelo build
 ├── tools/
-│   └── diagnostics.py             # futuro: relatório do ambiente
+│   ├── diagnostics.py             # relatório do ambiente
+│   └── build_batocera.py          # prepara dist/SuikaElika
 ├── tests/                         # futuro: testes relevantes de regras
 ├── LICENSE                        # futuro: licença do código a escolher
 ├── THIRD_PARTY_NOTICES.md          # futuro: licenças das dependências/assets
@@ -904,7 +904,8 @@ Não usar `pickle` para arquivos de jogador. Configurações não executam códi
 
 ### 18.1 O que foi confirmado
 
-A wiki oficial documenta a categoria **Pygame**, com jogos em `/userdata/roms/pygame` e extensão `.pygame`. Também documenta **Ports**, com scripts `.sh` em `/userdata/roms/ports`. São caminhos distintos de integração. Fontes: [sistema Pygame](https://wiki.batocera.org/systems:pygame) e [Ports](https://wiki.batocera.org/systems:ports).
+A wiki oficial documenta a categoria **Pygame**, com jogos em
+`/userdata/roms/pygame` e extensão `.pygame`. Fonte: [sistema Pygame](https://wiki.batocera.org/systems:pygame).
 
 A página de Pygame avisa que precisa de atualização. Por isso, a pesquisa incluiu o código do projeto. Na árvore `388457253f92e0cee110ad468d10bbb301f95ae1`, consultada em 20/10/2026:
 
@@ -915,47 +916,36 @@ A página de Pygame avisa que precisa de atualização. Por isso, a pesquisa inc
 
 Portanto, nesse código, o `.pygame` é **uma entrada Python**, e não um arquivo shell ou um ZIP apenas renomeado. A árvore de desenvolvimento consultada não substitui a inspeção da versão instalada no aparelho.
 
-Fontes fixadas: [lançador](https://github.com/batocera-linux/batocera.linux/blob/388457253f92e0cee110ad468d10bbb301f95ae1/python-src/batocera-launch/batocera_launch/emulators/pygame.py), [alias do interpretador](https://github.com/batocera-linux/batocera.linux/blob/388457253f92e0cee110ad468d10bbb301f95ae1/package/batocera/utils/batocera-pygame/batocera-pygame.mk) e [receita Pygame](https://github.com/batocera-linux/batocera.linux/blob/388457253f92e0cee110ad468d10bbb301f95ae1/package/batocera/emulators/python-pygame2/python-pygame2.mk).
+Fontes: [lançador atual](https://github.com/batocera-linux/batocera.linux/blob/master/python-src/batocera-launch/batocera_launch/emulators/pygame.py), [alias do interpretador](https://github.com/batocera-linux/batocera.linux/blob/master/package/batocera/utils/batocera-pygame/batocera-pygame.mk) e [receita Pygame](https://github.com/batocera-linux/batocera.linux/blob/master/package/batocera/emulators/python-pygame2/python-pygame2.mk).
 
 ### 18.2 Caminho principal proposto: categoria Pygame
 
 Distribuição planejada:
 
 ```text
-/userdata/roms/pygame/suika-elika/
-├── Suika Elika.pygame       # pequeno bootstrap Python
+/userdata/roms/pygame/SuikaElika/
+├── SuikaElika.pygame        # arquivo Python de entrada
 ├── suika_elika/             # pacote da aplicação
-├── assets/                  # vazio/opcional durante o protótipo
+├── assets/                  # imagens usadas no jogo
 ├── data/                    # regras distribuídas
-├── vendor/                  # dependências adicionais do alvo, se necessário
-├── THIRD_PARTY_NOTICES.md
-└── README-BATOCERA.md
+└── README-BATOCERA.txt
 ```
 
-O bootstrap resolve sua própria pasta, adiciona apenas os caminhos necessários do pacote, carrega dependências locais verificadas e chama `suika_elika.__main__.main()`. A pasta `vendor` pode conter Pymunk/CFFI do alvo; não deve trazer uma segunda cópia de Pygame sem justificativa, pois isso pode criar conflito com SDL e o pacote do sistema.
+O arquivo `.pygame` resolve sua própria pasta, adiciona o pacote ao caminho de
+importação e chama a aplicação. O build de `tools/build_batocera.py` prepara
+essa estrutura em `dist/SuikaElika/`. Não inclui Python, Pygame, SDL ou Pymunk:
+essas dependências precisam ser fornecidas pelo alvo numa combinação
+compatível.
 
-Atualizar a lista de jogos pelo EmulationStation depois da cópia. Validar o nome, a subpasta e a exibição na versão instalada. Capa e metadados de `gamelist.xml` podem ser adicionados depois, sem serem necessários para o primeiro protótipo.
+Copiar a pasta inteira para `/userdata/roms/pygame/` e atualizar a lista de
+jogos pelo EmulationStation. Capa e metadados de `gamelist.xml` são opcionais.
 
-### 18.3 Alternativa: categoria Ports
+### 18.3 Metadados e arte
 
-Usar quando o alvo exigir controle explícito do interpretador, bibliotecas ou ambiente, ou quando a categoria Pygame estiver indisponível naquele equipamento.
-
-```text
-/userdata/roms/ports/
-├── Suika Elika.sh
-└── .data/suika-elika/
-    ├── suika_elika/
-    ├── assets/
-    ├── data/
-    ├── vendor/
-    └── README-BATOCERA.md
-```
-
-O shell futuro deve resolver a pasta do próprio arquivo com aspas, mudar para `.data/suika-elika` e usar `exec` para substituir o processo pelo interpretador validado, executando o módulo do jogo. Guardar saída de erro em diretório gravável e preservar o status de saída.
-
-Usar finais de linha LF e permissão de execução no `.sh`. Não fixar `DISPLAY=:0`, driver SDL, resolução ou servidor de áudio sem necessidade comprovada no aparelho; herdar primeiro o ambiente de lançamento. O pacote deve preservar as variáveis de mapeamento de controle recebidas.
-
-Essa alternativa não torna dependências nativas automaticamente portáveis. Ambos os caminhos continuam dependendo de um Python, SDL e Pymunk compatíveis.
+Uma imagem opcional pode ser associada pelo campo `<image>` no `gamelist.xml`
+do sistema Pygame. O campo `<path>` deve apontar para
+`./SuikaElika/SuikaElika.pygame`. A exibição depende do tema ativo do
+EmulationStation.
 
 ### 18.4 Inspeção obrigatória do alvo antes do pacote
 
@@ -1254,5 +1244,6 @@ Consultadas em **20/10/2026**. Links de documentação `latest` podem mudar; a i
 | 0.1 | 20/10/2026 | Pesquisa inicial, análise visual dos dois vídeos, proposta completa do modo clássico, física com Pymunk, primeiro visual procedural e integração planejada com Batocera e joystick |
 | Governança | 20/10/2026 | AGENTS com commit obrigatório, arquitetura complementar, backlog paralelo e skill de orquestração; sem implementação do runtime |
 | Correções de apresentação e física | 20/10/2026 | Fullscreen passa a usar a resolução atual do display; colisão e borda visual compartilham o perfil do fundo curvo do balde; damping/atrito/restituição ajustados para reduzir deslizamento e quique. Novo ruleset `classic-v2` mantém recordes da física anterior separados. |
+| Cesta e ritmo de soltura | 20/10/2026 | Cesta aberta com laterais retas, fundo plano e vidro translúcido; cooldown mínimo de 0,2 s entre solturas após contato, equivalente a 300 BPM. |
 
 Alterações futuras devem registrar o motivo, o impacto na experiência e a necessidade de mudar `ruleset_version`. O protótipo local continua sujeito a balanceamento e validação no aparelho alvo.

@@ -77,6 +77,7 @@ Parâmetros de passo, sorteio, massa, pontos, raio e derrota pertencem ao rulese
 | `suika_elika/contracts/` | Modelos imutáveis, enums e interfaces compartilhadas |
 | `game/catalog.py`, `game/randomizer.py`, `data/rules/` | Catálogo e sequência |
 | `game/physics.py` | Adaptação Pymunk e consultas |
+| `container_geometry.py` | Contorno retangular compartilhado entre colisores e desenho da cesta |
 | `game/merging.py` | Pares, reservas e transações de fusão |
 | `game/spawning.py` | Fruta em espera, posição e bloqueio de soltura |
 | `game/danger.py` | Proteção, herança, contagem e escape |

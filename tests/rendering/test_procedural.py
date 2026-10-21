@@ -60,6 +60,8 @@ def test_container_and_background_have_requested_dimensions_and_cache(art: Proce
     assert art.container_surface((640, 400)) is container
     assert art.background_surface((960, 540)) is background
     assert container.get_flags() & pygame.SRCALPHA
+    center = container.get_at((320, 200))
+    assert 0 < center.a < 255
 
 
 @pytest.mark.parametrize("size", [(0, 10), (10, -1), (1.5, 3), (10,), (1, 2, 3)])

@@ -135,9 +135,9 @@ def test_contact_then_cooldown_releases_and_busy_edges_are_not_queued() -> None:
 
     busy = launcher.handle_drop(InputEdge(21, InputAction.DROP))
     assert not busy.accepted and busy.reason == "launcher_not_ready"
-    assert launcher.advance(0.2) is LauncherState.WAIT_CONTACT
+    assert launcher.advance(0.1) is LauncherState.WAIT_CONTACT
     assert launcher.advance(0.01, launch_contacted=True) is LauncherState.COOLDOWN
-    assert launcher.advance(0.13) is LauncherState.COOLDOWN
+    assert launcher.advance(0.08) is LauncherState.COOLDOWN
     assert launcher.advance(0.01) is LauncherState.READY
     assert sequence.accepted_drops == 1
 
@@ -152,7 +152,7 @@ def test_consumption_counts_as_contact_and_timeout_is_a_one_second_maximum() -> 
     launcher, _, _ = _launcher()
     assert launcher.handle_drop(InputEdge(30, InputAction.DROP)).accepted
     assert launcher.advance(0.1, launch_body_active=False) is LauncherState.COOLDOWN
-    assert launcher.advance(0.24) is LauncherState.COOLDOWN
+    assert launcher.advance(0.09) is LauncherState.COOLDOWN
     assert launcher.advance(0.01) is LauncherState.READY
 
     assert launcher.handle_drop(InputEdge(31, InputAction.DROP)).accepted

@@ -33,8 +33,8 @@ def test_default_world_uses_classic_fixed_step_and_empty_open_top_container() ->
 
     assert world.config.fixed_dt == pytest.approx(1 / 120)
     assert world.space.gravity == (0, 1000)
-    assert len(world.space.static_body.shapes) == 5
-    assert len(world.space.shapes) == 5
+    assert len(world.space.static_body.shapes) == 3
+    assert len(world.space.shapes) == 3
     assert all(isinstance(shape, pymunk.Segment) for shape in world.space.shapes)
 
 
@@ -110,7 +110,7 @@ def test_open_top_has_no_ceiling_collision() -> None:
     assert world.poses(("upward",))[0].pose.position.y < -5
 
 
-def test_bowl_floor_has_a_shallow_rising_profile_at_the_sides() -> None:
+def test_basket_floor_is_flat_and_sides_are_vertical() -> None:
     world = PhysicsWorld()
     floors = tuple(
         shape
@@ -118,16 +118,15 @@ def test_bowl_floor_has_a_shallow_rising_profile_at_the_sides() -> None:
         if isinstance(shape, pymunk.Segment) and shape.a.x != shape.b.x
     )
 
-    assert len(floors) == 3
-    assert sum(isclose(shape.a.y, shape.b.y, abs_tol=1e-9) for shape in floors) == 1
-    assert {
-        shape.a.y < shape.b.y
-        for shape in floors
-        if not isclose(shape.a.y, shape.b.y, abs_tol=1e-9)
-    } == {
-        True,
-        False,
-    }
+    assert len(floors) == 1
+    assert isclose(floors[0].a.y, floors[0].b.y, abs_tol=1e-9)
+
+    sides = tuple(
+        shape
+        for shape in world.space.shapes
+        if isinstance(shape, pymunk.Segment) and shape.a.x == shape.b.x
+    )
+    assert len(sides) == 2
 
 
 def test_default_materials_reduce_bounce_and_residual_motion() -> None:

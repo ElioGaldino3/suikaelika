@@ -190,13 +190,13 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py`
 - Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Pymunk 7.3.1; passo fixo 1/120 s, recipiente aberto 800×460, corpos circulares com massa/momento do catálogo, limites de velocidade, contatos copiados e mutações post-step. Na venv Python 3.13.16, `python -m pytest tests/game/test_physics.py tests/game/test_catalog.py tests/game/test_randomizer.py -q` (28 passed), Ruff e mypy passaram; `git diff --check` passou. Homologação Batocera continua em SE-004.
+- Evidence: Pymunk 7.3.1; passo fixo 1/120 s, cesta aberta retangular 800×460 com piso plano, corpos circulares com massa/momento do catálogo, limites de velocidade, contatos copiados e mutações post-step. Geometria visual e colisores compartilham os quatro pontos retangulares. Revisão atual: `python -m pytest tests/game/test_physics.py tests/game/test_spawning.py tests/game/test_session.py -q` (32 passed); suíte total 177 passed, 4 skips (Pygame ausente), Ruff, mypy configurado e grafo passaram. Homologação Batocera continua em SE-004.
 - Blocker: `none`
 
 **Objetivo:** Criar o adaptador Pymunk e o recipiente com passo fixo e consultas de contatos.
 
 **Aceitação:**
-- Corpos, massas, inércias, paredes internas e boca aberta correspondem às regras propostas.
+- Corpos, massas, inércias, paredes retas, piso plano e boca aberta correspondem às regras propostas.
 - Contatos retornam IDs e dados copiados; remoções e inserções são aplicadas fora do passo do motor.
 - Cenários de queda, parede, repouso e limite de velocidade passam localmente; a homologação do runtime continua em SE-004.
 
@@ -210,7 +210,7 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tests/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py`
 - Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Sprites cacheados das 11 frutas, recipiente e cenário em superfícies Pygame, com detalhes dentro dos bounds; importação lazy não inicializa Pygame. Python 3.13.16 + Pygame 2.6.1: `python -m pytest` (80 passed), testes direcionados (8 passed), Ruff e mypy direcionados passaram. Ruff/mypy globais, naquele estado do checkout, apontaram somente erros nos arquivos SE-010 ainda em edição.
+- Evidence: Sprites cacheados das 11 frutas, cenário e cesta retangular translúcida em superfícies Pygame, com detalhes dentro dos bounds; importação lazy não inicializa Pygame. A revisão atual adiciona teste do alpha do vidro, mas a execução está pulada neste ambiente porque Pygame não está instalado. Verificações anteriores com Pygame 2.6.1 permanecem registradas; a nova aparência ainda precisa de inspeção visual local e no Batocera.
 - Blocker: `none`
 
 **Objetivo:** Gerar superfícies das onze frutas, recipiente e cenário com primitivas do Pygame.
@@ -350,14 +350,14 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/game/catalog.py; suika_elika/game/randomizer.py; data/rules/classic-v1.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; suika_elika/game/physics.py; tests/game/test_physics.py`
 - Owner: `unassigned`
 - Attempts: `1`
-- Evidence: Entrega revisada: prévia sem corpo, rejeição por nascimento bloqueado sem consumo da sequência, uma soltura por borda, temporizadores de simulação e previsão circular estática do primeiro contato/fundo. Com CPython 3.13.16, `python -m pytest tests/game/test_spawning.py -q` passou (11 testes), Ruff e mypy strict nos dois arquivos passaram; suíte completa `python -m pytest` passou (127 testes), `python -m ruff check .`, `python -m mypy` e `git diff --check` passaram. A sessão deve fornecer à `advance()` o sinal de contato da fruta lançada também com parede/fundo; integração permanece com SE-016.
+- Evidence: Entrega revisada: prévia sem corpo, rejeição por nascimento bloqueado sem consumo da sequência, uma soltura por borda, cooldown mínimo de 0,2 s (300 BPM) após contato, timeout de simulação e previsão circular estática do primeiro contato/fundo. Revisão atual: testes de física/spawning/session (32 passed), suíte total 177 passed, 4 skips, Ruff e mypy configurado passaram. A sessão deve fornecer à `advance()` o sinal de contato da fruta lançada também com parede/fundo; integração permanece com SE-016.
 - Blocker: `none`
 
 **Objetivo:** Gerenciar fruta em espera, limites horizontais, contato/cooldown e bloqueio de nascimento.
 
 **Aceitação:**
 - Fruta em espera não tem corpo; soltura aceita cria um corpo e rejeitada não consome sequência.
-- WAIT_CONTACT/COOLDOWN/BLOCKED/READY e timeout seguem PROJECT, sem repetir botão segurado.
+- WAIT_CONTACT/COOLDOWN/BLOCKED/READY, cooldown mínimo de 0,2 s e timeout seguem PROJECT, sem repetir botão segurado.
 - Mira considera soma dos raios e primeiro contato estático, sem prometer a posição final.
 
 ### SE-016 — Coordenar sessão e snapshots da partida
@@ -506,18 +506,19 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-003, SE-020`
-- Writes: `packaging/batocera/**; tests/packaging/test_layout.py; docs/BATOCERA.md`
+- Writes: `packaging/batocera/**; tools/build_batocera.py; tests/packaging/test_layout.py; docs/BATOCERA.md; README.md`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; tools/diagnostics.py; tests/tools/test_diagnostics.py; docs/BATOCERA-ENVIRONMENT.md; suika_elika/app.py; suika_elika/scene_manager.py; suika_elika/config.py; suika_elika/__main__.py; main.py; tests/integration/test_app_flow.py`
 - Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Criados launcher `.pygame` com bootstrap relativo à instalação e alternativa Ports `.sh` com LF, caminhos citados, `exec`, `.data/SuikaElika` e sem alterar variáveis SDL. `docs/BATOCERA.md` documenta instalação, dados persistentes, seleção do jogador/controle e limites. 3 testes de packaging passaram; suíte total 189, Ruff global, mypy configurado (40 arquivos), grafo (34 tarefas) e `git diff --check` passaram. Sintaxe POSIX não pôde ser verificada: o `bash.exe` disponível é encaminhador WSL e não encontrou `/bin/bash`. Não executado no Batocera; dependências e compatibilidade da versão 43 seguem pendentes em SE-004/SE-024.
+- Attempts: `2`
+- Evidence: Pacote agora é exclusivo do sistema Pygame: `tools/build_batocera.py` gera `dist/SuikaElika/` com `SuikaElika.pygame`, pacote, regras e assets; recria somente essa saída de build. O README e `docs/BATOCERA.md` explicam instalação em `/userdata/roms/pygame/SuikaElika`, atualização da lista e metadados opcionais de arte; removida a alternativa Ports. `python tools/build_batocera.py` gerou a pasta de instalação; testes completos: 177 passed, 4 skipped (Pygame ausente), Ruff passou, mypy passou com `import-not-found` desativado, e `git diff --check` passou. Batocera real, joystick, áudio e compatibilidade de ABI/dependências continuam pendentes em SE-004/SE-024.
 - Blocker: `none`
 
-**Objetivo:** Preparar a categoria Pygame e a alternativa Ports, sem alegar pacote universal.
+**Objetivo:** Preparar um build reproduzível e instruções para o sistema Pygame, sem alegar pacote universal.
 
 **Aceitação:**
-- .pygame contém entrada Python; .sh usa LF, aspas e exec; recursos são resolvidos a partir da instalação.
-- Dados graváveis ficam em userdata separado e variáveis SDL existentes são preservadas.
+- `.pygame` contém a entrada Python e o build inclui código, regras e assets a partir da pasta da própria instalação.
+- A saída recria somente `dist/SuikaElika`; configuração e dados graváveis permanecem em userdata separado.
+- As instruções descrevem `/userdata/roms/pygame` e arte opcional por metadados do EmulationStation.
 - Layout e bootstrap são verificáveis localmente; dependências finais e execução real continuam dependentes de SE-024/027.
 
 ### SE-024 — Fixar e construir dependências para o alvo identificado

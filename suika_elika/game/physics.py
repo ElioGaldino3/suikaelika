@@ -200,13 +200,13 @@ class PhysicsWorld:
             pymunk.Segment(
                 self.space.static_body,
                 (left_x, start_y),
-                (left_x, self.config.height - edge * 3 + half),
+                (left_x, self.config.height - edge + half),
                 half,
             ),
             pymunk.Segment(
                 self.space.static_body,
                 (right_x, start_y),
-                (right_x, self.config.height - edge * 3 + half),
+                (right_x, self.config.height - edge + half),
                 half,
             ),
             *(

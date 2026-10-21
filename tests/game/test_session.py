@@ -213,8 +213,8 @@ def test_explicit_static_contact_unlocks_launcher_and_pause_freezes_state() -> N
     session.step(launch_contacted=True)
     danger_state = session._danger.state(launch_id)
     assert danger_state is not None and danger_state.contact_age_seconds == 0
-    # Contact starts the 0.35 s minimum cooldown; elapsed time still applies.
-    for _ in range(41):
+    # Contact starts the 0.2 s minimum cooldown; elapsed time still applies.
+    for _ in range(24):
         session.step()
     assert session.snapshot.drop_ready
     session.step(_drop_frame(2))

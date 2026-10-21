@@ -24,7 +24,6 @@ LAUNCH_Y = -18.0
 BACKGROUND = (112, 201, 235)
 INK = (24, 59, 78)
 DANGER = (228, 85, 85)
-CONTAINER_INNER = (232, 247, 243)
 
 
 class Renderer:
@@ -145,14 +144,7 @@ class Renderer:
         self._present()
 
     def _draw_world_backdrop(self) -> None:
-        pygame = self._pygame
         x, y = round(WORLD_ORIGIN.x), round(WORLD_ORIGIN.y)
-        pygame.draw.rect(
-            self._logical,
-            CONTAINER_INNER,
-            (x, y, int(WORLD_WIDTH), int(WORLD_HEIGHT)),
-            border_radius=6,
-        )
         self._logical.blit(self._container, (x, y))
         danger_y = round(y + 52)
         dash = 16

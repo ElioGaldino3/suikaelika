@@ -1,105 +1,93 @@
-# Executar no Batocera
+# Build e instalação no Batocera
 
-Este pacote contém dois launchers de origem: a categoria **Pygame** do
-EmulationStation e a alternativa **Ports**. Eles iniciam o mesmo código Python
-instalado em `userdata`. Não há build de dependências ou pacote universal nesta
-etapa. A instalação final depende de confirmar Python, Pygame, SDL, Pymunk,
-arquitetura e ABI no Batocera do aparelho (SE-004/SE-024); ainda não foi
-homologada no Batocera 43 nem em joystick físico.
+Este projeto usa o sistema **Pygame** do Batocera. A documentação oficial
+identifica `/userdata/roms/pygame` como a pasta de jogos e `.pygame` como a
+extensão aceita ([sistema Pygame](https://wiki.batocera.org/systems:pygame)). O
+código atual do lançador do Batocera usa a pasta do arquivo `.pygame` como
+diretório de execução e chama `pygame <arquivo-rom>`
+([lançador atual](https://github.com/batocera-linux/batocera.linux/blob/master/python-src/batocera-launch/batocera_launch/emulators/pygame.py)).
+O wiki observa que sua página Pygame precisa de atualização; confirme o
+comportamento na versão instalada no aparelho.
 
-Batocera documenta `.pygame` em `/userdata/roms/pygame` e `.sh` em
-`/userdata/roms/ports`. A documentação de Ports orienta deixar dados do jogo em
-`roms/ports/.data` e manter o shell script visível na pasta `ports`.
-[Sistema Pygame](https://wiki.batocera.org/systems:pygame), [sistema Ports e
-formato `.sh`](https://wiki.batocera.org/systems:ports). O launcher Pygame
-observado no código-fonte atual do Batocera executa `pygame` com o caminho do
-arquivo ROM; esse código-fonte atual não confirma o comportamento exato da
-versão 43.
-[Launcher Pygame no código-fonte do Batocera](https://github.com/batocera-linux/batocera.linux/blob/master/python-src/batocera-launch/batocera_launch/emulators/pygame.py).
+## O que o build gera
 
-## Pré-requisitos
+Na raiz do checkout, rode:
 
-- Rodar a coleta local do alvo com o Python planejado para iniciar o jogo:
-  `python3 tools/diagnostics.py --format json`.
-- Pygame/SDL disponíveis para a categoria Pygame; para Ports, `python3` precisa
-  importar Pygame.
-- Pymunk e suas bibliotecas nativas precisam importar no mesmo interpretador.
-  A verificação de versão/importação e a escolha de dependências pertencem à
-  SE-024. Não copie wheels Windows para Linux e não instale pacotes globais no
-  launcher.
-- Os comandos abaixo pressupõem que o diretório do projeto está acessível no
-  Batocera. Substitua `PROJECT_ROOT` pelo caminho real do checkout ou da cópia.
-
-## Categoria Pygame
-
-O arquivo `.pygame` inclui seu próprio caminho de instalação em `sys.path`. O
-pacote Python e os dados de regras ficam ao lado dele; o catálogo localiza
-`data/rules/classic-v2.json` a partir do próprio módulo.
-
-```sh
-PROJECT_ROOT="/userdata/system/suika-elika-source"
-INSTALL_DIR="/userdata/roms/pygame/SuikaElika"
-mkdir -p "$INSTALL_DIR"
-cp -R "$PROJECT_ROOT/suika_elika" "$PROJECT_ROOT/data" \
-  "$PROJECT_ROOT/assets" "$INSTALL_DIR/"
-cp "$PROJECT_ROOT/packaging/batocera/pygame/SuikaElika.pygame" "$INSTALL_DIR/"
+```powershell
+python tools/build_batocera.py
 ```
 
-Depois atualize a lista de jogos no EmulationStation e abra **Pygame →
-SuikaElika**. O formato da categoria é `.pygame`; a chamada e a inicialização
-gráfica ainda precisam ser observadas no aparelho real.
+O script monta `dist/SuikaElika/`, removendo apenas a saída anterior com esse
+mesmo nome dentro de `dist/`:
 
-## Alternativa Ports
-
-Ports usa o mesmo bootstrap `.pygame` sob uma pasta oculta de dados. O launcher
-`Suika Elika.sh` resolve seu próprio diretório, cita caminhos com espaços e
-substitui o processo pelo `python3` (ou pelo comando definido em
-`SUIKA_ELIKA_PYTHON`). Ele não altera `SDL_*`, `DISPLAY` ou outras variáveis SDL
-do sistema.
-
-```sh
-PROJECT_ROOT="/userdata/system/suika-elika-source"
-GAME_DIR="/userdata/roms/ports/.data/SuikaElika"
-mkdir -p "$GAME_DIR"
-cp -R "$PROJECT_ROOT/suika_elika" "$PROJECT_ROOT/data" \
-  "$PROJECT_ROOT/assets" "$GAME_DIR/"
-cp "$PROJECT_ROOT/packaging/batocera/pygame/SuikaElika.pygame" "$GAME_DIR/"
-cp "$PROJECT_ROOT/packaging/batocera/ports/Suika Elika.sh" \
-  "/userdata/roms/ports/Suika Elika.sh"
-chmod +x "/userdata/roms/ports/Suika Elika.sh"
+```text
+dist/SuikaElika/
+├── SuikaElika.pygame       # entrada Python chamada pelo sistema Batocera
+├── README-BATOCERA.txt
+├── suika_elika/            # código do jogo
+├── data/                   # regras classic-v2
+└── assets/                 # imagens do jogo
 ```
 
-Atualize a lista e abra **Ports → Suika Elika**. O conteúdo em `.data` fica
-oculto da lista de scripts conforme a organização documentada para Ports.
+O nome `SuikaElika.pygame` pertence ao arquivo lançador. A pasta do jogo se
+chama `SuikaElika`, sem extensão. O build não é um executável compilado; apenas
+reúne o lançador, o pacote Python e seus dados. Ele não baixa nem inclui Python,
+Pygame, SDL ou Pymunk.
 
-## Seleção de controle
+## Copiar para o Batocera
 
-Na inicialização, o jogo seleciona o primeiro controle nativo enumerado como
-jogador 1. Enquanto ele estiver ativo, teclado emulado não gera uma segunda
-fonte de ações. Se nenhum controle nativo for encontrado, o jogo habilita o
-teclado como fallback de desenvolvimento. A ordem dos dispositivos e esse
-fallback ainda precisam ser conferidos no Batocera 43 real.
+Copie a pasta **inteira** `dist/SuikaElika` para `/userdata/roms/pygame/`. Pelo
+compartilhamento de rede no Windows, o destino costuma ser
+`\\BATOCERA\share\roms\pygame\`; substitua `BATOCERA` pelo nome/IP do aparelho
+se necessário. No aparelho, a estrutura final deve ser:
 
-Se o controle ativo for removido durante a partida, a sessão pausa e limpa as
-entradas pendentes. O jogo aguarda reconectar um dispositivo com a mesma
-identidade GUID/nome e exige uma confirmação antes de continuar; essa
-confirmação não solta uma fruta. Um dispositivo diferente não substitui o
-jogador 1 automaticamente. A API ou o mapeamento de joystick oferecido pelo
-Batocera não foi homologado neste projeto.
+```text
+/userdata/roms/pygame/SuikaElika/
+├── SuikaElika.pygame
+├── README-BATOCERA.txt
+├── suika_elika/
+├── data/
+└── assets/
+```
 
-## Dados persistentes e ambiente
+Atualize a lista de jogos pelo menu do EmulationStation (**Main Menu → Game
+Settings → Update Gamelists**) e inicie **Pygame → SuikaElika**.
 
-O jogo grava configuração em `/userdata/system/configs/suika-elika` e dados de
-partida em `/userdata/saves/suika-elika`, separados do diretório instalado. Os
-launchers preservam as variáveis herdadas do EmulationStation; não defina
-`SDL_VIDEODRIVER`, `SDL_AUDIODRIVER`, `SDL_GAMECONTROLLERCONFIG`, `DISPLAY` ou
-`LD_LIBRARY_PATH` sem uma necessidade observada no equipamento.
+## Arte opcional no EmulationStation
 
-## Diagnóstico no aparelho
+Guarde a imagem, por exemplo, em
+`/userdata/roms/pygame/images/SuikaElika.png` e associe-a à entrada em
+`/userdata/roms/pygame/gamelist.xml`:
 
-Registre o relatório integral de `python3 tools/diagnostics.py --format json`.
-Ele coleta metadados, mas não importa SDL nem verifica display, joystick, áudio
-ou física. Em caso de falha, registre se abriu a tela, controle e saída de
-áudio, logs do EmulationStation e resultado de importar Pygame/Pymunk. Esses
-resultados pertencem à validação do Batocera e não podem ser inferidos pelos
-testes Windows ou headless.
+```xml
+<game>
+  <path>./SuikaElika/SuikaElika.pygame</path>
+  <name>Suika Elika</name>
+  <image>./images/SuikaElika.png</image>
+  <desc>Jogo de queda e fusão de frutas.</desc>
+</game>
+```
+
+O campo `<image>` é um metadado usado pelos temas do EmulationStation
+([exemplo de gamelist do Batocera](https://wiki.batocera.org/create_pacman_package)).
+O tema ativo precisa ter uma área para exibir a imagem.
+
+## Dependências e validação
+
+O sistema Batocera precisa oferecer um `python3` compatível que consiga importar
+Pygame e Pymunk, junto das bibliotecas nativas exigidas por elas. O build não
+torna essas dependências portáveis. Não copie wheels do Windows para Linux. A
+combinação de versão, arquitetura e ABI deve ser verificada no aparelho:
+
+```sh
+python3 tools/diagnostics.py --format json
+```
+
+Rode o diagnóstico no checkout do projeto, se ele estiver disponível no
+aparelho. Ele registra metadados e disponibilidade das bibliotecas sem abrir
+janela, testar áudio ou acessar o joystick. A inicialização gráfica, a física,
+os controles (incluindo joystick físico) e o áudio ainda precisam ser conferidos
+no Batocera real. Testes locais não comprovam compatibilidade com o aparelho.
+
+O jogo salva opções em `/userdata/system/configs/suika-elika` e dados da partida
+em `/userdata/saves/suika-elika`, separados dos arquivos de instalação.

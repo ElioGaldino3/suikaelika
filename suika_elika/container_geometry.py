@@ -13,14 +13,12 @@ def bowl_edge(width: float, height: float) -> int:
 def bowl_outline_points(
     width: float, height: float, edge: float
 ) -> tuple[tuple[float, float], ...]:
-    """Return the open-top bowl outline with a shallow curved bottom profile."""
+    """Return the open-top rectangular basket outline with a flat floor."""
     return (
-        (edge * 2, edge),
-        (width - edge * 2, edge),
-        (width - edge * 2, height - edge * 3),
-        (width * 3 / 4, height - edge),
-        (width / 4, height - edge),
-        (edge * 2, height - edge * 3),
+        (0.0, edge),
+        (width, edge),
+        (width, height - edge),
+        (0.0, height - edge),
     )
 
 

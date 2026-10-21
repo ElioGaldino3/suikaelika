@@ -1,13 +1,11 @@
 # Suika Elika
 
-Jogo de queda e fusão de frutas feito em Python + Pygame, com controle por
-joystick e destino principal no Batocera. O jogo abre em tela cheia na
-resolução atual do monitor/TV; o conteúdo mantém proporção e se ajusta à tela.
+Jogo de queda e fusão de frutas feito em Python + Pygame, com suporte a joystick.
+O jogo ajusta a apresentação à resolução atual do monitor ou da TV.
 
 ## Rodar no computador
 
-É necessário Python 3.10 ou superior. Clone/extraia o projeto e rode os comandos
-na pasta raiz, onde estão `main.py`, `data/` e `assets/`.
+É necessário Python 3.10 ou superior. Na pasta raiz do projeto:
 
 ### Windows (PowerShell)
 
@@ -29,83 +27,65 @@ python -m pip install -e .
 python main.py
 ```
 
-O primeiro comando de instalação baixa Pygame e Pymunk no ambiente virtual do
-projeto. Não é necessário gerar um `.exe`: `main.py` inicia o jogo pelo Python.
-Para sair, use a opção de saída do menu ou feche a janela. Se não houver
-joystick, o teclado funciona como fallback de desenvolvimento; as instruções
-de controles estão em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+Não é preciso gerar um `.exe`: `main.py` inicia o jogo pelo Python. Se não
+houver joystick, o teclado funciona como fallback de desenvolvimento. Os
+controles estão em [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-## Instalar no Batocera
+## Build para o sistema Pygame do Batocera
 
-O pacote atual é código Python com seus dados, imagens e um script de
-inicialização. Não é um `.exe` nem um binário autocontido. O Batocera precisa
-ter um `python3` com Pygame/Pymunk e dependências nativas compatíveis com a sua
-versão e arquitetura. **Essa combinação ainda precisa ser validada no aparelho
-alvo**; não copie pacotes Windows para o Batocera.
-
-A organização recomendada para o EmulationStation é a categoria **Ports**:
+O arquivo `.pygame` é o script Python de entrada do jogo. O build monta uma
+pasta `SuikaElika` com esse script e os arquivos que ele importa:
 
 ```text
-/userdata/roms/ports/
-├── Suika Elika.sh
-├── images/
-│   └── suika-elika.png        # opcional: arte da lista
-└── .data/
-    └── SuikaElika/
-        ├── SuikaElika.pygame
-        ├── suika_elika/
-        ├── data/
-        └── assets/
+dist/SuikaElika/
+├── SuikaElika.pygame
+├── suika_elika/
+├── data/
+├── assets/
+└── README-BATOCERA.txt
 ```
 
-No Batocera, `/userdata` normalmente é compartilhado pela rede como `share`.
-Copie `suika_elika/`, `data/`, `assets/` e os dois launchers de
-`packaging/batocera/` para a estrutura acima. Marque o launcher como executável
-(`chmod +x "/userdata/roms/ports/Suika Elika.sh"`) e atualize a lista de jogos
-em **Main Menu → Game Settings → Update Gamelists**. Depois abra **Ports →
-Suika Elika**.
+Gere o pacote na raiz do projeto:
 
-Também existe a categoria Pygame. Ela usa uma cópia do pacote em
-`/userdata/roms/pygame/SuikaElika/` e o arquivo `.pygame`; os passos completos e
-os comandos de cópia estão em [docs/BATOCERA.md](docs/BATOCERA.md).
+```powershell
+python tools/build_batocera.py
+```
 
-### Arte na lista de jogos
+O resultado pronto para copiar fica em `dist/SuikaElika/`. Copie essa pasta
+inteira para `/userdata/roms/pygame/`, para que o destino seja
+`/userdata/roms/pygame/SuikaElika/`. Por exemplo, no Windows, a pasta pode ser
+copiada pelo compartilhamento de rede do Batocera, normalmente
+`\\BATOCERA\share\roms\pygame\` (ou substitua `BATOCERA` pelo IP do aparelho).
+Depois, atualize a lista de jogos no EmulationStation e inicie **Pygame →
+SuikaElika**.
 
-Sim, dá para associar uma imagem à entrada do jogo no EmulationStation. Coloque
-uma imagem em `roms/ports/images/suika-elika.png` e adicione/ajuste a entrada
-correspondente em `roms/ports/gamelist.xml`:
+`SuikaElika.pygame` é um arquivo dentro da pasta do jogo, não o nome da pasta.
+Não é `.exe` nem binário independente: o aparelho ainda precisa de uma versão
+compatível de Python, Pygame/SDL e Pymunk. O build organiza os arquivos do jogo,
+mas não compila nem inclui essas bibliotecas do sistema. Confira os passos e
+limites de instalação em [docs/BATOCERA.md](docs/BATOCERA.md).
+
+## Arte na lista de jogos
+
+Pode-se associar uma imagem no `gamelist.xml` do sistema Pygame. Exemplo para a
+instalação acima:
 
 ```xml
 <game>
-  <path>./Suika Elika.sh</path>
+  <path>./SuikaElika/SuikaElika.pygame</path>
   <name>Suika Elika</name>
-  <image>./images/suika-elika.png</image>
+  <image>./images/SuikaElika.png</image>
   <desc>Jogo de queda e fusão de frutas.</desc>
 </game>
 ```
 
-O nome em `<path>` precisa corresponder ao launcher instalado. A arte só aparece
-se o tema do EmulationStation mostrar o campo de imagem. Também é possível usar
-as ferramentas de scraping do Batocera; a documentação de Ports e o formato de
-metadados estão nas páginas oficiais [Ports](https://wiki.batocera.org/systems%3Aports)
-e [criação de pacote e gamelist](https://wiki.batocera.org/create_pacman_package).
-
-**Nota sobre executáveis:** empacotar Python com PyInstaller para uma versão
-concreta de Linux é uma alternativa possível, mas não é o método fornecido aqui
-e não garante compatibilidade com a libc, SDL, arquitetura ou runtime do
-Batocera. Por enquanto, distribua o código e dados junto do launcher e use o
-Python/dependências compatíveis do aparelho.
+Coloque a arte em `/userdata/roms/pygame/images/SuikaElika.png`; o tema do
+EmulationStation precisa exibir imagens da lista.
 
 ## Documentação
 
-- [Instalação e validação no Batocera](docs/BATOCERA.md)
+- [Build e instalação no Batocera](docs/BATOCERA.md)
 - [Requisitos e regras do jogo](docs/PROJECT.md)
 - [Arquitetura](docs/ARCHITECTURE.md)
 - [Desenvolvimento e comandos de qualidade](docs/DEVELOPMENT.md)
 - [Backlog e estado das tarefas](TODO.md)
-
-## Referências
-
-Mecânica inspirada em Suika Game, da Aladdin X, e direção visual inspirada em
-Fruit Match, da Play.Works. As regras e valores de balanceamento de Suika Elika
-são próprios do projeto.
