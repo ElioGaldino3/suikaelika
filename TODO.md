@@ -442,15 +442,15 @@ SE-004, SE-027, SE-028 e SE-030 têm bloqueios externos explícitos. Enquanto is
 
 ### SE-020 — Integrar aplicação e fluxo jogável local
 
-- Status: `pending`
+- Status: `done`
 - Scope: `mvp`
 - Priority: `P1`
 - Depends: `SE-010, SE-011, SE-012, SE-016, SE-018, SE-019`
 - Writes: `suika_elika/app.py; suika_elika/scene_manager.py; suika_elika/config.py; suika_elika/__main__.py; main.py; tests/integration/test_app_flow.py`
 - Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/**; suika_elika/input/controller.py; suika_elika/input/joystick.py; tests/input/test_devices.py; suika_elika/input/profiles.py; tests/input/test_profiles.py; suika_elika/audio.py; tests/services/test_audio.py; suika_elika/game/session.py; tests/game/test_session.py; suika_elika/scenes/title.py; suika_elika/scenes/options.py; suika_elika/scenes/help.py; suika_elika/scenes/pause.py; suika_elika/scenes/results.py; tests/scenes/test_navigation.py; suika_elika/rendering/renderer.py; suika_elika/rendering/hud.py; suika_elika/rendering/effects.py; suika_elika/scenes/play.py; tests/rendering/test_composition.py`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Ainda não executada.
+- Attempts: `1`
+- Evidence: Bootstrap/roteamento de cenas, loop fixo limitado, pausa por foco, limpeza de recursos e fallback de áudio integrados. Revisão independente corrigiu o retorno de Opções à pausa e o layout de nove itens em 480p/720p/1080p. Verificações locais: `python -m pytest tests/integration/test_app_flow.py -q` (7 passou), `python -m pytest -q` (177 passou), Ruff global passou, mypy configurado passou (40 arquivos), mypy nos cinco arquivos da composição passou, `git diff --check` e `todo_graph.py validate` passaram (34 tarefas). Smoke headless com SDL dummy inicializou, desenhou um quadro e encerrou com código 0. Controle genérico ainda depende de perfil; reconexão/seleção de jogador segue em SE-021. Sem homologação de joystick ou Batocera.
 - Blocker: `none`
 
 **Objetivo:** Entregar uma partida local que inicia, pausa, termina, reinicia e sai.
