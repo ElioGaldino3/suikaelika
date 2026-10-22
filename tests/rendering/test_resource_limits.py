@@ -51,7 +51,7 @@ def test_renderer_reuses_fixed_size_presentation_and_pause_surfaces() -> None:
     assert len(renderer._small_fruit_surfaces) <= 1
 
 
-def test_renderer_reuses_quantized_fruit_rotation_surfaces() -> None:
+def test_renderer_reuses_one_degree_fruit_rotation_surfaces() -> None:
     renderer = Renderer(pygame.Surface((1280, 720)))
     definition = load_catalog().get("cherry").definition
 
@@ -60,11 +60,31 @@ def test_renderer_reuses_quantized_fruit_rotation_surfaces() -> None:
     )
     cached = next(iter(renderer._rotated_fruit_surfaces.values()))
     renderer._draw_fruit(
-        definition, Vector2(100, 100), angle=0.21, world_coordinates=False
+        definition, Vector2(100, 100), angle=0.2001, world_coordinates=False
     )
 
     assert len(renderer._rotated_fruit_surfaces) == 1
     assert next(iter(renderer._rotated_fruit_surfaces.values())) is cached
+
+
+def test_renderer_tracks_fruit_rotation_in_one_degree_steps() -> None:
+    renderer = Renderer(pygame.Surface((1280, 720)))
+    definition = load_catalog().get("apple").definition
+
+    renderer._draw_fruit(
+        definition, Vector2(100, 100), angle=0.20, world_coordinates=False
+    )
+    renderer._draw_fruit(
+        definition, Vector2(100, 100), angle=0.23, world_coordinates=False
+    )
+
+    assert len(renderer._rotated_fruit_surfaces) == 2
+    expected = pygame.transform.rotozoom(
+        renderer._fruit_surfaces["apple"], -13, 1.0
+    )
+    assert next(reversed(renderer._rotated_fruit_surfaces.values())).get_size() == (
+        expected.get_size()
+    )
 
 
 def test_renderer_uses_filtered_rotation_for_smoother_fruit_edges() -> None:
@@ -75,7 +95,7 @@ def test_renderer_uses_filtered_rotation_for_smoother_fruit_edges() -> None:
     )
 
     filtered = next(iter(renderer._rotated_fruit_surfaces.values()))
-    unfiltered = pygame.transform.rotate(renderer._fruit_surfaces["apple"], -15)
+    unfiltered = pygame.transform.rotate(renderer._fruit_surfaces["apple"], -11)
     filtered_levels = {
         filtered.get_at((x, y)).a
         for x in range(filtered.get_width())
@@ -90,7 +110,7 @@ def test_renderer_uses_filtered_rotation_for_smoother_fruit_edges() -> None:
     }
 
     assert filtered.get_size() == pygame.transform.rotozoom(
-        renderer._fruit_surfaces["apple"], -15, 1.0
+        renderer._fruit_surfaces["apple"], -11, 1.0
     ).get_size()
     assert len(filtered_levels) > len(unfiltered_levels)
 
@@ -100,11 +120,11 @@ def test_renderer_rotation_surface_cache_stays_bounded() -> None:
     entries = load_catalog().entries[:6]
 
     for entry in entries:
-        for rotation_step in range(1, 24):
+        for rotation_step in range(1, 181):
             renderer._draw_fruit(
                 entry.definition,
                 Vector2(100, 100),
-                angle=rotation_step * 2 * pi / 24,
+                angle=rotation_step * 2 * pi / 360,
                 world_coordinates=False,
             )
 

@@ -25,7 +25,8 @@ LAUNCH_Y = -18.0
 BACKGROUND = (112, 201, 235)
 INK = (24, 59, 78)
 DANGER = (228, 85, 85)
-_ROTATION_STEPS = 24
+# One-degree steps keep rotation visually continuous while retaining cache hits.
+_ROTATION_STEPS = 360
 _ROTATED_SURFACE_CACHE_LIMIT = 128
 DEBUG_COLLIDER_COLOR = (40, 255, 120)
 DEBUG_BOUNDS_COLOR = (255, 220, 30)
