@@ -7,23 +7,28 @@ from dataclasses import FrozenInstanceError
 import pytest
 
 from suika_elika.contracts import (
+    UNKNOWN_PLAYER_ID,
     AudioPort,
     ControllerProfileData,
     DomainEvent,
     EventType,
     FruitDefinition,
     FruitSnapshot,
+    GameResultData,
     InputAction,
     InputEdge,
     InputEdgeQueue,
     InputFrame,
+    PlayerData,
     Pose,
+    RecordCheckpointData,
     RecordData,
     RoundState,
     SessionSnapshot,
     SettingsData,
     StatisticsData,
     Vector2,
+    normalize_player_name,
 )
 
 
@@ -202,3 +207,42 @@ def test_profile_and_statistics_contracts_validate_stable_data() -> None:
         ControllerProfileData("pad", "Gamepad", "controller", (), deadzone=True)  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="non-negative integers"):
         StatisticsData(merges=-1)
+
+
+def test_player_name_normalization_and_reserved_unknown() -> None:
+    assert normalize_player_name("  Jose\u0301   Silva ") == "José Silva"
+    assert len(normalize_player_name("a" * 20)) == 20
+    for name in ("", "a" * 21, " desconhecido "):
+        with pytest.raises(ValueError):
+            normalize_player_name(name)
+    assert PlayerData("player-1", "Ana").name == "Ana"
+    assert UNKNOWN_PLAYER_ID == "unknown"
+
+
+def test_result_and_checkpoint_contracts_and_horizontal_input() -> None:
+    result = GameResultData("result-1", UNKNOWN_PLAYER_ID, "classic", "v1", "none", 2000, 210.0)
+    checkpoint = RecordCheckpointData(
+        "result-1", UNKNOWN_PLAYER_ID, "classic", "v1", "none", 2000, 80.0
+    )
+    assert result.result_id == checkpoint.result_id
+    assert InputAction.NAV_LEFT.value == "nav_left"
+    assert InputAction.NAV_RIGHT.value == "nav_right"
+
+
+@pytest.mark.parametrize("score", (-1, True))
+def test_result_rejects_invalid_score(score: int) -> None:
+    with pytest.raises(ValueError, match="non-negative integer"):
+        GameResultData("result-1", UNKNOWN_PLAYER_ID, "classic", "v1", "none", score, 10.0)
+
+
+@pytest.mark.parametrize("duration", (-1.0, float("inf"), float("nan")))
+def test_result_rejects_invalid_duration(duration: float) -> None:
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        GameResultData("result-1", UNKNOWN_PLAYER_ID, "classic", "v1", "none", 1, duration)
+
+
+def test_player_data_requires_a_normalized_non_reserved_identity() -> None:
+    with pytest.raises(ValueError, match="already be normalized"):
+        PlayerData("player-1", " Ana ")
+    with pytest.raises(ValueError, match="not reserved"):
+        PlayerData(UNKNOWN_PLAYER_ID, "Ana")

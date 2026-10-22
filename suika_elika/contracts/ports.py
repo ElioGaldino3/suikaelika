@@ -8,7 +8,15 @@ from typing import Protocol
 
 from .events import DomainEvent
 from .input import InputFrame
-from .models import FruitDefinition, Pose, SessionSnapshot, Vector2
+from .models import (
+    FruitDefinition,
+    GameResultData,
+    PlayerData,
+    Pose,
+    RecordCheckpointData,
+    SessionSnapshot,
+    Vector2,
+)
 
 _ZERO_VELOCITY = Vector2(0.0, 0.0)
 
@@ -248,6 +256,24 @@ class PersistencePort(Protocol):
     def load_statistics(self) -> StatisticsData: ...
 
     def save_statistics(self, statistics: StatisticsData) -> None: ...
+
+
+class PlayerResultsPort(PersistencePort, Protocol):
+    """Persistence capability for named players, results, and record checkpoints."""
+
+    def load_players(self) -> tuple[PlayerData, ...]: ...
+
+    def save_player(self, player: PlayerData) -> None: ...
+
+    def load_results(self, mode: str | None = None) -> tuple[GameResultData, ...]: ...
+
+    def save_result(self, result: GameResultData) -> None: ...
+
+    def assign_result_player(self, result_id: str, player_id: str) -> GameResultData: ...
+
+    def save_record_checkpoint(self, checkpoint: RecordCheckpointData) -> None: ...
+
+    def finalize_record_checkpoint(self, result: GameResultData) -> None: ...
 
 
 @dataclass(frozen=True, slots=True)

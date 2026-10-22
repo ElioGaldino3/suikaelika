@@ -219,3 +219,13 @@ não grava em armazenamento compartilhado.
 O suporte de joystick depende de como o controle da TV é exposto pelo SDL do
 Android. Testes de build e controles simulados não substituem a instalação e a
 partida em um aparelho Android TV real.
+
+## 13. Contratos de jogadores e resultados
+
+`PlayerResultsPort` estende `PersistencePort` com operações para listar/salvar jogadores e resultados, atribuir jogador a um resultado existente e gravar/finalizar checkpoint de recorde. A extensão separa essa capacidade até que o adaptador a implemente. `PlayerData` é distinto de `ControllerProfileData`: um representa identidade de placar, o outro configuração de dispositivo. `GameResultData` carrega identidade, vínculo, modo, ruleset, objetivo, pontos e duração; `RecordCheckpointData` preserva o mesmo `result_id` durante atualização do recorde interrompido.
+
+`save_result` atualiza pelo `result_id`, e `assign_result_player` altera apenas o vínculo de jogador; confirmar uma identificação ou finalizar um checkpoint não cria outra partida. A ordenação de `load_results` preserva a gravação original em empates exatos.
+
+O relógio de domínio usa duração ativa não arredondada; só apresentação formata tempo. O adaptador deve preservar a ordem de gravação para empate exato. O ranking clássico limita-se aos cinco resultados ordenados por pontuação decrescente e duração ascendente; BATALHA permanece isolada. A migração do schema preserva `RecordData`, sem sintetizar partidas individuais.
+
+`InputAction.NAV_LEFT` e `NAV_RIGHT` complementam navegação vertical para grades e teclados de nome, sem introduzir comportamento de cena. Nomes usam NFC, espaços aparados/colapsados, até 20 code points e unicidade por casefold; identidade Desconhecido é reservada.

@@ -3,12 +3,18 @@
 from .events import DomainEvent, EventType, EventValue, make_event
 from .input import InputAction, InputEdge, InputEdgeQueue, InputFrame
 from .models import (
+    UNKNOWN_PLAYER_ID,
+    UNKNOWN_PLAYER_NAME,
     FruitDefinition,
     FruitSnapshot,
+    GameResultData,
+    PlayerData,
     Pose,
+    RecordCheckpointData,
     RoundState,
     SessionSnapshot,
     Vector2,
+    normalize_player_name,
 )
 from .ports import (
     AudioPort,
@@ -18,6 +24,7 @@ from .ports import (
     ControllerProfileData,
     PersistencePort,
     PhysicsPort,
+    PlayerResultsPort,
     RecordData,
     Scene,
     SceneTransition,
@@ -35,6 +42,12 @@ __all__ = [
     "EventType",
     "EventValue",
     "FruitDefinition",
+    "GameResultData",
+    "PlayerData",
+    "RecordCheckpointData",
+    "UNKNOWN_PLAYER_ID",
+    "UNKNOWN_PLAYER_NAME",
+    "normalize_player_name",
     "FruitSnapshot",
     "InputAction",
     "InputEdge",
@@ -42,6 +55,7 @@ __all__ = [
     "InputFrame",
     "PersistencePort",
     "PhysicsPort",
+    "PlayerResultsPort",
     "Pose",
     "RecordData",
     "RoundState",

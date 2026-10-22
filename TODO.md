@@ -85,15 +85,15 @@ Inspeção estática de `game/session.py`, `persistence.py`, cenas e arquitetura
 
 ### SE-046 — Definir regras de tempo, ranking e identificação
 
-- Status: `pending`
+- Status: `done`
 - Scope: `performance-records`
 - Priority: `P1`
 - Depends: `none`
 - Writes: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/ports.py; suika_elika/contracts/models.py; suika_elika/contracts/input.py; suika_elika/contracts/__init__.py; tests/contracts/test_contracts.py`
 - Reads: `suika_elika/game/session.py; suika_elika/game/battle.py; suika_elika/persistence.py; suika_elika/scene_manager.py`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Não executada; decisões semânticas pendentes descritas no início.
+- Attempts: `1`
+- Evidence: Usuário confirmou ranking por pontuação total decrescente, duração ativa até game over associada ao resultado, uma entrada por partida e inclusão de Desconhecido. Regras e contratos revisados; 19 testes focados passaram, Ruff passou nos arquivos alterados, mypy passou (46 arquivos) e `git diff --check` passou.
 - Blocker: `none`
 
 **Aceitação:**

@@ -15,6 +15,8 @@ class InputAction(str, Enum):
     PAUSE = "pause"
     NAV_UP = "nav_up"
     NAV_DOWN = "nav_down"
+    NAV_LEFT = "nav_left"
+    NAV_RIGHT = "nav_right"
 
 
 @dataclass(frozen=True, slots=True)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass
 from enum import Enum
 from math import isfinite
@@ -60,6 +61,72 @@ class RoundState(str, Enum):
     PLAYING = "playing"
     PAUSED = "paused"
     GAME_OVER = "game_over"
+
+
+UNKNOWN_PLAYER_ID = "unknown"
+UNKNOWN_PLAYER_NAME = "Desconhecido"
+
+
+def normalize_player_name(name: str) -> str:
+    """Normalize a local player name according to the on-device naming rules."""
+    if not isinstance(name, str):
+        raise TypeError("player name must be text")
+    normalized = " ".join(unicodedata.normalize("NFC", name).split())
+    if not normalized or len(normalized) > 20:
+        raise ValueError("player name must contain 1 to 20 code points")
+    if normalized.casefold() == UNKNOWN_PLAYER_NAME.casefold():
+        raise ValueError("Desconhecido is reserved")
+    return normalized
+
+
+@dataclass(frozen=True, slots=True)
+class PlayerData:
+    player_id: str
+    name: str
+
+    def __post_init__(self) -> None:
+        if not self.player_id or self.player_id == UNKNOWN_PLAYER_ID:
+            raise ValueError("player id must be non-empty and not reserved")
+        if normalize_player_name(self.name) != self.name:
+            raise ValueError("player name must already be normalized")
+
+
+@dataclass(frozen=True, slots=True)
+class GameResultData:
+    result_id: str
+    player_id: str
+    mode: str
+    ruleset_version: str
+    objective: str
+    score: int
+    duration_seconds: float
+
+    def __post_init__(self) -> None:
+        if not all(
+            (self.result_id, self.player_id, self.mode, self.ruleset_version, self.objective)
+        ):
+            raise ValueError("result identifiers and context must not be empty")
+        if type(self.score) is not int or self.score < 0:
+            raise ValueError("result score must be a non-negative integer")
+        if (type(self.duration_seconds) not in (int, float) or
+                not isfinite(self.duration_seconds) or self.duration_seconds < 0):
+            raise ValueError("result duration must be finite and non-negative")
+
+
+@dataclass(frozen=True, slots=True)
+class RecordCheckpointData:
+    """An interrupted record candidate with elapsed active time at checkpoint."""
+    result_id: str
+    player_id: str
+    mode: str
+    ruleset_version: str
+    objective: str
+    score: int
+    duration_seconds: float
+
+    def __post_init__(self) -> None:
+        GameResultData(self.result_id, self.player_id, self.mode, self.ruleset_version,
+                       self.objective, self.score, self.duration_seconds)
 
 
 @dataclass(frozen=True, slots=True)

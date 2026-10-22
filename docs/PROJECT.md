@@ -190,6 +190,18 @@ como controle da batalha. A atribuição explícita P1/P2 pode ser indicada com
 `--p1-index` e `--p2-index`; o diagnóstico `tools/check_controllers.py` mostra os
 índices SDL atuais. A ordem do EmulationStation não é presumida como herdada.
 
+### 5.4 Tempo, resultados e ranking local
+
+O relógio ativo começa com o primeiro lançamento de fruta e acumula somente tempo em jogo. Pausa, perda de foco, desconexão do controle e game over congelam o relógio; o fluxo posterior de identificação não acrescenta duração. A medição mantém precisão interna e só arredonda na apresentação.
+
+O fluxo definido é: game over finaliza a duração e cria um resultado provisório para **Desconhecido** (`unknown`); identificação e confirmação associam uma pessoa a esse mesmo resultado; a tela de resultado mostra o ranking e permite iniciar nova partida ou voltar ao menu. Cada partida tem um ID de resultado e uma única entrada, sem duplicação ao confirmar ou revisitar a tela. Desconhecido não pode ser cadastrado como pessoa comum.
+
+Cada resultado carrega ID único, jogador, modo, versão do ruleset, objetivo, pontos e duração ativa até game over. O ranking local lista os cinco melhores resultados do modo clássico, um por partida, incluindo Desconhecido. Ordena por pontos decrescentes, depois por menor duração ativa; empates exatos mantêm a ordem estável de gravação. Exemplo: 2.000 pontos em 3:30 precedem 2.000 em 5:00. Resultados de BATALHA ficam separados e fora desse ranking.
+
+Nome de jogador: normalização Unicode NFC, aparar bordas e colapsar espaços internos; acentos são permitidos; limite de 20 code points após normalização. Nomes são únicos por `casefold`.
+
+Em interrupção que já tenha produzido novo recorde, o checkpoint guarda pontos e duração conhecida naquele instante. Ao concluir a partida, se aquele resultado continuar recordista, atualiza-se o mesmo resultado/ID com a duração final. Migrar o schema existente preserva dados; `RecordData` antigo continua recorde agregado e nunca é convertido em resultados fictícios.
+
 ## 6. Regras das frutas e da pontuação
 
 ### 6.1 Catálogo proposto
