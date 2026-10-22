@@ -64,8 +64,7 @@ def collect_report() -> dict[str, Any]:
     """Return machine-readable environment facts and explicit untested capabilities."""
     libraries = {
         group: {
-            name: inspect_library(name, distribution)
-            for name, distribution in packages.items()
+            name: inspect_library(name, distribution) for name, distribution in packages.items()
         }
         for group, packages in LIBRARIES.items()
     }
@@ -101,8 +100,7 @@ def format_text(report: dict[str, Any]) -> str:
         "Suika Elika environment report",
         f"Python: {runtime['python_version']} ({runtime['python_implementation']})",
         f"OS: {runtime['system']} {runtime['system_release']} ({runtime['os_name']})",
-        "Architecture: "
-        f"{runtime['machine']}, {runtime['process_architecture_bits']}-bit process",
+        f"Architecture: {runtime['machine']}, {runtime['process_architecture_bits']}-bit process",
         "Libraries:",
     ]
     for group, packages in report["libraries"].items():

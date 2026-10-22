@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+import gc
 import json
 import os
 import platform
@@ -28,15 +29,200 @@ import pygame
 from suika_elika.contracts import (
     EventType,
     FruitSnapshot,
+    InputAction,
+    InputEdge,
+    InputFrame,
     Pose,
     RoundState,
     SessionSnapshot,
     Vector2,
     make_event,
 )
+from suika_elika.game.battle import BattleSession
 from suika_elika.game.catalog import load_catalog
+from suika_elika.game.merging import MergeFruit, MergeSystem
 from suika_elika.game.physics import PhysicsWorld
+from suika_elika.game.session import GameSession
 from suika_elika.rendering.renderer import Renderer
+
+
+class _MemoryPersistence:
+    """Deterministic persistence stub; deliberately excludes filesystem latency."""
+
+    def __init__(self, initial_score: int = 0) -> None:
+        self.records: tuple[Any, ...] = ()
+        self.saves = 0
+        self.initial_score = initial_score
+
+    def load_records(self) -> tuple[Any, ...]:
+        return self.records
+
+    def load_statistics(self) -> Any:
+        from suika_elika.contracts import StatisticsData
+
+        return StatisticsData()
+
+    def save_record(self, record: Any) -> None:
+        self.records = (record,)
+        self.saves += 1
+
+    def __getattr__(self, name: str) -> Any:
+        if name.startswith("load_"):
+            return lambda: None
+        if name.startswith("save_"):
+            return lambda *_args, **_kwargs: None
+        raise AttributeError(name)
+
+
+def _gameplay_benchmark(frames: int, seed: int, *, battle: bool) -> dict[str, Any]:
+    """Run repeatable drop/move input through real session rules and physics."""
+    persistence = _MemoryPersistence()
+    session: Any = (
+        BattleSession(seed=seed)
+        if battle
+        else GameSession(PhysicsWorld(), seed=seed, persistence=persistence)
+    )
+    step_samples: list[float] = []
+    snapshot_samples: list[float] = []
+    merge_steps: list[int] = []
+    tracemalloc.start()
+    allocation_start, _ = tracemalloc.get_traced_memory()
+    for index in range(frames):
+        # Seeded deterministic triangular movement; one edge every 42 fixed ticks.
+        move = ((index * 17 + seed) % 121) / 60.0 - 1.0
+        edges = (InputEdge(index, InputAction.DROP),) if index % 42 == 0 else ()
+        frame = InputFrame(move_x=move, edges=edges)
+        started = time.perf_counter_ns()
+        if battle:
+            events = session.step((frame, frame))
+        else:
+            events = session.step(frame)
+        step_samples.append((time.perf_counter_ns() - started) / 1_000_000)
+        if any(event.event_type is EventType.FRUIT_MERGED for event in events):
+            merge_steps.append(index)
+        started = time.perf_counter_ns()
+        _ = session.snapshot
+        snapshot_samples.append((time.perf_counter_ns() - started) / 1_000_000)
+    alloc_current, alloc_peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    elapsed = frames / 120.0
+    return {
+        "scenario": "battle_integrated_steps" if battle else "classic_integrated_steps",
+        "seed": seed,
+        "action_sequence": "move_x=((tick*17+seed)%121)/60-1; DROP edge each 42 ticks",
+        "fixed_steps": frames,
+        "simulated_seconds": elapsed,
+        "drops_requested": (frames + 41) // 42,
+        "merge_step_indices": merge_steps,
+        "merge_count": len(merge_steps),
+        "step_ms": _summarize(step_samples),
+        "snapshot_ms": _summarize(snapshot_samples),
+        "python_alloc_delta_bytes": max(0, alloc_current - allocation_start),
+        "python_alloc_peak_bytes": max(0, alloc_peak - allocation_start),
+        "persistence": "none in battle; in-memory stub in classic",
+        "note": ("Domain step plus snapshot; excludes App accumulator, SDL events, and devices."),
+    }
+
+
+def _summarize(samples: list[float]) -> dict[str, float]:
+    return {
+        "p50_ms": round(statistics.median(samples), 4),
+        "p95_ms": round(_percentile(samples, 0.95), 4),
+        "p99_ms": round(_percentile(samples, 0.99), 4),
+        "max_ms": round(max(samples), 4),
+    }
+
+
+def _merge_scenarios(seed: int) -> list[dict[str, Any]]:
+    """Isolate real merge resolution over deterministic synthetic contacts."""
+    catalog = load_catalog()
+    results: list[dict[str, Any]] = []
+    for name, pairs in (("merge_single", 1), ("merge_chain", 5), ("merge_dense", 16)):
+        physics = PhysicsWorld()
+        source = catalog.get("cherry").definition
+        fruits = tuple(
+            MergeFruit(
+                f"merge-{index}",
+                source,
+                Pose(Vector2(100 + (index % 8) * 4, 120 + (index // 8) * 4)),
+                Vector2(0, 0),
+            )
+            for index in range(pairs * 2)
+        )
+        for fruit in fruits:
+            physics.create_body(fruit.entity_id, fruit.definition, fruit.pose)
+        child_counter = iter(range(100_000))
+
+        def next_child(
+            counter: Any = child_counter, scenario: str = name, run_seed: int = seed
+        ) -> str:
+            return f"child-{run_seed}-{scenario}-{next(counter)}"
+
+        merge = MergeSystem(catalog, physics, next_child)
+        samples: list[float] = []
+        merged = 0
+        iterations = 5 if pairs >= 16 else 15
+        for step in range(iterations):
+            started = time.perf_counter_ns()
+            resolution = merge.resolve(fruits, step_index=step)
+            samples.append((time.perf_counter_ns() - started) / 1_000_000)
+            merged += len(resolution.merged_pairs)
+        results.append(
+            {
+                "scenario": name,
+                "seed": seed,
+                "synthetic_fruit_count": len(fruits),
+                "iterations": iterations,
+                "merged_pairs_total": merged,
+                "resolve_ms": _summarize(samples),
+                "note": (
+                    "Real MergeSystem.resolve over synthetic contacts; not a natural "
+                    "physical cascade or gameplay replay."
+                ),
+            }
+        )
+    return results
+
+
+def _record_comparison(seed: int) -> list[dict[str, Any]]:
+    """Measure only record update logic on either side of the existing record."""
+    results = []
+    for label, current_score, old_score in (
+        ("below_record", 900, 1000),
+        ("above_record", 1100, 1000),
+    ):
+        persistence = _MemoryPersistence(old_score)
+        from suika_elika.contracts import RecordData
+
+        persistence.records = (
+            RecordData(
+                ruleset_version=load_catalog().ruleset_version,
+                mode="classic",
+                score=old_score,
+                best_fruit_level=0,
+                watermelons=0,
+                duration_seconds=10.0,
+            ),
+        )
+        session = GameSession(PhysicsWorld(), seed=seed, persistence=persistence)
+        samples = []
+        session._score = current_score
+        for _ in range(120):
+            started = time.perf_counter_ns()
+            session._save_record()
+            samples.append((time.perf_counter_ns() - started) / 1_000_000)
+        results.append(
+            {
+                "scenario": label,
+                "seed": seed,
+                "current_score": current_score,
+                "previous_record": old_score,
+                "save_calls": persistence.saves,
+                "save_record_ms": _summarize(samples),
+                "persistence": "in-memory stub; filesystem JSON I/O deliberately excluded",
+            }
+        )
+    return results
 
 
 def _percentile(values: list[float], fraction: float) -> float:
@@ -208,15 +394,13 @@ def _physics_benchmark(count: int, *, frames: int, warmup: int) -> dict[str, flo
     return _timed_loop("physics", lambda _index: world.step(), frames=frames, warmup=warmup)
 
 
-def run_benchmark(
-    *, frames: int, warmup: int, render_only: bool = False
-) -> dict[str, object]:
+def run_benchmark(*, frames: int, warmup: int, render_only: bool = False) -> dict[str, object]:
     if frames <= 0 or warmup < 0:
         raise ValueError("frames must be positive and warmup must be non-negative")
     pygame.init()
     target = pygame.display.set_mode((1280, 720))
     renderer = Renderer(target)
-    results: list[dict[str, float | int | str]] = []
+    results: list[dict[str, Any]] = []
     memory: dict[str, int] = {}
 
     for scenario, fruit_count, event_count, round_state in (
@@ -242,9 +426,7 @@ def run_benchmark(
             renderer.draw_session(frame_snapshot, ())
             pygame.display.flip()
 
-        results.append(
-            _timed_loop(scenario, draw_frame, frames=frames, warmup=warmup)
-        )
+        results.append(_timed_loop(scenario, draw_frame, frames=frames, warmup=warmup))
         memory[scenario] = _surface_bytes(renderer, target)
         memory[f"{scenario}_particles_peak"] = len(renderer.effects.particles)
 
@@ -257,6 +439,56 @@ def run_benchmark(
             result = _physics_benchmark(body_count, frames=frames, warmup=warmup)
             result["scenario"] = scenario
             results.append(result)
+
+        # Integrated deterministic domain workloads for both game modes.
+        results.append(_gameplay_benchmark(2400, 4417, battle=False))
+        results.append(_gameplay_benchmark(2400, 4417, battle=True))
+        results.extend(_merge_scenarios(4417))
+        results.extend(_record_comparison(4417))
+
+        # A bounded long session samples GC pauses and process/cache growth.
+        long_session = GameSession(PhysicsWorld(), seed=4417, persistence=_MemoryPersistence())
+        gc_pauses: list[float] = []
+        gc_started: int | None = None
+
+        def gc_probe(phase: str, _info: dict[str, Any]) -> None:
+            nonlocal gc_started
+            if phase == "start":
+                gc_started = time.perf_counter_ns()
+            elif phase == "stop" and gc_started is not None:
+                gc_pauses.append((time.perf_counter_ns() - gc_started) / 1_000_000)
+                gc_started = None
+
+        gc.callbacks.append(gc_probe)
+        long_steps = max(1200, frames * 30)
+        long_started = time.perf_counter_ns()
+        for index in range(long_steps):
+            edge = (InputEdge(index, InputAction.DROP),) if index % 42 == 0 else ()
+            long_session.step(InputFrame(move_x=((index * 17 + 4417) % 121) / 60 - 1, edges=edge))
+            _ = long_session.snapshot
+        long_elapsed = (time.perf_counter_ns() - long_started) / 1_000_000
+        gc.callbacks.remove(gc_probe)
+        results.append(
+            {
+                "scenario": "classic_long_session",
+                "seed": 4417,
+                "action_sequence": "move_x=((tick*17+4417)%121)/60-1; DROP edge each 42 ticks",
+                "fixed_steps": long_steps,
+                "simulated_seconds": round(long_steps / 120, 2),
+                "wall_elapsed_ms": round(long_elapsed, 3),
+                "gc_pause_count": len(gc_pauses),
+                "gc_pause_total_ms": round(sum(gc_pauses), 4),
+                "gc_pause_p95_ms": round(_percentile(gc_pauses, 0.95), 4) if gc_pauses else 0.0,
+                "gc_pause_max_ms": round(max(gc_pauses), 4) if gc_pauses else 0.0,
+                "memory_end": dict(_process_memory()),
+                "fruit_count_end": len(long_session.snapshot.fruits),
+                "renderer_cache_bytes": 0,
+                "note": (
+                    "No renderer instantiated, so cache is not applicable. "
+                    "Process memory is sampled only at the end."
+                ),
+            }
+        )
 
     report = {
         "host": {
@@ -281,6 +513,15 @@ def run_benchmark(
                 "comes from PSAPI; SDL Surface bytes are separately estimated as "
                 "pitch times height."
             ),
+            "gc_note": (
+                "GC pauses are sampled only in classic_long_session; other "
+                "scenarios omit collection pauses."
+            ),
+            "scenario_note": (
+                "Integrated domain steps are separate from isolated merge/render/physics "
+                "workloads; none includes the full App loop or device I/O."
+            ),
+            "gc_enabled": gc.isenabled(),
         },
         "results": results,
         "surface_memory_bytes_estimate": memory,
@@ -300,9 +541,7 @@ def main() -> int:
     )
     parser.add_argument("--output", help="Optional JSON report path")
     args = parser.parse_args()
-    report = run_benchmark(
-        frames=args.frames, warmup=args.warmup, render_only=args.render_only
-    )
+    report = run_benchmark(frames=args.frames, warmup=args.warmup, render_only=args.render_only)
     serialized = json.dumps(report, indent=2, ensure_ascii=False)
     if args.output:
         with open(args.output, "w", encoding="utf-8", newline="\n") as stream:

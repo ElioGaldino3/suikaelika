@@ -38,16 +38,16 @@ Inspeção estática de `game/session.py`, `persistence.py`, cenas e arquitetura
 
 ### SE-044 — Auditar travadas e produzir diagnóstico reproduzível
 
-- Status: `in_review`
+- Status: `blocked`
 - Scope: `performance-records`
 - Priority: `P0`
 - Depends: `none`
 - Writes: `tools/performance.py; tools/diagnostics.py; docs/validation/merge-performance.md`
 - Reads: `suika_elika/**; tests/**; pyproject.toml; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/BATOCERA.md; docs/ANDROID-TV.md`
-- Owner: `/root/se044`
+- Owner: `unassigned`
 - Attempts: `2`
-- Evidence: Tentativa 1 mediu workloads isolados e registrou baseline local (249 passed, 1 failed, 52 errors; Ruff passou; mypy teve 2 erros de tipos POSIX de `resource` no Windows). Tentativa 2 entregou workloads determinísticos de clássico/batalha, snapshot/fusão sintética, limiar de recorde com stub e sessão curta; resultados e limitações estão em revisão, incluindo falta de replay natural e I/O/áudio reais.
-- Blocker: `none`
+- Evidence: Tentativas 1–2 e revisão produziram cargas determinísticas de 20 s para clássico/batalha, passos/snapshots, resolver sintético, comparação do limiar com stub em memória, render isolado e sessão clássica curta com GC/RSS. Verificações de revisão: 30 testes focados passaram; Ruff e mypy da `.venv` passaram; benchmark e diagnóstico JSON terminaram código 0. Suíte ampla, no sandbox, teve 249 passed/1 failed/52 errors por falta de permissão no tmp_path; após autorização, 301 passed/1 failed/0 errors; falha restante é teste de navegação que espera 105% e recebe 101%. A entrega ainda não satisfaz os cenários naturais de fusão/cadeia/pilha/sessão longa por modo, a série prolongada de cache/memória e comparações de persistência/áudio reais.
+- Blocker: Aceitação local permanece incompleta após duas tentativas: faltam replay natural e medições completas por modo, cache/sessão longa e comparações controladas de persistência e áudio. Desbloquear completando esses cenários no harness; SE-052 continua responsável pela prova no equipamento real.
 
 **Aceitação:**
 
