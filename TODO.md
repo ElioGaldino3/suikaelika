@@ -1,201 +1,246 @@
-# TODO — Suika Elika
+# TODO — Desempenho, recordes e jogadores
 
-Atualizado em 21/10/2026. O jogo clássico está funcional e jogável localmente.
-O histórico detalhado do MVP foi arquivado em [docs/archive/TODO-classic.md](docs/archive/TODO-classic.md).
-Este arquivo concentra BATALHA, entrada/diagnóstico e os bloqueios reais de homologação.
-A validação com drivers simulados não homologa controles físicos nem Batocera.
+Atualizado em 22/10/2026. Este backlog substitui integralmente o TODO anterior a pedido do usuário.
+**Somente planejamento autorizado nesta etapa. Nenhuma tarefa abaixo foi iniciada ou implementada.**
+Os caminhos de escrita são reservas propostas para execução futura, não alterações desta entrega.
+Os IDs anteriores não são reutilizados; o histórico anterior pode ser consultado no Git.
 
-## Modo BATALHA 1x1
+## Pedidos e decisões de escopo
 
-### SE-035 — Entrada simultânea por dois controles
+- Auditar o jogo completo para descobrir as causas das travadas durante fusões e corrigir os gargalos comprovados, com comparação antes/depois.
+- Persistir e exibir o recorde e seu tempo após reiniciar o aplicativo e o equipamento.
+- Manter um ranking local dos cinco melhores tempos, mostrado na tela inicial e no pós-jogo.
+- Ao terminar uma partida, abrir identificação com **Desconhecido** como opção e foco inicial, grade de jogadores existentes e botão **Novo jogador**.
+- Investigar entrada de nome fornecida pelo Batocera. Se não houver solução utilizável com joystick no runtime real, implementar teclado virtual próprio.
+- Manter operação offline e experiência completa pelo controle. Não incluir contas online, edição de arte ou novos modos.
+- Proposta de escopo para recordes/ranking/identificação: clássico. Preservar a separação da batalha; sua inclusão depende da definição em SE-046, sem misturar resultados de modos, metas ou rulesets diferentes.
 
-- Status: `done`
-- Scope: `battle`
-- Priority: `P1`
+**Decisões que precisam ser resolvidas antes dos contratos do ranking (SE-046):**
+
+1. “Melhores tempos”: maior duração de sobrevivência ou menor tempo para atingir um objetivo? Se for velocidade, qual objetivo e quais partidas são elegíveis? Não ordenar por menor duração até a derrota, pois isso premiaria perder rapidamente.
+2. “Tempo do recorde”: duração total da partida que fez a melhor pontuação ou instante em que essa pontuação foi atingida? Proposta: duração final da partida recordista, independente do ranking de tempos.
+3. Ranking por partidas (permitindo nomes repetidos) ou apenas o melhor resultado de cada jogador? Definir desempate estável, inclusão de Desconhecido, tratamento da batalha e limites de nomes.
+
+Essas decisões devem ser confirmadas com o usuário na execução; esta etapa apenas registra as perguntas.
+
+## Contexto observado para orientar a execução
+
+Inspeção estática de `game/session.py`, `persistence.py`, cenas e arquitetura; sem profiling ou reprodução nesta etapa:
+
+- Já há persistência JSON e `RecordData.duration_seconds`; investigar integração, sem partir da premissa de que tudo precisa ser criado do zero.
+- `GameSession._apply_merge_resolution()` chama `_save_record()` ao superar o recorde. `JsonPersistence._write_data()` serializa JSON, executa `flush`/`os.fsync`, copia backup e substitui arquivo no mesmo fluxo. É uma hipótese forte de bloqueio por I/O em fusões recordistas, ainda sem causa confirmada por medição.
+- O salvamento durante a partida pode capturar o tempo intermediário; a política de preservar o registro anterior em empate de pontuação também deve ser auditada para garantir o tempo final correto.
+- A arquitetura já registra grade espacial para contatos e cache LRU de rotações. Medir o comportamento real antes de propor novas otimizações de física ou gráficos.
+- Já existe `tools/performance.py`; avaliar cobertura e reaproveitá-lo. O TODO anterior registrava falha em teste de assets, ainda não revalidada nesta etapa: medir a baseline antes de atribuir regressões.
+- Homologações anteriores não são declaradas concluídas pela substituição do TODO. Este backlog cobre a validação no equipamento necessária aos pedidos atuais.
+
+## Frente de desempenho
+
+### SE-044 — Auditar travadas e produzir diagnóstico reproduzível
+
+- Status: `pending`
+- Scope: `performance-records`
+- Priority: `P0`
 - Depends: `none`
-- Writes: `suika_elika/input/battle.py; suika_elika/app.py; tests/integration/test_battle_flow.py; tests/input/test_devices.py`
-- Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md`
-- Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Implementado e revisado. 232 testes passaram; Ruff e mypy (46 fontes) aprovados; build Batocera gerado e cenário incluído. Critérios, pesquisa Context7, revisão visual e limitações em docs/validation/battle.md. Homologação física permanece em SE-038.
-- Blocker: `none`
-
-**Aceitação:**
-
-- Dois instance IDs distintos, sem duplicar Controller/Joystick. Manter os lugares após remoção e reconexão; pausar ambos e consumir confirmação sem lançar.
-
-### SE-036 — Corrida a 500 pontos em duas cestas
-
-- Status: `done`
-- Scope: `battle`
-- Priority: `P1`
-- Depends: `none`
-- Writes: `suika_elika/game/battle.py; suika_elika/scenes/battle.py; suika_elika/scene_manager.py; tests/game/test_battle.py`
-- Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md`
-- Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Implementado e revisado. 232 testes passaram; Ruff e mypy (46 fontes) aprovados; build Batocera gerado e cenário incluído. Critérios, pesquisa Context7, revisão visual e limitações em docs/validation/battle.md. Homologação física permanece em SE-038.
-- Blocker: `none`
-
-**Aceitação:**
-
-- Duas sessões independentes, cestas físicas de 480×460, sequência igual. Vitória por >=500 ou transbordamento adversário; empate no mesmo passo. Pausa, resultado e revanche.
-
-### SE-037 — Menu, tela dividida e cenário da batalha
-
-- Status: `done`
-- Scope: `battle`
-- Priority: `P1`
-- Depends: `none`
-- Writes: `suika_elika/rendering/battle.py; suika_elika/rendering/assets.py; suika_elika/scenes/title.py; suika_elika/scenes/pause.py; tools/process_art_assets.py; assets/backgrounds/battle.png; tests/rendering/test_battle_rendering.py; tests/rendering/test_assets.py; tests/scenes/test_navigation.py; README.md; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/validation/battle.md; TODO.md`
-- Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md`
-- Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Implementado e revisado. 232 testes passaram; Ruff e mypy (46 fontes) aprovados; build Batocera gerado e cenário incluído. Critérios, pesquisa Context7, revisão visual e limitações em docs/validation/battle.md. Homologação física permanece em SE-038.
-- Blocker: `none`
-
-**Aceitação:**
-
-- BATALHA visível e desabilitado com menos de dois controles, atualizado por hotplug. Cestas por jogador, placar/meta/próxima fruta e raw_assets/battle_background.png como fundo; incluir no pacote.
-
-### SE-038 — Homologar batalha com dois controles no Batocera
-
-- Status: `blocked`
-- Scope: `battle`
-- Priority: `P1`
-- Depends: `SE-035, SE-036, SE-037`
-- Writes: `docs/validation/battle-hardware.md`
-- Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md`
+- Writes: `tools/performance.py; tools/diagnostics.py; docs/validation/merge-performance.md`
+- Reads: `suika_elika/**; tests/**; pyproject.toml; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/BATOCERA.md; docs/ANDROID-TV.md`
 - Owner: `unassigned`
 - Attempts: `0`
-- Evidence: Homologação não executada; histórico preservado no arquivo do MVP.
-- Blocker: `Necessário acesso ao Batocera e a dois controles físicos.`
+- Evidence: Não executada; hipótese estática registrada acima, sem causa comprovada.
+- Blocker: `none`
 
 **Aceitação:**
 
-- Testar dois controles físicos, modelos iguais/diferentes, hotplug, foco, pausa, áudio e desempenho no aparelho real.
+- Reproduzir fusões isoladas, cadeias, pilha densa e sessões longas, no clássico e na batalha. Comparar partida abaixo do recorde e partida superando o recorde; registrar seed/ações, quantidade de frutas, hardware, plataforma e versões.
+- Auditar loop/acumulador e recuperação de atrasos, física/contatos, busca e resolução de fusões, snapshots, renderização/cache/transformações, partículas, áudio, carregamento de assets, alocações/GC e persistência. Separar hipóteses, medições e achados descartados.
+- Medir tempo por etapa e por quadro, p50/p95/p99, pior quadro, quantidade/duração de pausas e memória/cache em sessão prolongada. FPS médio sozinho não comprova fluidez.
+- Isolar I/O de recordes, efeitos, áudio e desenho em comparações controladas, sem transformar os desvios de diagnóstico em alteração de regras do jogo.
+- Produzir relatório com reprodução, perfis, causa(s) sustentada(s) por evidência e correções priorizadas por impacto/risco. Comparar com orçamento de 16,67 ms para 60 FPS e fixar limites verificáveis no equipamento de referência.
+- Usar Context7 para APIs de Pygame/Pymunk se necessário; resolver biblioteca antes de consultar cada conceito. Se indisponível, registrar e usar documentação oficial.
+- Obter baseline dos testes configurados. Se faltar acesso ao equipamento que apresenta o problema, concluir apenas diagnóstico local e registrar explicitamente o que SE-052 ainda precisa medir.
 
-### SE-039 — Concluir preparação e homologação da distribuição
+### SE-045 — Corrigir os gargalos comprovados nas fusões
 
-- Status: `blocked`
-- Scope: `battle`
-- Priority: `P1`
-- Depends: `none`
-- Writes: `docs/validation/batocera-runtime.md; docs/validation/local-performance.md; docs/decisions/license.md; docs/RELEASE.md`
-- Reads: `docs/PROJECT.md; docs/ARCHITECTURE.md`
+- Status: `pending`
+- Scope: `performance-records`
+- Priority: `P0`
+- Depends: `SE-044`
+- Writes: `suika_elika/**; tests/**; tools/performance.py; docs/ARCHITECTURE.md; docs/validation/merge-performance.md`
+- Reads: `docs/PROJECT.md; pyproject.toml`
 - Owner: `unassigned`
 - Attempts: `0`
-- Evidence: Homologação não executada; histórico preservado no arquivo do MVP.
-- Blocker: `Aparelho indisponível e licença ainda não decidida pelo responsável; não declarar distribuição homologada.`
-
-**Aceitação:**
-
-- Pendências anteriores SE-004/024/026/027/028/029/030: coletar runtime, fixar dependências, revisar balanceamento, homologar controles/áudio/persistência, definir licença e fechar documentação da distribuição.
-
-
-### SE-040 — Diagnóstico de controles e teclado desktop explícito
-
-- Status: `done`
-- Scope: `input`
-- Priority: `P1`
-- Depends: `SE-035`
-- Writes: `tools/check_controllers.py; suika_elika/config.py; suika_elika/app.py; suika_elika/input/battle.py; suika_elika/scene_manager.py; tests/tools/test_check_controllers.py; tests/integration/test_desktop_mode.py; README.md; docs/DEVELOPMENT.md; docs/BATOCERA.md; docs/ARCHITECTURE.md; docs/PROJECT.md; docs/validation/controller-desktop.md; TODO.md`
-- Reads: `suika_elika/input/controller.py; docs/PROJECT.md; docs/ARCHITECTURE.md`
-- Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Implementado e revisado. 251 testes passaram, Ruff e mypy (46 fontes) aprovados, build e smoke do pacote com código 0. Diagnóstico real retornou 0 joysticks e teclado fora da contagem. Pesquisa, comandos, critérios e limitações em docs/validation/controller-desktop.md. Homologação física continua em SE-038/039.
+- Evidence: Não executada; intervenções dependem das medições de SE-044.
 - Blocker: `none`
 
 **Aceitação:**
 
-- Script independente lista quantidade e metadados de joysticks no terminal; JSON, execução sem display e erros de leitura explícitos.
-- Teclado comum fora da contagem. Entrada nativa por padrão; --desktop autoriza fallback no clássico/menu, sem substituir o segundo controle da batalha.
-- Seleção explícita de P1/P2 por índices SDL distintos; não presumir que a ordem do EmulationStation seja transmitida pelo lançador Pygame.
-- Regressões, lint, tipos, build e smoke local aprovados; limitações de hardware registradas.
+- Corrigir causas medidas e comparar os mesmos cenários antes/depois, com limites de tempo por quadro definidos no diagnóstico, incluindo fusões recordistas e cadeias.
+- Se confirmada a hipótese de I/O, retirar gravações duráveis repetidas do passo crítico e definir política de consolidação, falhas e encerramento. Preservar dados em pontos seguros e declarar a janela de perda em interrupção abrupta; não apenas remover `fsync` ou transferir custo para outro quadro sem medir.
+- Preservar pares de fusão únicos, pontuação, RNG, cadência de lançamento, perigo, pausa e simetria da batalha. Otimizações visuais não alteram física; mudança real de regra exige versionamento explícito.
+- Verificar limites de memória/cache, ausência de acumulação de trabalho e comportamento com armazenamento lento/indisponível. Não escrever JSON por fruta/fusão como efeito colateral das novas telas.
+- Rodar testes relevantes e suíte, Ruff e mypy conforme `pyproject.toml`; documentar resultados reais, comparação de desempenho e limitações de hardware.
+- Reserva ampla temporária: reduzir `Writes` aos arquivos identificados pela auditoria antes de distribuir implementação. Serializar esta tarefa com mudanças de sessão/persistência das demais frentes.
 
+## Contratos e dados locais
 
-### SE-041 — Aperto imediato e lançamento ao segurar a 400 BPM
+### SE-046 — Definir regras de tempo, ranking e identificação
 
-- Status: `done`
-- Scope: `input`
-- Priority: `P1`
-- Depends: `SE-035, SE-036, SE-040`
-- Writes: `suika_elika/contracts/input.py; suika_elika/input/manager.py; suika_elika/input/controller.py; suika_elika/input/joystick.py; suika_elika/app.py; suika_elika/game/spawning.py; suika_elika/game/session.py; suika_elika/game/catalog.py; suika_elika/scenes/play.py; suika_elika/scenes/battle.py; suika_elika/scenes/help.py; data/rules/classic-v4.json; tests/game/test_catalog.py; tests/game/test_randomizer.py; tests/game/test_session.py; tests/game/test_spawning.py; tests/input/test_actions.py; tests/input/test_devices.py; tests/integration/test_drop_repeat.py; tests/packaging/test_layout.py; tests/scenes/test_navigation.py; README.md; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/DEVELOPMENT.md; docs/BATOCERA.md; docs/validation/drop-repeat.md; TODO.md`
-- Reads: `suika_elika/game/physics.py; suika_elika/scene_manager.py`
-- Owner: `unassigned`
-- Attempts: `1`
-- Evidence: Implementado e revisado. 266 testes passaram; Ruff e mypy (46 fontes) aprovados; grafo válido, build e smoke do pacote com código 0. Física real confirmou intervalos de 150 ms a 30/60/120 FPS. Comandos, critérios e limites em docs/validation/drop-repeat.md; homologação física permanece em SE-038/039.
-- Blocker: `none`
-
-**Aceitação:**
-
-- Cada novo aperto tenta lançar sem cooldown artificial; segurar repete a cada 150 ms de simulação, no teclado autorizado e nos dois controles.
-- Repetição para ao soltar e desarma em pausa/retomada/reinício, sem repetir confirmação nem gerar rajada após bloqueio.
-- Área de nascimento continua protegida; velocidade inicial permite a cadência sem sobreposição. Ruleset classic-v4 separa os recordes.
-- Testes de física/entrada/cenas e regressões aprovados; lint, tipos, build e evidências registrados; homologação física permanece pendente.
-
-
-## Correção de controles no menu — 21/10/2026
-
-- Status: `done`
-- Corrigida a leitura das constantes SDL no namespace do Pygame 2.6.1:
-  confirmação/soltura, voltar, Start, direcional digital e ajuste fino.
-- Evidência: `python -m pytest -q`: 267 testes passaram;
-  `python -m ruff check .`: aprovado; `python -m mypy`: 46 fontes aprovadas.
-  Regressão usa o módulo real Controller com dispositivo simulado.
-- Limitação: teste físico do usuário e Batocera pendentes. Confirmação usa
-  o botão sul/A SDL; o rótulo X depende do mapeamento do controle.
-
-
-## Meta da batalha e hold a 180 BPM — 21/10/2026
-
-- Status: `done`
-- BATALHA abre uma tela com 1000, 2000 e 5000 pontos; seleção define a vitória,
-  o HUD e o resultado. Revanche e retomada preservam a meta. Voltar cancela a
-  seleção; hotplug desabilita o início sem dois controles.
-- Hold reduzido para 180 BPM (1/3 s) no clássico e batalha, mantendo apertos
-  imediatos, interrupção ao soltar/pausar e ausência de rajadas após bloqueio.
-  Ruleset `classic-v5` separa os recordes; catálogo anterior preservado.
-- Evidência: `python -m pytest -q`: 277 passaram; `python -m ruff check .`:
-  aprovado; `python -m mypy`: 46 fontes aprovadas; `git diff --check`: aprovado.
-  Tela de seleção renderizada a 1280x720 e inspecionada visualmente.
-- Limitações: testes de entrada usam dispositivos simulados; controle físico,
-  áudio HDMI e execução no Batocera continuam sem homologação neste lote.
-
-
-## Android TV
-
-### SE-042 — Gerar APK instalável para Android TV
-
-- Status: `done`
-- Scope: `android-tv`
+- Status: `pending`
+- Scope: `performance-records`
 - Priority: `P1`
 - Depends: `none`
-- Writes: `buildozer.spec; packaging/android/; raw_assets/icons/android/; suika_elika/platform.py; tests/services/test_platform.py; README.md; docs/ANDROID-TV.md; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/validation/android-tv.md; TODO.md`
-- Reads: `pyproject.toml; raw_assets/icons/android/; docs/PROJECT.md; docs/ARCHITECTURE.md`
+- Writes: `docs/PROJECT.md; docs/ARCHITECTURE.md; suika_elika/contracts/ports.py; suika_elika/contracts/models.py; suika_elika/contracts/input.py; suika_elika/contracts/__init__.py; tests/contracts/test_contracts.py`
+- Reads: `suika_elika/game/session.py; suika_elika/game/battle.py; suika_elika/persistence.py; suika_elika/scene_manager.py`
 - Owner: `unassigned`
-- Attempts: `13`
-- Evidence: APK debug gerado por `powershell -ExecutionPolicy Bypass -File packaging/android/build.ps1` em Docker: `dist/android/suikaelika-0.1.0-arm64-v8a_armeabi-v7a-debug.apk` (44.332.312 bytes). `aapt2 dump xmltree` confirmou pacote `com.suikaelika`, minSdk 23, targetSdk 35, paisagem, `LEANBACK_LAUNCHER`, banner e recursos opcionais de Leanback/touchscreen. ZIP contém ABIs arm64-v8a e armeabi-v7a, ícone adaptativo e banner; distribuição P4A inclui pygame-ce/Pymunk. Logcat da TCL registrou pygame sem o atributo init; a receita executa setup.py build_py antes da instalação e os dois bundles incluem pygame/__init__.pyc. Testes Android relacionados: 9 passaram; Ruff geral e das receitas e mypy aprovados. A suíte completa teve 296 aprovados e 1 falha preexistente em `tests/rendering/test_assets.py`, causada por comparar sprites empacotados em 5× a resolução nativa da folha. Evidências e limites em `docs/validation/android-tv.md`; TV física continua em SE-043.
+- Attempts: `0`
+- Evidence: Não executada; decisões semânticas pendentes descritas no início.
 - Blocker: `none`
 
 **Aceitação:**
 
-- Gerar APK instalável com launcher Leanback, paisagem, controles nativos, ícone e banner Android fornecidos; incluir as versões Pygame CE/Pymunk do runtime do jogo.
-- Rodar testes relacionados, lint, tipos e validar manifesto/ABIs/arquivos no pacote. Documentar o comando Windows e limites do hardware.
+- Resolver com o usuário as três decisões do início antes de implementar sua lógica; registrar regra explícita e exemplos de classificação/desempate.
+- Definir relógio de jogo ativo: pausa, perda de foco, desconexão e identificação não aumentam tempo; início/fim do intervalo são explícitos. Comparar duração com precisão interna, arredondando apenas a apresentação.
+- Definir jogador com ID estável e nome de exibição, identidade reservada Desconhecido, resultado com ID único e vínculo ao jogador, modo/ruleset/objetivo, pontos e tempo. Não confundir jogadores com perfis de controle existentes.
+- Definir contratos de consulta/gravação e fluxo: fim da rodada → identificação → confirmação → resultado com ranking → nova partida/menu; um resultado é registrado uma única vez.
+- Definir salvamento provisório como Desconhecido antes da identificação e associação posterior sem duplicação, para não perder resultado ao fechar nessa tela. Definir também checkpoint de recorde durante partida interrompida.
+- Definir schema/migração compatível com dados atuais e política de nomes vazios, duplicados, acentos, comprimento e desempate. Ausência de dados antigos não pode gerar tempos fictícios no ranking.
+- Verificar contratos com testes focados e documentar decisões como futuras até sua implementação.
 
-### SE-043 — Homologar o APK em Android TV
+### SE-047 — Persistir recorde, tempo, jogadores e melhores resultados
 
-- Status: `blocked`
-- Scope: `android-tv`
+- Status: `pending`
+- Scope: `performance-records`
 - Priority: `P1`
-- Depends: `SE-042`
-- Writes: `docs/validation/android-tv-hardware.md`
-- Reads: `docs/ANDROID-TV.md; docs/ARCHITECTURE.md`
+- Depends: `SE-045, SE-046`
+- Writes: `suika_elika/persistence.py; suika_elika/platform.py; suika_elika/game/session.py; suika_elika/records.py; tests/services/test_persistence.py; tests/services/test_platform.py; tests/game/test_session.py; tests/services/test_records.py; docs/ARCHITECTURE.md`
+- Reads: `suika_elika/contracts/**; docs/PROJECT.md; docs/BATOCERA.md; docs/ANDROID-TV.md; docs/validation/merge-performance.md`
 - Owner: `unassigned`
 - Attempts: `0`
-- Evidence: Homologação em aparelho real ainda não executada.
-- Blocker: `Necessário acesso à Android TV e a um controle físico.`
+- Evidence: Não executada; contratos e correção de desempenho são pré-requisitos.
+- Blocker: `none`
 
 **Aceitação:**
 
-- Instalar e iniciar pelo launcher da TV; jogar clássico e batalha com controles, testar desconexão/reconexão, áudio e desempenho no aparelho real.
+- Diagnosticar a perda/ausência atual: criação do serviço, diretório gravável, carregamento no início, chave modo/ruleset e exibição. Reutilizar persistência existente com migração não destrutiva e backup recuperável.
+- Salvar recorde e tempo segundo SE-046, mantendo o vínculo à partida correta inclusive quando a pontuação final empata com checkpoint da mesma partida. Uma partida inferior não sobrescreve o recorde.
+- Persistir jogadores e resultados identificados/Desconhecido, extrair no máximo cinco melhores tempos pela regra acordada e aplicar desempate estável. Confirmar de novo ou revisitar a tela não duplica entradas.
+- Garantir dados após sair/reabrir o processo e após reinício do equipamento, usando caminhos persistentes do Batocera e Android TV quando aplicável, sem gravar na pasta instalada do jogo.
+- Testar primeira execução, migração, reinício com nova instância do serviço, arquivo corrompido, falha de escrita e interrupção em pontos de salvamento. Apresentar erro sem travar; não afirmar que cache em memória está salvo em disco.
+- Verificar que a política de gravação respeita o orçamento de SE-045; preservar isolamento de modo/ruleset/objetivo e dados anteriores.
+
+## Entrada de nome e pós-jogo
+
+### SE-048 — Investigar entrada de texto disponível no Batocera
+
+- Status: `pending`
+- Scope: `performance-records`
+- Priority: `P1`
+- Depends: `none`
+- Writes: `docs/decisions/player-name-input.md`
+- Reads: `docs/BATOCERA.md; suika_elika/input/**; suika_elika/app.py; packaging/batocera/**`
+- Owner: `unassigned`
+- Attempts: `0`
+- Evidence: Não executada; nenhuma API ou teclado do Batocera foi presumido disponível.
+- Blocker: `none`
+
+**Aceitação:**
+
+- Consultar documentação oficial do Batocera sobre entrada de texto/teclado virtual acessível a um processo Pygame externo; distinguir UI do EmulationStation de recurso chamável pelo jogo.
+- Para APIs Pygame/SDL, consultar Context7 primeiro; registrar fontes, versões, disponibilidade e limitações. Falta de documentação ou de acesso ao aparelho não comprova suporte.
+- Avaliar abertura, foco, navegação integral pelo controle, confirmação/cancelamento, acentos e retorno ao jogo. Teclado físico pode ser adicional, nunca requisito.
+- Entregar decisão de integração nativa somente com viabilidade demonstrada; na ausência de solução demonstrável, adotar teclado virtual próprio na SE-049. Prova no aparelho pendente permanece explícita.
+
+### SE-049 — Implementar cadastro e teclado para nomes
+
+- Status: `pending`
+- Scope: `performance-records`
+- Priority: `P1`
+- Depends: `SE-047, SE-048`
+- Writes: `suika_elika/scenes/player_name.py; suika_elika/input/text.py; suika_elika/input/actions.py; suika_elika/rendering/player_name.py; suika_elika/app.py; suika_elika/scene_manager.py; tests/input/test_text.py; tests/scenes/test_player_name.py`
+- Reads: `suika_elika/contracts/**; suika_elika/persistence.py; suika_elika/records.py; docs/decisions/player-name-input.md; docs/ARCHITECTURE.md`
+- Owner: `unassigned`
+- Attempts: `0`
+- Evidence: Não executada; mecanismo de texto depende da pesquisa SE-048.
+- Blocker: `none`
+
+**Aceitação:**
+
+- Usar entrada nativa viável conforme SE-048 ou criar teclado virtual de letras, espaço, apagar, concluir e cancelar, legível na TV e totalmente navegável por direcional/analógico e botões.
+- Aceitar nomes em português segundo SE-046, impedir nome vazio e duplicidade conforme política definida e dar feedback para comprimento máximo.
+- Ao confirmar cadastro, persistir jogador e retornar à grade com o novo jogador selecionado. Cancelar retorna sem criar jogador e sem perder resultado pendente.
+- Conexão/desconexão, repetição ao segurar direção e foco não geram caracteres ou confirmações residuais. Texto digitado não aciona soltura/atalhos de gameplay.
+- Testar fluxo com eventos simulados e inspecionar visualmente o teclado. Reservar validação com controle físico ao SE-052; não exigir `--desktop` para identificar jogador no Batocera.
+
+### SE-050 — Criar identificação pós-jogo com grade de jogadores
+
+- Status: `pending`
+- Scope: `performance-records`
+- Priority: `P1`
+- Depends: `SE-049`
+- Writes: `suika_elika/scenes/player_select.py; suika_elika/rendering/player_select.py; suika_elika/scenes/play.py; suika_elika/scenes/results.py; suika_elika/scene_manager.py; tests/scenes/test_player_select.py; tests/integration/test_app_flow.py`
+- Reads: `suika_elika/records.py; suika_elika/persistence.py; suika_elika/contracts/**; suika_elika/scenes/player_name.py; docs/ARCHITECTURE.md`
+- Owner: `unassigned`
+- Attempts: `0`
+- Evidence: Não executada; depende de persistência e cadastro.
+- Blocker: `none`
+
+**Aceitação:**
+
+- Toda partida concluída no escopo acordado abre identificação antes do resultado; Desconhecido está visível e focado inicialmente e permite continuar com um comando de confirmação.
+- Exibir jogadores persistidos em grade, botão Novo jogador e navegação bidimensional previsível. Lista vazia, muitas pessoas, nomes longos e paginação/rolagem têm comportamento definido.
+- Selecionar jogador existente associa resultado sem novo cadastro. Novo jogador abre SE-049; retorno preserva a partida encerrada e a seleção esperada.
+- Resultado permanece congelado. Confirmar/voltar, reconectar ou repetir evento não reabre a rodada nem grava duplicatas. Definir retorno/cancelamento mantendo possibilidade de seguir como Desconhecido.
+- Testar encadeamento fim → identificação → cadastro/seleção → resultado → menu/reinício, inclusive falha de gravação e encerramento na identificação.
+
+## Apresentação e validação final
+
+### SE-051 — Exibir recorde, tempo e top 5 no início e pós-jogo
+
+- Status: `pending`
+- Scope: `performance-records`
+- Priority: `P1`
+- Depends: `SE-050`
+- Writes: `suika_elika/scenes/title.py; suika_elika/scenes/results.py; suika_elika/rendering/renderer.py; suika_elika/rendering/hud.py; suika_elika/scene_manager.py; tests/scenes/test_navigation.py; tests/rendering/test_composition.py; docs/validation/records-ui.md`
+- Reads: `suika_elika/records.py; suika_elika/persistence.py; suika_elika/contracts/**; docs/PROJECT.md; docs/ARCHITECTURE.md`
+- Owner: `unassigned`
+- Attempts: `0`
+- Evidence: Não executada; depende do fluxo completo de identificação.
+- Blocker: `none`
+
+**Aceitação:**
+
+- Tela inicial e pós-jogo mostram recorde com tempo associado e ranking de até cinco posições com jogador e tempo, carregados do disco na abertura do jogo. HUD mantém recorde/tempo legíveis durante a partida conforme regra acordada.
+- Título do ranking explica a métrica escolhida; dados do resultado recém-confirmado aparecem imediatamente. Identificar contexto de modo/objetivo/ruleset sem misturar classificações incompatíveis.
+- Tratar zero a cinco entradas sem inventar resultados, destacar a partida atual se classificada e formatar durações acima de uma hora sem corte.
+- Inspecionar renderização a 1280×720 e escalas suportadas, área segura da TV, contraste, nomes longos e foco de menus. Ranking não encobre opções nem impede reinício pelo controle.
+- Testar reabrir o aplicativo, retorno do resultado ao menu e nova partida preservando recordes, tempos, nomes e ordenação.
+
+### SE-052 — Validar integração, desempenho e persistência no equipamento
+
+- Status: `pending`
+- Scope: `performance-records`
+- Priority: `P1`
+- Depends: `SE-051`
+- Writes: `docs/validation/performance-records-hardware.md; docs/BATOCERA.md; docs/ANDROID-TV.md; README.md`
+- Reads: `suika_elika/**; tests/**; tools/performance.py; tools/build_batocera.py; packaging/**; pyproject.toml; docs/validation/merge-performance.md; docs/validation/records-ui.md`
+- Owner: `unassigned`
+- Attempts: `0`
+- Evidence: Não executada; disponibilidade do equipamento deverá ser verificada na execução.
+- Blocker: `none`
+
+**Aceitação:**
+
+- Rodar `python -m pytest -q`, `python -m ruff check .`, `python -m mypy` e build/smoke aplicáveis aos pacotes alterados; registrar comandos/resultados e separar falhas preexistentes de regressões.
+- Validar no Batocera com controle físico: fusões repetidas e recordistas, cadeias, pilha densa, jogo prolongado, grade, cadastro, teclado escolhido, ranking, hotplug/foco e áudio. Repetir no Android TV se for o equipamento do relato ou receber pacote alterado.
+- Comparar medições com SE-044/045 no equipamento de referência, inclusive pausas de I/O e memória. Não aprovar desempenho somente por FPS médio ou teste headless.
+- Encerrar e reabrir o jogo, reiniciar equipamento e confirmar recorde/tempo/top 5/jogadores. Verificar erro de armazenamento, encerramento na identificação e limites de recuperação acordados.
+- Se faltar aparelho/controle, registrar tarefa como bloqueada com condição concreta de desbloqueio; manter evidências locais separadas e não declarar homologação física.
+- Revisar diff e critérios de cada lote, atualizar estados/evidências no TODO e criar commits com caminhos explícitos somente após verificações. Nada desta lista autoriza execução durante a entrega atual de planejamento.
+
+## Ordem e critérios de execução futura
+
+1. Auditar desempenho (SE-044) e corrigir causas comprovadas (SE-045).
+2. Resolver contratos/semântica (SE-046) e investigar entrada do Batocera (SE-048); podem ser preparados antes, sem editar caminhos em conflito com a otimização.
+3. Persistência (SE-047) → cadastro/teclado (SE-049) → identificação (SE-050) → apresentação (SE-051) → validação final (SE-052).
+
+Todos os itens permanecem `pending`, com zero tentativas. Dependências não concluídas impedem consumidores; ausência futura de hardware pode bloquear apenas as verificações que dependem dele. Os caminhos compartilhados exigem serialização ou divisão revisada antes de qualquer delegação. Esta alteração do TODO não inicia o backlog.
