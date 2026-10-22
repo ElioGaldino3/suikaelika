@@ -1,75 +1,105 @@
-# Diagnóstico reproduzível de travadas em fusões (SE-044)
+# Auditoria local de fusões e desempenho
 
-## Estado e limite da evidência
+**Data:** 22/10/2026
+**Escopo:** `SE-044` — diagnóstico local reproduzível; não é homologação do Batocera.
 
-Este diagnóstico mede somente o checkout em Windows 11, CPython 3.14.7, Pygame CE 2.5.8 / SDL 2.32.10, display e áudio SDL `dummy`, em CPU AMD64 do host local (modelo não coletado). Não houve acesso ao equipamento do relato, ao Batocera, à Android TV ou a joystick físico. Os tempos abaixo não demonstram nem refutam a travada relatada nesses aparelhos. SE-052 ainda precisa coletar o relatório de `tools/diagnostics.py --format json`, modelo/CPU/RAM/armazenamento/GPU, resolução/refresh, versão do sistema, backend SDL, versão do jogo e carga reproduzida no aparelho.
+## Como reproduzir
 
-## Reprodução disponível e lacunas
-
-O harness atual `tools/performance.py` permite repetir carga normal de render com 24 frutas, render de referência com 150 frutas, estresse visual com 120 frutas e três eventos de fusão por quadro, overlay pausado, e física isolada com 24, 120 e 400 corpos. Comando medido:
+Na raiz do projeto, execute os cenários naturais e o soak completo:
 
 ```powershell
-.venv\Scripts\python.exe tools\performance.py --frames 30 --warmup 2
+.venv\Scripts\python.exe tools/performance.py --frames 30 --warmup 5 --full-scenarios --soak-seconds 300 --output .local/performance-full.json
 ```
 
-Além das cargas isoladas, o harness roda 2.400 passos (20 s simulados) em `GameSession` e `BattleSession`, seed `4417`, DROP a cada 42 passos, `move_x=((tick*17+seed)%121)/60-1`. Conta fusões emergentes e mede `step` e snapshot separadamente. No helper de 2.400 passos, os resultados foram:
+O comando executa quatro perfis em cada modo, compara gravação em memória com JSON durável, mede o acumulador do `App`, inicializa o mixer SDL e mantém um renderizador durante ao menos cinco minutos ativos por modo. Os tempos são medidos nesta máquina; `--soak-seconds` pode ser reduzido para depuração.
 
-| Modo | fusões | step p50/p95/p99/máximo ms | snapshot p50/p95/p99/máximo ms |
-|---|---:|---|---|
-| Clássico | 31 | 1,183 / 2,046 / 3,410 / 13,158 | 0,077 / 0,116 / 0,144 / 0,234 |
-| Batalha (dois tabuleiros) | 32 | 2,001 / 4,063 / 4,669 / 20,706 | 0,112 / 0,188 / 0,213 / 0,344 |
+Para comparar efeitos visuais com a mesma cena e a mesma quantidade de frutas:
 
-O passo integrado de batalha excedeu 16,67 ms uma vez, sob tracemalloc; p99 foi 4,669 ms. A medição não inclui App accumulator, renderer nem SDL events, então não representa um quadro completo.
+```powershell
+.venv\Scripts\python.exe tools/performance.py --frames 300 --warmup 30 --render-only --output .local/render-comparison.json
+```
 
-`MergeSystem.resolve` foi medido isoladamente sobre frutas sintéticas sobrepostas: 2 frutas (unitária), 10 (“cadeia”) e 32 (densa), com 15/15/5 chamadas. Na primeira coleta, máximos foram 3,343 / 74,559 / 220,653 ms; na execução final o cenário denso teve máximo 223,566 ms. A entrada artificial congestionada é repetida por chamada e não constitui cascata física sequencial nem resultado de gameplay; o rótulo cadeia descreve a forma da entrada, não uma cadeia confirmada.
+Os arquivos JSON ficam em `.local/`, fora do histórico do Git. O relatório abaixo registra os resultados obtidos em execução completa e a comparação controlada do renderizador.
 
-Comparação de `_save_record`: 120 chamadas com scores 900/recorde 1000 e 1100/1000. Na execução final, stub em memória: abaixo p50/p95/p99/máx 0,0018/0,0020/0,0039/0,0071 ms; acima 0,0018/0,0019/0,0028/0,0062 ms. Isso mede lógica, sem JSON, filesystem ou flush. Áudio real não foi isolado; efeitos usam eventos sintéticos. Sessão longa: 1.200 passos (10 s simulados), 249,570 ms de parede, 2 pausas GC totalizando 0,291 ms (máxima 0,178 ms), 16 frutas no fim e RSS 87,9 MB. Sem renderer/cache no perfil longo; cache = não aplicável.
+## Máquina e limites da medição
 
-## Resultados medidos
+- Windows 11 x64; CPython 3.14.7; 12 processadores lógicos; processador identificado pelo runtime como `Intel64 Family 6 Model 151 Stepping 2, GenuineIntel`.
+- pygame-ce 2.5.8; Pymunk 7.3.1; SDL 2.32.10; tela 1280×720.
+- SDL de vídeo e áudio em modo `dummy`. O desenho usa superfícies Pygame, sem validar GPU física. O mixer Pygame inicializou e consumiu eventos no driver dummy, sem validar HDMI, alto-falantes ou latência do Batocera.
+- Orçamento de referência: 16,67 ms por quadro a 60 FPS. A simulação usa passo fixo de 8,33 ms. Como o equipamento que apresenta as travadas não foi usado, o resultado local não estabelece limites homologados para ele; essa prova continua em SE-052.
 
-Valores por callback/quadro, milissegundos. Orçamento de referência: 16,67 ms por quadro a 60 Hz. `p50/p95/p99/máximo`:
+## Cenários reproduzíveis
 
-| Carga isolada | p50 | p95 | p99 | máximo | alocação Python pico | partículas | orçamento no máximo |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| Render, 24 frutas | 3,619 | 4,034 | 4,084 | 4,084 | 4.200 B | 0 | 24,5% |
-| Render, 150 frutas | 6,125 | 6,383 | 6,592 | 6,592 | 18.784 B | 0 | 39,6% |
-| Render, 120 frutas + efeitos | 7,803 | 8,261 | 8,703 | 8,703 | 90.410 B | 128 | 52,2% |
-| Overlay pausado | 3,993 | 4,179 | 4,187 | 4,187 | 3.528 B | 0 | 25,1% |
-| Física, 24 corpos | 0,559 | 0,596 | 0,637 | 0,637 | 7.456 B | — | 3,8% |
-| Física, 120 corpos | 3,255 | 3,399 | 4,152 | 4,152 | 34.840 B | — | 24,9% |
-| Física, 400 corpos | 11,063 | 11,415 | 11,587 | 12,086 | 119.896 B | — | 72,5% |
+Cada replay envia `InputFrame` reais para `GameSession` ou `BattleSession`, com física Pymunk. Só conta chamadas executadas; ao game over ou fim da batalha, o replay termina imediatamente.
 
-O comando completo roda também os cenários integrados e o perfil de 10 s descritos acima. `tracemalloc` mede alocações Python, não alocações nativas SDL/Pymunk. O renderer sintético inclui cache já aquecido; não mede cache frio.
+| Modo e cenário | Seed e ações | Passos e resultado observado |
+| --- | --- | --- |
+| Clássico — fusão isolada | seed 0; launcher neutro em x=400; DROP nos passos 0 e 120 | 360 passos; 2 frutas aceitas; 1 fusão; pico de 2 frutas |
+| Clássico — cascata | seed 4417; x=400; DROP a cada 42 passos | 391 passos; 10 quedas; fusões nos passos 324 e 330; a fruta criada no passo 324 foi consumida 6 passos depois |
+| Clássico — pilha densa | seed 4417; `move_x=((tick*17+4417)%121)/60-1`; DROP a cada 42 passos | 7.200 passos; 172 quedas; 135 fusões; pico de 42 frutas; score 1.104 |
+| Clássico — partida longa | mesmas ações da pilha densa até game over | 14.690 passos / 122,4167 s ativos; 346 quedas; 287 fusões; pico de 60 frutas; score 2.531; game over natural |
+| Batalha — fusão isolada | seed 2; ambos neutros em x=240; DROP a cada 90 passos | 180 passos; cada tabuleiro aceitou 2 quedas e teve 1 fusão; pico de 2 frutas |
+| Batalha — cascata | seed 2; ambos neutros em x=240; DROP a cada 90 passos | 662 passos; cada tabuleiro teve 4 fusões; relação pai/filho nos passos 581→601 (20 passos) |
+| Batalha — pilha densa | seed 4417; movimento triangular determinístico; DROP a cada 42 passos | 6.822 passos / 56,85 s ativos; cada tabuleiro teve 162 quedas e 124 fusões, pico de 41 frutas; término natural por overflow com 942 pontos |
+| Batalha — partida longa | mesmas ações até a batalha terminar | Mesmo término natural por overflow aos 6.822 passos; não são acrescentados passos após o terminal |
 
-## Auditoria por hipótese
+Em cada tabuleiro, o contador de chamadas a `GameSession.step` coincide com os passos do replay. Os resultados da batalha são medidos por jogador, pois os IDs de fruta começam novamente em cada tabuleiro.
 
-| Área | Estado | Evidência / próxima medição |
-|---|---|---|
-| Loop e acumulador | hipótese aberta | `App.run` usa `Clock.tick`, lê eventos, limita delta e avança simulação em passos fixos; não há decomposição temporal por estágio nem contagem de passos/quadro no harness. |
-| Física e contatos | parcialmente medido | `PhysicsWorld.step` isolado: 24/120/400 corpos conforme tabela. Contatos Pymunk, `poses`, construção dos mapas e callbacks precisam ser cronometrados separadamente. |
-| Resolução de fusão | parcialmente medida | `MergeSystem.resolve` sintético e passo integrado com fusões emergentes; não é cascata determinística de gameplay. |
-| Snapshots | medido | `GameSession.snapshot`/`BattleSession.snapshot` cronometrados à parte no roteiro seed 4417. |
-| Render/cache | medido parcialmente | renderer normal/efeitos e cache aquecido; comparar primeiro quadro/cache frio e escala/resolução do aparelho. |
-| Partículas | medido parcialmente | workload sintético com três eventos de merge por callback atinge 128 partículas; comparar efeitos reduzidos e desligados sem alterar outras variáveis. |
-| Áudio | não isolado | mixer não foi medido; comparar habilitado/silenciado em host e aparelho, registrando driver/saída. |
-| Assets | não isolado | harness usa renderer existente e assets carregados; carga a frio e cache de superfície devem ser separados. |
-| Alocações/GC | parcial | alocações Python por cenários e pausas GC em sessão curta; sem checkpoints contínuos ou memória nativa/cache da sessão longa. |
-| Persistência/recorde | lógica medida | comparação abaixo/acima usa stub em memória; filesystem e serialização não incluídos. |
+## Medições e achados
 
-## Achados, descartes e prioridade
+### Simulação, física e fusões
 
-**Comprovado neste host:** física sintética com 400 corpos chega a 72,5% do orçamento em `step()` isolado; render sintético com efeitos chega a 52,2%. O `BattleSession.step` integrado teve máximo 20,706 ms e excedeu o orçamento, mas essa amostra foi medida sob tracemalloc e sem renderização. O resolver denso artificial alcançou 223,566 ms; não prova que uma cascata normal cause travada.
+- Na partida clássica longa, o tempo de `GameSession.step` teve p50/p95/p99 de 0,837/1,292/1,832 ms; física, 0,394/0,621/0,696 ms; `MergeSystem.resolve`, 0,084/0,130/0,911 ms. O pico de contatos permaneceu baixo.
+- Na pilha densa clássica, `GameSession.step` teve p50/p95/p99 de 0,642/0,927/1,361 ms; na batalha densa, o tabuleiro mais lento ficou em 0,648/0,952/1,577 ms.
+- Uma execução registrou um pico isolado de 61,5 ms dentro de `MergeSystem.resolve`, também presente com persistência em memória. Ele não se repetiu no replay longo com a mesma seed: p99 de 0,873 ms, máximo de 3,911 ms e nenhuma chamada acima do passo fixo de 8,33 ms. O pico não sustenta uma causa determinística na resolução de fusões; precisa ser correlacionado com quadros e pausas do GC no equipamento de referência.
 
-**Descartado somente para estes workloads e este host:** atualização lógica do recorde em memória não se aproxima do orçamento. I/O real, áudio, renderer dentro do mesmo quadro, driver e aparelho não foram descartados. Nenhuma causa foi causalmente confirmada.
+### Persistência de recorde
 
-Ainda falta replay de ações que produza especificamente fusão única, cascata natural, pilha densa e sessão longa em cada modo. Também falta quadro integral com App accumulator, áudio real, I/O real, série de RSS/cache, A/B de efeitos/desenho e execução no hardware reportado. O dado local não identifica causalidade nem autoriza correções de gargalo (SE-045).
+O mesmo replay clássico (seed 4417, 14.690 passos, score 2.531) foi executado abaixo e acima do recorde anterior, com stub em memória e com `JsonPersistence` real em diretório temporário. A gravação JSON percorre serialização, `flush`/`fsync`, cópia de backup e substituição atômica.
 
-## Verificações e documentação
+| Caso | Backend | Salvamentos | p50/p95/p99 por salvamento | p99 de `GameSession.step` |
+| --- | --- | ---: | ---: | ---: |
+| Abaixo de 100.000 pontos | Memória | 1 | 0,001/0,001/0,001 ms | 1,684 ms |
+| Abaixo de 100.000 pontos | JSON durável | 1 | 3,839/3,839/3,839 ms | 1,708 ms |
+| Acima de 0 pontos | Memória | 283 | 0,001/0,001/0,001 ms | 1,711 ms |
+| Acima de 0 pontos | JSON durável | 283 | 3,530/4,194/4,352 ms | 5,440 ms |
 
-Baseline amplo: `.venv\Scripts\python.exe -m pytest -q` no sandbox restrito terminou código 1: **249 passed, 1 failed, 52 errors**. As 52 falhas de setup vieram da criação do diretório numerado do `tmp_path` fora da raiz gravável do workspace. Depois de autorizar a escrita temporária fora do workspace, a mesma suíte terminou código 1: **301 passed, 1 failed, 0 errors em 10,85 s**. A falha remanescente é `tests/scenes/test_navigation.py::test_collider_menu_adjusts_apple_and_saves_the_scale`: o teste espera `Maçã: 105%`, mas a implementação retorna `Maçã: 101%` após um quadro de entrada horizontal.
+Os arquivos recarregaram sem erro. No host local, uma gravação durável em cada fusão recordista acrescentou aproximadamente 3,5–4,4 ms por chamada e elevou o p99 de passo para 5,44 ms; o máximo do passo foi 8,72 ms. É custo síncrono mensurável, mas não explica sozinho os picos isolados de dezenas de milissegundos. Armazenamento mais lento no aparelho ainda pode mudar o resultado.
 
-Verificação focada nesta tentativa: `.venv\Scripts\python.exe -m pytest -q tests\game\test_merging.py tests\game\test_session.py tests\game\test_battle.py` terminou código 0: **30 passed**. `.venv\Scripts\ruff.exe check tools/performance.py tools/diagnostics.py` terminou código 0. `.venv\Scripts\mypy.exe` terminou código 0: **Success: no issues found in 46 source files**; uma falha de mypy reportada na primeira coleta não se reproduziu com o executável configurado na `.venv`. `.venv\Scripts\python.exe tools\performance.py --frames 30 --warmup 2` terminou código 0 e incluiu os workloads listados acima. `.venv\Scripts\python.exe tools\diagnostics.py --format json` terminou código 0, runtime Windows 11 AMD64, Pymunk 7.3.1; as sondagens SDL/display/audio/joystick são declaradas não executadas.
+**Achado de correção para SE-047:** quando a partida supera o recorde, a duração persistida para a nova pontuação ficou em 121,525 s, embora o game over tenha ocorrido em 122,4167 s (diferença de 0,8917 s). A partida abaixo do recorde preservou os 91,25 s do registro anterior, como esperado. A atualização final precisa manter a duração total da partida recordista segundo a regra decidida pelo usuário.
 
-Context7: resolvido Pygame como `/pygame/pygame`; consultada a documentação de `pygame.time.Clock.tick` e `pygame.time.get_ticks`. A referência descreve retorno de milissegundos e aviso de precisão de `SDL_Delay`; logo, `Clock.tick` serve ao pacing, mas medições finas deste harness usam `time.perf_counter_ns`.
+### Renderização, efeitos e áudio
 
-Fontes: [Pygame time API](https://www.pygame.org/docs/ref/time.html) e [documentação Context7 de Pygame](https://github.com/pygame/pygame/blob/main/docs/reST/ref/time.rst).
+Comparação controlada de 300 quadros, mesmos 120 frutos, mesmo snapshot, mesmo estado de jogo e mesmo caminho de desenho:
+
+| Variante | p50 | p95 | p99 | Máximo |
+| --- | ---: | ---: | ---: | ---: |
+| Sem efeitos | 5,706 ms | 6,006 ms | 6,081 ms | 6,178 ms |
+| Três eventos de fusão por quadro | 7,061 ms | 7,370 ms | 7,615 ms | 8,623 ms |
+
+Os efeitos acrescentaram 1,364 ms ao p95 neste host. A inicialização dos renderizadores levou 109,7 ms no clássico e 133,4 ms na batalha; esse custo cobre o construtor e a criação/carregamento das superfícies usadas, não é custo por quadro nem uma medição isolada de leitura de arquivos.
+
+No replay de cascata, `PygameAudioManager` com mixer SDL dummy ficou em p50/p95/p99 de 0,0004/0,0005/0,0093 ms por `consume`, máximo de 0,0353 ms. O stub silencioso ficou abaixo de 0,0014 ms no máximo. Isso só mede o caminho do mixer dummy.
+
+### Acumulador, memória e sessão longa
+
+- O acumulador real do `App` processou 240 passos em 120 quadros regulares a 60 FPS e 330 passos com intervalos irregulares, sem descartar backlog. Um quadro de 500 ms foi limitado a 250 ms, processou no máximo 8 passos e descartou 22 passos acumulados; o resto do acumulador ficou abaixo de 8,33 ms.
+- No soak clássico, o renderizador permaneceu vivo por 367,25 s ativos em 3 partidas completas. Na batalha, por 341,1 s em 6 partidas completas. Os tetos observados se mantiveram: rotações 128/128, partículas até 13/128, eventos de efeitos 512/512, 5 superfícies pequenas e 11 sprites de frutas. A estimativa de superfícies ficou em 23,9–24,7 MB no clássico e 27,8–28,5 MB na batalha (inclui fundo, recipiente e painel próprios da batalha), sem crescimento dos caches entre as amostras por rodada.
+- O RSS terminou em 181,7 MB após o soak clássico e 179,2 MB após o soak de batalha; o pico do processo durante a execução foi 258,2 MB. O uso privado final foi 167,6 MB e 165,1 MB, respectivamente. São amostras do processo inteiro no Windows, não apenas do jogo.
+- O harness observou 156 pausas de GC no clássico (p95 1,63 ms, máximo 125,82 ms) e 260 na batalha (p95 1,83 ms, máximo 143,28 ms). O próprio harness mantém `tracemalloc` ativo para medir alocações, então esses máximos precisam ser confirmados com a build do jogo sem instrumentação e correlacionados ao tempo de quadro. A variação de alocação Python inclui objetos e relatórios do harness e não é, isoladamente, prova de vazamento.
+
+## Conclusão e próximos passos
+
+Os cenários locais não reproduziram de forma estável um gargalo de fusão acima do orçamento de 16,67 ms. A gravação síncrona de recordes é custo real e repetido quando uma partida supera o recorde; efeitos visuais acrescentam cerca de 1,36 ms ao p95 de desenho neste host. O maior risco ainda por confirmar é a pausa de GC/host registrada no soak e no máximo isolado de uma execução. Não foi aplicada otimização de regras ou de desempenho sem evidência reproduzível.
+
+1. **SE-052:** repetir os perfis na build de referência do Batocera, armazenamento real, vídeo e áudio HDMI, gravando duração de quadro e pausas do GC para confirmar a causa das travadas reportadas.
+2. **SE-045:** usar a comparação de 283 gravações para avaliar consolidação durável apenas se o mesmo custo aparecer no aparelho; preservar a recuperação de dados e medir de novo os mesmos cenários.
+3. **SE-047:** corrigir o checkpoint final de duração do recorde conforme o achado acima e as decisões de SE-046.
+
+## Verificações executadas
+
+- `python tools/performance.py --frames 30 --warmup 5 --full-scenarios --soak-seconds 300 --output .local/performance-full.json`: terminou com código 0; cobriu 300 s ativos por modo e encerrou cada partida pelo terminal natural.
+- `python tools/performance.py --frames 300 --warmup 30 --render-only --output .local/render-comparison.json`: terminou com código 0; 300 amostras por variante de efeitos.
+- `python -m pytest tests/tools/test_performance.py`: 9 passaram.
+- `python -m pytest --basetemp .local/pytest-tmp-se044`: 318 passaram e 1 falhou em `test_collider_menu_adjusts_apple_and_saves_the_scale`; o teste espera 105%, mas a cena retorna 101%. A mesma falha já existia antes deste lote e não envolve o harness.
+- `python -m ruff check tools/performance.py tests/tools/test_performance.py` e `python -m mypy`: passaram; `git diff --check`: passou.

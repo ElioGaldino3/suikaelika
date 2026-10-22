@@ -38,16 +38,16 @@ Inspeção estática de `game/session.py`, `persistence.py`, cenas e arquitetura
 
 ### SE-044 — Auditar travadas e produzir diagnóstico reproduzível
 
-- Status: `blocked`
+- Status: `done`
 - Scope: `performance-records`
 - Priority: `P0`
 - Depends: `none`
-- Writes: `tools/performance.py; tools/diagnostics.py; docs/validation/merge-performance.md`
+- Writes: `tools/performance.py; tools/diagnostics.py; docs/validation/merge-performance.md; tests/tools/test_performance.py`
 - Reads: `suika_elika/**; tests/**; pyproject.toml; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/BATOCERA.md; docs/ANDROID-TV.md`
-- Owner: `unassigned`
-- Attempts: `2`
-- Evidence: Tentativas 1–2 e revisão produziram cargas determinísticas de 20 s para clássico/batalha, passos/snapshots, resolver sintético, comparação do limiar com stub em memória, render isolado e sessão clássica curta com GC/RSS. Verificações de revisão: 30 testes focados passaram; Ruff e mypy da `.venv` passaram; benchmark e diagnóstico JSON terminaram código 0. Suíte ampla, no sandbox, teve 249 passed/1 failed/52 errors por falta de permissão no tmp_path; após autorização, 301 passed/1 failed/0 errors; falha restante é teste de navegação que espera 105% e recebe 101%. A entrega ainda não satisfaz os cenários naturais de fusão/cadeia/pilha/sessão longa por modo, a série prolongada de cache/memória e comparações de persistência/áudio reais.
-- Blocker: Aceitação local permanece incompleta após duas tentativas: faltam replay natural e medições completas por modo, cache/sessão longa e comparações controladas de persistência e áudio. Desbloquear completando esses cenários no harness; SE-052 continua responsável pela prova no equipamento real.
+- Owner: `/root`
+- Attempts: `3`
+- Evidence: Harness completo em `tools/performance.py`; relatório em `docs/validation/merge-performance.md`. Comando `python tools/performance.py --frames 30 --warmup 5 --full-scenarios --soak-seconds 300 --output .local/performance-full.json`: oito perfis naturais, comparações abaixo/acima do recorde com memória e JSON real, acumulador, mixer dummy e soak de 367 s clássico/341 s batalha com caches/RSS/GC. Perfis clássicos/batalha verificam fusão isolada, cascata, pilha e término natural; relatório registra seed, ações, plataforma, versões, p50/p95/p99/máximo, hipóteses, achados e limites. Render A/B controlado com 300 quadros por variante. Foco: 9 testes passaram; suíte: 318 passaram e 1 falhou no teste já conhecido de navegação (espera 105%, recebe 101%); Ruff e mypy passaram. Comparação JSON mediu 283 gravações síncronas quando supera o recorde, sem confirmar causa local reproduzível para os picos; divergência entre duração final e duração persistida encaminhada a SE-047.
+- Blocker: `none` para diagnóstico local. SE-052 ainda precisa confirmar os achados na máquina Batocera com vídeo, áudio e armazenamento reais; limites locais não homologam o equipamento-alvo.
 
 **Aceitação:**
 
