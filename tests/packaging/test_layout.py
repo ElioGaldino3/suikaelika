@@ -1,10 +1,11 @@
 """Local checks for the Pygame package prepared for Batocera."""
 
+import tarfile
 from pathlib import Path
 
 import pytest
 
-from tools.build_batocera import build_package
+from tools.build_batocera import build_archive, build_package
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGING = ROOT / "packaging" / "batocera"
@@ -62,6 +63,19 @@ def test_build_creates_and_replaces_the_pygame_installation_folder(tmp_path: Pat
 def test_build_rejects_output_outside_dist(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="inside the project's dist"):
         build_package(tmp_path, tmp_path / "outside")
+
+
+def test_archive_contains_only_the_built_batocera_folder(tmp_path: Path) -> None:
+    package = tmp_path / "dist" / "SuikaElika.pygame"
+    package.mkdir(parents=True)
+    (package / "main.py").write_text("print('run')\n", encoding="utf-8")
+    archive = build_archive(package)
+
+    with tarfile.open(archive, "r:gz") as bundle:
+        names = set(bundle.getnames())
+
+    assert archive == tmp_path / "dist" / "SuikaElika-Batocera.tar.gz"
+    assert names == {"SuikaElika.pygame", "SuikaElika.pygame/main.py"}
 
 
 def test_installation_instructions_cover_pygame_and_limits() -> None:

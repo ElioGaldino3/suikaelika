@@ -36,6 +36,33 @@ o arquivo `SuikaElika.pygame` que fica dentro dele; esse lançador chama
 `main.py`. O build não é um executável compilado; reúne os pontos de entrada, o
 pacote Python e seus dados. Ele não baixa nem inclui Python, Pygame ou SDL.
 
+Para gerar também um arquivo compacto pronto para publicar no GitHub Releases,
+use:
+
+```powershell
+python tools/build_batocera.py --archive
+```
+
+Isso cria `dist/SuikaElika-Batocera.tar.gz`, contendo somente a pasta
+`SuikaElika.pygame` acima. A automação `.github/workflows/batocera-release.yml`
+publica esse arquivo quando uma tag `v*` é enviada ao GitHub. Depois da
+publicação, o Batocera pode baixar a versão mais recente e extrair a pasta no
+diretório de ROMs:
+
+```sh
+cd /userdata/roms/pygame
+curl -fL https://github.com/eliogaldino3/suikaelika/releases/latest/download/SuikaElika-Batocera.tar.gz -o SuikaElika-Batocera.tar.gz
+tar -xzf SuikaElika-Batocera.tar.gz
+rm SuikaElika-Batocera.tar.gz
+```
+
+O resultado é `/userdata/roms/pygame/SuikaElika.pygame/`. Essa URL só funciona
+depois que a primeira Release com o arquivo anexado tiver sido publicada. Para
+publicá-la, crie e envie uma tag, por exemplo `v0.1.0`; o GitHub Actions monta o
+pacote e cria a Release automaticamente. O tarball `archive/refs/heads/main`
+continua sendo o snapshot completo do código-fonte e não deve ser usado para
+instalar o jogo no Batocera.
+
 ## Instalar e atualizar um checkout do GitHub
 
 Para manter uma cópia do repositório no Batocera e atualizá-la com Git, clone-o

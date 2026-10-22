@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import tarfile
 import tempfile
 from collections.abc import Sequence
 from pathlib import Path
@@ -85,6 +86,23 @@ def build_package(
     return target
 
 
+def build_archive(package_dir: Path, output: Path | None = None) -> Path:
+    """Create a compact gzip tarball containing only the Batocera package."""
+    package_dir = package_dir.resolve()
+    if not package_dir.is_dir():
+        raise FileNotFoundError(f"Batocera package directory not found: {package_dir}")
+    dist_root = package_dir.parent.resolve()
+    if dist_root.name != "dist":
+        raise ValueError("Batocera package must be a direct child of the project's dist")
+    archive = output or dist_root / "SuikaElika-Batocera.tar.gz"
+    archive = archive.resolve()
+    if archive.parent != dist_root:
+        raise ValueError("archive output must stay inside the project's dist directory")
+    with tarfile.open(archive, "w:gz") as bundle:
+        bundle.add(package_dir, arcname=package_dir.name)
+    return archive
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -92,10 +110,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="package folder to create (must stay inside ./dist)",
     )
+    parser.add_argument(
+        "--archive",
+        action="store_true",
+        help="also create dist/SuikaElika-Batocera.tar.gz for GitHub Releases",
+    )
     args = parser.parse_args(argv)
     output = build_package(output_dir=args.output)
     print(f"Batocera Pygame package built: {output}")
     print(f"Copy this folder to /userdata/roms/pygame/{PACKAGE_NAME}")
+    if args.archive:
+        archive = build_archive(output)
+        print(f"Compact Batocera archive built: {archive}")
     return 0
 
 

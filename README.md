@@ -116,6 +116,18 @@ Gere o pacote na raiz do projeto:
 python tools/build_batocera.py
 ```
 
+Para gerar também um tarball compacto para anexar a uma Release do GitHub:
+
+```powershell
+python tools/build_batocera.py --archive
+```
+
+O arquivo fica em `dist/SuikaElika-Batocera.tar.gz`. Enviar uma tag `v*` ao
+GitHub também aciona `.github/workflows/batocera-release.yml`, que publica o
+arquivo como anexo da Release. No Batocera, use a URL `releases/latest/download`
+descrita em [docs/BATOCERA.md](docs/BATOCERA.md); ela fica disponível depois da
+primeira Release.
+
 O resultado pronto para copiar fica em `dist/SuikaElika.pygame/`. Copie a pasta
 inteira para `/userdata/roms/pygame/`, para que o destino seja
 `/userdata/roms/pygame/SuikaElika.pygame/`. No Windows, transfira pelo
