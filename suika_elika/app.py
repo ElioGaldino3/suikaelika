@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from suika_elika.audio import create_audio_manager
@@ -396,9 +396,10 @@ class App:
         pygame = self._pygame
         assert pygame is not None
         self._persistence = JsonPersistence()
-        self._settings = self._persistence.load_settings() or SettingsData(
-            fullscreen=self.config.fullscreen
-        )
+        saved_settings = self._persistence.load_settings()
+        self._settings = saved_settings or SettingsData(fullscreen=self.config.fullscreen)
+        if not self.config.fullscreen and self._settings.fullscreen:
+            self._settings = replace(self._settings, fullscreen=False)
         catalog = self._catalog_for_settings(self._settings)
         self._create_display()
 
@@ -889,6 +890,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="permitir teclado no clássico/menu quando nenhum controle estiver conectado",
     )
     parser.add_argument(
+        "--window", action="store_true",
+        help="abrir em janela (1600x900) em vez de tela cheia",
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         help="desenhar colisores e limites das frutas para análise visual",
@@ -905,6 +910,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         indexes = (args.p1_index, args.p2_index)
     return App(
         AppConfig(
+            fullscreen=not args.window,
             allow_keyboard_fallback=args.desktop,
             player_indexes=indexes,
             debug_colliders=args.debug,

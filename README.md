@@ -17,6 +17,9 @@ python -m pip install -e .
 python main.py --desktop
 ```
 
+Por padrão, o jogo abre em tela cheia. Para abrir em uma janela de 1600×900,
+use `python main.py --window` (também pode combinar com `--desktop`).
+
 ### Linux
 
 ```sh

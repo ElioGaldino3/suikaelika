@@ -178,7 +178,7 @@ def test_fixed_loop_caps_recovery_and_discards_backlog(persistence: JsonPersiste
 
 @pytest.mark.parametrize(
     ("fullscreen", "expected_size"),
-    [(True, (0, 0)), (False, (1280, 720))],
+    [(True, (0, 0)), (False, (1600, 900))],
 )
 def test_display_uses_native_resolution_for_fullscreen(
     fullscreen: bool, expected_size: tuple[int, int]

@@ -17,6 +17,7 @@ from suika_elika.input.manager import InputBackend, InputSample
     [
         ([], False, None, False),
         (["--desktop"], True, None, False),
+        (["--window"], False, None, False),
         (["--p1-index", "2", "--p2-index", "0"], False, (2, 0), False),
         (["--debug"], False, None, True),
         (["--desktop", "--debug"], True, None, True),
@@ -37,6 +38,7 @@ def test_cli_constructs_expected_config(monkeypatch, args, desktop, indexes, deb
     assert configs[0].allow_keyboard_fallback is desktop
     assert configs[0].player_indexes == indexes
     assert configs[0].debug_colliders is debug
+    assert configs[0].fullscreen is ("--window" not in args)
 
 
 @pytest.mark.parametrize(

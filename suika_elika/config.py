@@ -10,7 +10,7 @@ from math import isfinite
 class AppConfig:
     """Presentation and fixed-step limits owned by the application loop."""
 
-    window_size: tuple[int, int] = (1280, 720)
+    window_size: tuple[int, int] = (1600, 900)
     target_fps: int = 60
     fixed_dt: float = 1.0 / 120.0
     max_frame_delta: float = 0.25
