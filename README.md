@@ -87,9 +87,10 @@ botão sul/A e X para confirmar/soltar. Em joysticks genéricos, o índice 0
 porque pode ser o botão norte em alguns controles.
 O teclado de desenvolvimento não conta como segundo controle.
 
-O fundo vem de `raw_assets/battle_background.png`. A cópia preparada em
-`assets/backgrounds/battle.png` segue no pacote Batocera. Para regenerar as artes,
-execute `python tools/process_art_assets.py`.
+O fundo de batalha distribuído fica em `assets/backgrounds/battle.png`. As fontes
+brutas de arte ficam no ambiente local e não são necessárias para executar o
+jogo. Para regenerar as artes com as fontes disponíveis, execute
+`python tools/process_art_assets.py`.
 
 Testes locais com dispositivos simulados não substituem a homologação de dois
 controles físicos no Batocera. Evidências em [docs/validation/battle.md](docs/validation/battle.md).

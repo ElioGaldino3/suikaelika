@@ -42,7 +42,7 @@ Uma observação visual não revela o motor físico, o algoritmo de sorteio, os 
 | R06 | Visual inspirado em Fruit Match da Play.Works | Direção de arte descrita na seção 12 |
 | R07 | Começar sem imagens | Formas, cores, rostos e interface desenhados por código |
 | R08 | Documentação detalhada antes da implementação | Este arquivo é a referência para as próximas etapas |
-| R09 | Disponibilizar Suika Elika para Android TV em APK instalável | Launcher Leanback, paisagem, joystick nativo e ícone Android fornecido em `raw_assets/icons` |
+| R09 | Disponibilizar Suika Elika para Android TV em APK instalável | Launcher Leanback, paisagem, joystick nativo e ícone Android fornecido em `packaging/android/resources` |
 
 ### 1.2 Escopo desta entrega
 
@@ -181,7 +181,7 @@ Ranking online, serviços de conta e geração de assets durante a partida ficam
 - Avaliar ambas as sessões após cada passo fixo. Transbordamento tem prioridade sobre meta nesse mesmo passo; ambos transbordarem ou ambos atingirem a meta no mesmo passo resulta em empate, sem vantagem pela ordem de processamento.
 - Congelar ambos ao terminar e mostrar vencedor, motivo, placares, Revanche e Menu. Revanche requer dois controles. Não gravar resultados da batalha no recorde ou nas estatísticas do clássico.
 - Start de qualquer jogador pausa os dois; ambos navegam nos menus da batalha. Desconexão congela ambos; reconectar requer confirmação consumida pela UI, sem soltura residual. Perda de foco também congela ambos.
-- Fundo fornecido: `raw_assets/battle_background.png`; cópia 16:9 para distribuição em `assets/backgrounds/battle.png`.
+- Fundo de batalha distribuído: `assets/backgrounds/battle.png`; fontes brutas de arte são locais e não são necessárias em runtime.
 - Verificações locais com controles simulados não homologam dois dispositivos reais, áudio HDMI, desempenho nem Batocera.
 
 **Entrada atualizada em 20/10/2026:** o padrão exige controles nativos também no
@@ -1042,7 +1042,7 @@ paisagem. O jogo mantém joystick como entrada padrão; o teclado `--desktop` n�
 privado do app Android.
 
 O ícone quadrado, as camadas adaptativas e o banner 16:9 do launcher vêm de
-`raw_assets/icons/android/`. Comandos e instruções de instalação estão em
+`packaging/android/resources/`. Comandos e instruções de instalação estão em
 [ANDROID-TV.md](ANDROID-TV.md).
 Build local aprovado não comprova funcionamento do controle, áudio ou
 desempenho na TV; esses itens exigem uma homologação física.

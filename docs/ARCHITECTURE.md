@@ -212,7 +212,7 @@ executa o build Linux no container oficial do Buildozer e grava o APK em
 
 O manifesto declara as funcionalidades Leanback e touchscreen como opcionais e
 acrescenta `LEANBACK_LAUNCHER` à atividade SDL. O ícone de loja, as camadas
-adaptativas e o banner 16:9 vêm de `raw_assets/icons/android/`. Em runtime,
+adaptativas e o banner 16:9 vêm de `packaging/android/resources/`. Em runtime,
 `ANDROID_PRIVATE` determina as pastas internas de configuração e dados; o app
 não grava em armazenamento compartilhado.
 

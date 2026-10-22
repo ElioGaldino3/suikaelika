@@ -39,11 +39,12 @@ interface de TV compatível, além de permitir iniciar o pacote por um instalado
 
 ## Ícone e entrada
 
-O ícone quadrado de loja de `raw_assets/icons/android/play_store_512.png` é a
+Os recursos Android necessários ao build ficam em `packaging/android/resources/`.
+O ícone quadrado de loja `play_store_512.png` é a
 imagem base do launcher. As camadas adaptativas de foreground e background em
-`raw_assets/icons/android/res/mipmap-xxxhdpi/` alimentam o ícone adaptativo do
+`packaging/android/resources/res/mipmap-xxxhdpi/` alimentam o ícone adaptativo do
 Android. O banner 16:9 do launcher fica em
-`raw_assets/icons/android/res/drawable-xhdpi/tv_banner.png` (320×180); ele foi
+`packaging/android/resources/res/drawable-xhdpi/tv_banner.png` (320×180); ele foi
 derivado da mesma arte e inclui o nome do jogo. O build inclui esses recursos no
 APK e define o banner da aplicação no manifesto.
 

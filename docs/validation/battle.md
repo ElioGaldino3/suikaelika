@@ -17,8 +17,9 @@ Data: 20/10/2026. Implementação local; homologação física pendente.
   retomada não solta fruta. Jogador restante pode voltar ao menu ao desconectar.
 - Ambos operam menus da batalha; resultado mostra vencedor/motivo/placares e
   oferece revanche. Batalha não grava recordes/estatísticas do clássico.
-- `raw_assets/battle_background.png` é preservado. `assets/backgrounds/battle.png`
-  é a cópia 1280×720, incluída no pacote. Prévia de tela dividida e menu conferidas.
+- `assets/backgrounds/battle.png` (1280×720) é a imagem incluída no pacote. A
+  fonte original fica apenas no ambiente local e é ignorada pelo Git. Prévia de
+  tela dividida e menu conferidas.
 
 ## Pesquisa de múltiplos controles
 

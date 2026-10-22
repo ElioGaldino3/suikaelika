@@ -9,7 +9,7 @@ pygame = pytest.importorskip("pygame")
 from suika_elika.app import _MenuCanvas  # noqa: E402
 from suika_elika.contracts import FruitSnapshot, Pose, Vector2  # noqa: E402
 from suika_elika.game.battle import BattleSession  # noqa: E402
-from suika_elika.rendering.assets import ASSET_ROOT, GameArt, cover_surface  # noqa: E402
+from suika_elika.rendering.assets import ASSET_ROOT, GameArt  # noqa: E402
 from suika_elika.rendering.battle import BattleRenderer  # noqa: E402
 from suika_elika.rendering.renderer import DEBUG_COLLIDER_COLOR  # noqa: E402
 from suika_elika.scenes.title import TitleScene  # noqa: E402
@@ -33,14 +33,11 @@ def demo_snapshot():
     return replace(snapshot, players=(players[0], players[1]))
 
 
-def test_battle_background_is_supplied_art_and_packaged_copy_matches() -> None:
-    root = ASSET_ROOT.parent
-    raw = pygame.image.load(root / "raw_assets" / "battle_background.png")
-    expected = cover_surface(pygame, raw, (1280, 720))
+def test_battle_background_uses_the_packaged_art() -> None:
     packaged = pygame.image.load(ASSET_ROOT / "backgrounds" / "battle.png")
     actual = GameArt().background_surface(battle=True)
     for point in ((50, 50), (640, 360), (1200, 650)):
-        assert actual.get_at(point) == expected.get_at(point) == packaged.get_at(point)
+        assert actual.get_at(point) == packaged.get_at(point)
 
 
 @pytest.mark.parametrize("size", [(1280, 720), (1920, 1080), (800, 600)])

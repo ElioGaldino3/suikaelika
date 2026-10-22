@@ -27,7 +27,7 @@ O `aapt2 dump xmltree` do APK confirmou:
 - `android.software.leanback` e `android.hardware.touchscreen` como recursos opcionais;
 - ícone e recursos adaptativos do launcher no pacote.
 
-O APK contém as bibliotecas nativas SDL/Python e `libpybundle.so` para `arm64-v8a` e `armeabi-v7a`. A distribuição P4A gerada inclui pygame-ce 2.5.8 e Pymunk 7.3.1; os diretórios compilados das duas ABIs incluem as extensões pygame de vídeo/joystick e `pymunk/_chipmunk.abi3.so`. `assets/private.tar` inclui os módulos do jogo, dados e sprites. Os recursos usados vêm de `raw_assets/icons/android/`: ícone quadrado 512×512 e banner 320×180.
+O APK contém as bibliotecas nativas SDL/Python e `libpybundle.so` para `arm64-v8a` e `armeabi-v7a`. A distribuição P4A gerada inclui pygame-ce 2.5.8 e Pymunk 7.3.1; os diretórios compilados das duas ABIs incluem as extensões pygame de vídeo/joystick e `pymunk/_chipmunk.abi3.so`. `assets/private.tar` inclui os módulos do jogo, dados e sprites. Na validação original, os recursos vieram de `raw_assets/icons/android/`; no repositório atual, os recursos Android necessários ficam em `packaging/android/resources/`.
 
 ## Verificações
 

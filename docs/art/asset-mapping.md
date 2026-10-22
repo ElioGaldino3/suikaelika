@@ -1,9 +1,12 @@
 # Arte fornecida para o protótipo
 
-O processamento reproduzível é feito com `python tools/process_art_assets.py`
-no ambiente de desenvolvimento com Pygame instalado. A folha `raw_assets/frutinhas_v3.png`
+As imagens-fonte originais ficam apenas no ambiente local e não são incluídas
+no repositório. Quando essas fontes estiverem disponíveis, o processamento é
+feito com `python tools/process_art_assets.py` no ambiente de desenvolvimento
+com Pygame instalado. A folha `raw_assets/frutinhas_v3.png`
 tem 1448×1086 pixels e transparência por pixel; o script a usa sem reamostrar
-os recortes. Os arquivos de entrada em `raw_assets/` ficam intactos. As células
+os recortes. Os arquivos-fonte locais em `raw_assets/` ficam intactos e não são
+rastreados pelo Git. As células
 seguem a ordem do catálogo, separam os desenhos que se encostam nas costuras
 visuais e mantêm os pixels originais com alpha dentro da caixa recortada.
 Os PNGs são salvos sem compressão com perda.

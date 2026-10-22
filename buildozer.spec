@@ -10,9 +10,9 @@ version = 0.1.0
 requirements = python3,pygame-ce,pymunk
 orientation = landscape
 fullscreen = 1
-icon.filename = %(source.dir)s/raw_assets/icons/android/play_store_512.png
-icon.adaptive_foreground.filename = %(source.dir)s/raw_assets/icons/android/res/mipmap-xxxhdpi/ic_launcher_foreground.png
-icon.adaptive_background.filename = %(source.dir)s/raw_assets/icons/android/res/mipmap-xxxhdpi/ic_launcher_background.png
+icon.filename = %(source.dir)s/packaging/android/resources/play_store_512.png
+icon.adaptive_foreground.filename = %(source.dir)s/packaging/android/resources/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+icon.adaptive_background.filename = %(source.dir)s/packaging/android/resources/res/mipmap-xxxhdpi/ic_launcher_background.png
 
 android.api = 35
 android.minapi = 23
@@ -23,7 +23,7 @@ android.accept_sdk_license = True
 android.extra_manifest_xml = packaging/android/manifest/extra.xml
 android.manifest.intent_filters = packaging/android/manifest/leanback_intent_filters.xml
 android.extra_manifest_application_arguments = packaging/android/manifest/application_arguments.txt
-android.add_resources = %(source.dir)s/raw_assets/icons/android/res
+android.add_resources = %(source.dir)s/packaging/android/resources/res
 
 p4a.bootstrap = sdl2
 p4a.branch = master
