@@ -38,15 +38,15 @@ Inspeção estática de `game/session.py`, `persistence.py`, cenas e arquitetura
 
 ### SE-044 — Auditar travadas e produzir diagnóstico reproduzível
 
-- Status: `pending`
+- Status: `in_review`
 - Scope: `performance-records`
 - Priority: `P0`
 - Depends: `none`
 - Writes: `tools/performance.py; tools/diagnostics.py; docs/validation/merge-performance.md`
 - Reads: `suika_elika/**; tests/**; pyproject.toml; docs/PROJECT.md; docs/ARCHITECTURE.md; docs/BATOCERA.md; docs/ANDROID-TV.md`
-- Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Não executada; hipótese estática registrada acima, sem causa comprovada.
+- Owner: `/root/se044`
+- Attempts: `2`
+- Evidence: Tentativa 1 mediu workloads isolados e registrou baseline local (249 passed, 1 failed, 52 errors; Ruff passou; mypy teve 2 erros de tipos POSIX de `resource` no Windows). Tentativa 2 entregou workloads determinísticos de clássico/batalha, snapshot/fusão sintética, limiar de recorde com stub e sessão curta; resultados e limitações estão em revisão, incluindo falta de replay natural e I/O/áudio reais.
 - Blocker: `none`
 
 **Aceitação:**
@@ -132,15 +132,15 @@ Inspeção estática de `game/session.py`, `persistence.py`, cenas e arquitetura
 
 ### SE-048 — Investigar entrada de texto disponível no Batocera
 
-- Status: `pending`
+- Status: `done`
 - Scope: `performance-records`
 - Priority: `P1`
 - Depends: `none`
 - Writes: `docs/decisions/player-name-input.md`
 - Reads: `docs/BATOCERA.md; suika_elika/input/**; suika_elika/app.py; packaging/batocera/**`
 - Owner: `unassigned`
-- Attempts: `0`
-- Evidence: Não executada; nenhuma API ou teclado do Batocera foi presumido disponível.
+- Attempts: `1`
+- Evidence: `docs/decisions/player-name-input.md` distingue o teclado/configuração do EmulationStation e Evmapy de uma API de texto acessível ao processo Pygame. Consultadas fontes oficiais do Batocera, documentação oficial do Pygame e Context7 (Pygame/SDL; SDL consultado é SDL3 e está rotulado como limitação). Não foi encontrada integração nativa demonstrável; recomendação para SE-049: teclado virtual próprio navegável por joystick. Whitespace verificado; navegação física permanece para SE-052.
 - Blocker: `none`
 
 **Aceitação:**
