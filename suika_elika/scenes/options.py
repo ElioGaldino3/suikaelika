@@ -28,7 +28,9 @@ _NUMERIC_FIELDS = {
 _BOOLEAN_FIELDS = {"effects_reduced", "vibration_enabled", "fullscreen"}
 _HITBOX_MIN = 0.5
 _HITBOX_MAX = 1.5
-_HITBOX_STEP = 0.05
+_HITBOX_STEP = 0.01
+_HITBOX_INITIAL_REPEAT_DELAY = 0.5
+_HITBOX_REPEAT_INTERVAL = 0.12
 
 
 class SettingsPersistence(Protocol):
@@ -79,6 +81,17 @@ class OptionsScene(MenuScene):
         self._unsaved = False
         self._collider_menu_active = False
         self._options_selected_index = 0
+        self._hitbox_repeat_direction = 0
+        self._hitbox_repeat_remaining = 0.0
+
+    def update(self, delta_seconds: float) -> SceneTransition | None:
+        transition = super().update(delta_seconds)
+        if self._collider_menu_active and self._hitbox_repeat_direction:
+            self._hitbox_repeat_remaining -= delta_seconds
+            if self._hitbox_repeat_remaining <= 0.0:
+                self._adjust_fruit_hitbox(self._hitbox_repeat_direction)
+                self._hitbox_repeat_remaining = _HITBOX_REPEAT_INTERVAL
+        return transition
 
     def _find_active_profile(self) -> ControllerProfileData | None:
         if self.profile_repository is None:
@@ -217,11 +230,13 @@ class OptionsScene(MenuScene):
     def _open_collider_menu(self) -> None:
         self._options_selected_index = self.selected_index
         self._collider_menu_active = True
+        self._reset_hitbox_repeat()
         self.selected_index = self.catalog.get("apple").level - 1
         self.message = ""
 
     def _close_collider_menu(self) -> None:
         self._collider_menu_active = False
+        self._reset_hitbox_repeat()
         self.selected_index = self._options_selected_index
         self.message = ""
 
@@ -288,10 +303,23 @@ class OptionsScene(MenuScene):
                 elif self.selected_index == count - 1:
                     self._close_collider_menu()
                     return
-        if frame.move_x <= -0.55:
-            self._adjust_fruit_hitbox(-1)
-        elif frame.move_x >= 0.55:
-            self._adjust_fruit_hitbox(1)
+        direction = (
+            -1
+            if frame.move_x <= -0.55
+            else 1
+            if frame.move_x >= 0.55
+            else 0
+        )
+        if direction == 0:
+            self._reset_hitbox_repeat()
+        elif direction != self._hitbox_repeat_direction:
+            self._hitbox_repeat_direction = direction
+            self._hitbox_repeat_remaining = _HITBOX_INITIAL_REPEAT_DELAY
+            self._adjust_fruit_hitbox(direction)
+
+    def _reset_hitbox_repeat(self) -> None:
+        self._hitbox_repeat_direction = 0
+        self._hitbox_repeat_remaining = 0.0
 
     def _adjust_fruit_hitbox(self, direction: int) -> None:
         if self.selected_index >= len(self.catalog.entries):

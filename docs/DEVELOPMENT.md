@@ -35,7 +35,9 @@ frutas da simulação no clássico e na BATALHA. Para usar teclado sem joystick,
 combine `--debug` com `--desktop`.
 
 Em **Opções → Ajustar hitboxes**, use esquerda/direita para mudar cada fruta em
-passos de 5%, entre 50% e 150%. Os fatores são salvos localmente. O ajuste vale
+passos de 1%, entre 50% e 150%. O primeiro ajuste é imediato; ao segurar, a
+repetição começa após 500 ms e segue a cada 120 ms. Os fatores são salvos
+localmente. O ajuste vale
 na próxima partida ou depois de reiniciar a rodada atual; ao voltar da pausa,
 escolha **Reiniciar** para testar sem a rodada antiga usando os raios anteriores.
 O círculo verde passa a acompanhar o raio aplicado à física; os sprites mantêm
