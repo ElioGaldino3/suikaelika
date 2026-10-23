@@ -89,8 +89,11 @@ O teclado de desenvolvimento não conta como segundo controle.
 
 O fundo de batalha distribuído fica em `assets/backgrounds/battle.png`. As fontes
 brutas de arte ficam no ambiente local e não são necessárias para executar o
-jogo. Para regenerar as artes com as fontes disponíveis, execute
-`python tools/process_art_assets.py`.
+jogo. Para regenerar os cenários com as fontes disponíveis, execute
+`python tools/process_art_assets.py`. Esse comando preserva as sprites.
+Para importar um novo conjunto de 11 frutas circulares, use
+`python tools/process_art_assets.py --fruit-source CAMINHO`.
+O padrão das sprites e os prompts estão em [docs/art/asset-mapping.md](docs/art/asset-mapping.md).
 
 Testes locais com dispositivos simulados não substituem a homologação de dois
 controles físicos no Batocera. Evidências em [docs/validation/battle.md](docs/validation/battle.md).

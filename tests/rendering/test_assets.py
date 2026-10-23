@@ -15,6 +15,8 @@ from tools.process_art_assets import (  # noqa: E402
     FRUIT_CELLS,
     FRUIT_SHEET,
     FRUIT_SHEET_SIZE,
+    SPRITE_RADIUS,
+    pack_round_sprite,
     process_fruit_sprites,
 )
 
@@ -35,7 +37,7 @@ def test_art_pipeline_uses_new_transparent_sheet_and_nonoverlapping_crop_cells()
             assert x2 <= other_x1 or other_x2 <= x1 or y2 <= other_y1 or other_y2 <= y1
 
 
-def test_v3_sheet_generates_sprites_and_keeps_manual_upscales(tmp_path) -> None:
+def test_historical_sheet_extraction_keeps_original_crop_resolution(tmp_path) -> None:
     sheet = pygame.image.load(FRUIT_SHEET)
     sprite_dir = tmp_path / "sprites"
 
@@ -44,17 +46,46 @@ def test_v3_sheet_generates_sprites_and_keeps_manual_upscales(tmp_path) -> None:
     assert {path.stem for path in sprite_dir.glob("*.png")} == set(FRUIT_CELLS)
     for fruit_id in FRUIT_CELLS:
         generated = pygame.image.load(sprite_dir / f"{fruit_id}.png")
-        packaged = pygame.image.load(ASSET_ROOT / "sprites" / f"{fruit_id}.png")
         bounds = generated.get_bounding_rect(min_alpha=32)
         assert bounds.width > 0
         assert bounds.left >= 8 and bounds.top >= 8
         assert bounds.right <= generated.get_width() - 8
         assert bounds.bottom <= generated.get_height() - 8
-        width_scale = packaged.get_width() / generated.get_width()
-        height_scale = packaged.get_height() / generated.get_height()
-        assert width_scale == pytest.approx(height_scale)
-        assert width_scale >= 1
-        assert width_scale == pytest.approx(round(width_scale))
+        x1, y1, x2, y2 = FRUIT_CELLS[fruit_id]
+        assert generated.get_size() == (bounds.width + 16, bounds.height + 16)
+        assert generated.get_width() <= x2 - x1 + 16
+        assert generated.get_height() <= y2 - y1 + 16
+
+
+def test_all_packaged_fruits_are_512_square_with_a_filled_circular_silhouette() -> None:
+    for entry in load_catalog().entries:
+        source = pygame.image.load(ASSET_ROOT / "sprites" / f"{entry.fruit_id}.png")
+        assert source.get_size() == (512, 512), entry.fruit_id
+        assert source.get_flags() & pygame.SRCALPHA
+        assert source.get_at((0, 0)).a == 0
+        mask = pygame.mask.from_surface(source, 220)
+        inner = pygame.Surface(source.get_size(), pygame.SRCALPHA, 32)
+        pygame.draw.circle(inner, (255, 255, 255, 255), (256, 256), SPRITE_RADIUS - 2)
+        required = pygame.mask.from_surface(inner)
+        assert mask.overlap_area(required, (0, 0)) == required.count(), entry.fruit_id
+        outline = (
+            point
+            for component in pygame.mask.from_surface(source, 32).connected_components()
+            for point in component.outline()
+        )
+        distances = [((x + 0.5 - 256) ** 2 + (y + 0.5 - 256) ** 2) ** 0.5 for x, y in outline]
+        assert min(distances) >= SPRITE_RADIUS - 1, entry.fruit_id
+        assert max(distances) <= SPRITE_RADIUS + 1, entry.fruit_id
+
+
+def test_round_sprite_packing_rejects_empty_or_nonround_art() -> None:
+    empty = pygame.Surface((100, 100), pygame.SRCALPHA, 32)
+    with pytest.raises(ValueError, match="no opaque pixels"):
+        pack_round_sprite(empty)
+    elongated = pygame.Surface((100, 200), pygame.SRCALPHA, 32)
+    elongated.fill((255, 0, 0, 255))
+    with pytest.raises(ValueError, match="round silhouette"):
+        pack_round_sprite(elongated)
 
 
 def test_larger_fruit_source_pngs_retain_high_resolution_crop() -> None:
@@ -99,15 +130,14 @@ def test_imported_fruit_silhouettes_fit_their_physics_circles() -> None:
             for component in mask.connected_components()
             for point in component.outline()
         )
-        visible_radius = max(
-            (
-                ((x + 0.5 - center_x) ** 2 + (y + 0.5 - center_y) ** 2) ** 0.5
-                for x, y in outline
-            ),
-            default=0.0,
-        )
+        distances = [
+            ((x + 0.5 - center_x) ** 2 + (y + 0.5 - center_y) ** 2) ** 0.5
+            for x, y in outline
+        ]
+        visible_radius = max(distances, default=0.0)
 
         assert visible_radius == pytest.approx(entry.definition.radius, abs=1.5)
+        assert min(distances) == pytest.approx(entry.definition.radius, abs=1.5)
 
 
 def test_missing_assets_use_the_existing_procedural_art(tmp_path) -> None:

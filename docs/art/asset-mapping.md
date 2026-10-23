@@ -1,47 +1,69 @@
-# Arte fornecida para o protótipo
+# Sprites circulares das frutas
 
-As imagens-fonte originais ficam apenas no ambiente local e não são incluídas
-no repositório. Quando essas fontes estiverem disponíveis, o processamento é
-feito com `python tools/process_art_assets.py` no ambiente de desenvolvimento
-com Pygame instalado. A folha `raw_assets/frutinhas_v3.png`
-tem 1448×1086 pixels e transparência por pixel; o script a usa sem reamostrar
-os recortes. Os arquivos-fonte locais em `raw_assets/` ficam intactos e não são
-rastreados pelo Git. As células
-seguem a ordem do catálogo, separam os desenhos que se encostam nas costuras
-visuais e mantêm os pixels originais com alpha dentro da caixa recortada.
-Os PNGs são salvos sem compressão com perda.
-Os cenários são ajustados para preencher o canvas lógico 1280×720, com corte
-central e preservação da proporção.
+As 11 frutas foram recriadas individualmente com a ferramenta integrada `image_gen`,
+por um subagente dedicado, conforme pedido do usuário em 23/10/2026. O conjunto
+preserva o estilo de personagens com olhos grandes, sorriso, volume e brilho.
+Os prompts completos de cada chamada ficam em [round-fruits-prompts.json](round-fruits-prompts.json).
+A [prévia do conjunto](round-fruits-preview.png) e o
+[relatório de validação](../validation/round-fruits.md) registram a entrega.
 
-| Nível | ID do catálogo | Desenho na folha |
+## Padrão dos PNGs de runtime
+
+- Arquivos `assets/sprites/<fruit_id>.png`, todos RGBA **512×512**.
+- Corpo circular centrado em **(256,256)**, raio **248**, margem transparente de 8 pixels.
+- Interior opaco, borda com antialias e fundo realmente transparente.
+- Cabos, folhas e coroas inscritos no corpo; nenhuma projeção fora do círculo.
+- Identidade reconhecível por cor, textura e detalhes internos.
+
+| Nível | ID | Identidade dentro do círculo |
 |---:|---|---|
-| 1 | `cherry` | cereja, superior 1 |
-| 2 | `strawberry` | morango, superior 2 |
-| 3 | `grape` | uva, superior 3 |
-| 4 | `lemon` | limão amarelo, superior 4 |
-| 5 | `apple` | maçã, superior 5 |
-| 6 | `orange` | laranja, superior 6 |
-| 7 | `pear` | pera, inferior 1 |
-| 8 | `peach` | pêssego, inferior 2 |
-| 9 | `pineapple` | abacaxi, inferior 3 |
-| 10 | `melon` | melão, inferior 4 |
-| 11 | `watermelon` | melancia, inferior 5 |
+| 1 | `cherry` | Cereja vermelha, cabo e folhas internos |
+| 2 | `strawberry` | Morango vermelho com sementes e folhas |
+| 3 | `grape` | Esfera roxa de uva, folhas internas |
+| 4 | `lemon` | Limão amarelo com textura cítrica |
+| 5 | `apple` | Maçã vermelha, cabo e folha internos |
+| 6 | `orange` | Laranja com poros da casca |
+| 7 | `pear` | Pera verde com pintinhas |
+| 8 | `peach` | Pêssego rosado com sulco interno |
+| 9 | `pineapple` | Abacaxi dourado, losangos e coroa interna |
+| 10 | `melon` | Melão verde claro com rede na casca |
+| 11 | `watermelon` | Melancia verde com listras escuras |
 
-Os sprites originais variam em proporção e escala. No carregamento, o runtime
-mede o contorno opaco e o ajusta para que sua maior distância ao centro coincida
-com o raio físico da fruta. Isso mantém a arte alinhada à colisão circular sem
-forçar cada silhueta a virar um círculo perfeito. A imagem recebe margem
-transparente para rotação e as superfícies processadas ficam em cache. As
-rotações usam transformação filtrada com cache limitado. Os PNGs gerados são os
-recursos de runtime; a folha original não é necessária na instalação.
+O runtime continua medindo a distância do contorno opaco ao centro e ajustando-a
+ao raio do catálogo, com margem para rotação e superfícies em cache. Agora o
+contorno preenche o círculo em todas as direções. As dimensões reduzidas são pares
+para manter o centro da imagem alinhado ao centro físico, sem deslocamento de meio
+pixel. A opção de ajuste manual de
+hitboxes continua tendo seu comportamento próprio; esta troca de arte não altera
+os fatores salvos nem o tamanho físico das frutas.
 
-`assets/backgrounds/menu.png` vem de `raw_assets/background_menu.png` e
-`assets/backgrounds/gameplay.png` vem de `raw_assets/background_jogo.png`.
-Ambos são exibidos preenchendo a tela; o menu recebe um painel translúcido para
-manter o texto legível. Se os diretórios processados não estiverem disponíveis,
-a renderização mantém o fallback procedural anterior.
+## Empacotamento
 
-**Limitação do recorte:** a separação usa células fixas porque a folha não tem
-guias. Alguns desenhos encostam nas bordas; os limites foram posicionados nas
-costuras entre as frutas. Confira os PNGs individuais antes de substituir a arte
-fonte ou alterar a composição da folha.
+Para importar imagens individuais já circulares, com os mesmos onze nomes:
+
+```powershell
+python tools/process_art_assets.py --fruit-source work/round-fruits
+```
+
+O empacotador valida o conjunto inteiro antes de substituir sprites. Ele recorta
+a margem externa, padroniza as dimensões, admite até 10% de ampliação para eliminar
+pequenas irregularidades da geração e aplica a mesma máscara circular suave.
+Arte alongada ou com falhas no preenchimento é rejeitada para nova geração.
+Esse preparo geométrico não desenha nem substitui a ilustração gerada.
+
+As saídas originais desta geração ficam localmente em `work/round-fruits/`, que é
+ignorado pelo Git. Os onze PNGs finais são versionados e suficientes para instalar
+e jogar; nenhuma ferramenta de IA ou fonte bruta é necessária no aparelho.
+
+`python tools/process_art_assets.py` sem argumentos regenera **apenas os cenários**,
+preservando as sprites atuais. Ele requer as fontes locais em `raw_assets/`:
+`background_menu.png`, `background_jogo.png` e `battle_background.png`.
+Os cenários continuam preenchendo 1280×720 com corte central proporcional.
+
+## Folha histórica
+
+`raw_assets/frutinhas_v3.png` (1448×1086) e os recortes fixos de `FRUIT_CELLS`
+permanecem como fontes históricas locais. `process_fruit_sprites` continua disponível
+para extrair esses recortes para um diretório escolhido, sem relacioná-los às
+dimensões das novas sprites. Não execute essa função sobre `assets/sprites/`.
+O fallback procedural continua disponível quando faltam assets instalados.

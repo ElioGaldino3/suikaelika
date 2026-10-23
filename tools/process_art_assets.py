@@ -1,12 +1,14 @@
-"""Crop the supplied fruit sheet and prepare 16:9 game backgrounds.
+"""Pack individually generated round fruits and prepare 16:9 backgrounds.
 
 Run from the repository root with the game's Pygame installed:
     python tools/process_art_assets.py
 The user-provided files in raw_assets/ are read-only inputs.
+Pass --fruit-source DIR to replace sprites; the default only rebuilds backgrounds.
 """
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 
 import pygame
@@ -17,6 +19,8 @@ OUTPUT = ROOT / "assets"
 FRUIT_SHEET = SOURCE / "frutinhas_v3.png"
 FRUIT_SHEET_SIZE = (1448, 1086)
 LOGICAL_SIZE = (1280, 720)
+SPRITE_SIZE = 512
+SPRITE_RADIUS = 248
 
 # Cells follow the classic catalog: six upper-row fruits, then five lower-row
 # fruits. Empty separator gaps are left out where neighboring glow pixels touch.
@@ -88,7 +92,7 @@ def fit_cover(image: pygame.Surface, size: tuple[int, int]) -> pygame.Surface:
 
 
 def process_fruit_sprites(sheet: pygame.Surface, sprite_dir: Path) -> None:
-    """Crop the v3 fruit sheet into native-resolution transparent PNGs."""
+    """Extract historical sheet crops, independently of the current round assets."""
     if sheet.get_size() != FRUIT_SHEET_SIZE:
         raise ValueError(
             f"expected {FRUIT_SHEET_SIZE} fruit sheet, got {sheet.get_size()}"
@@ -101,12 +105,59 @@ def process_fruit_sprites(sheet: pygame.Surface, sprite_dir: Path) -> None:
         pygame.image.save(sprite, sprite_dir / f"{fruit_id}.png")
 
 
+def pack_round_sprite(source: pygame.Surface) -> pygame.Surface:
+    """Resize generated art and enforce the shared circular alpha envelope.
+
+    The source must already depict a round fruit. A small overscan hides minor
+    generated contour irregularities; reject art requiring more than 10% crop.
+    This prepares pixels only, without changing the gameplay collision radius.
+    """
+    bounds = source.get_bounding_rect(min_alpha=32)
+    if not bounds.width or not bounds.height:
+        raise ValueError("fruit source contains no opaque pixels")
+    if not 0.9 <= bounds.width / bounds.height <= 1.1:
+        raise ValueError("fruit source must already have a round silhouette")
+    cropped = source.subsurface(bounds)
+    side = SPRITE_SIZE
+    # Supersample only the geometric mask, retaining the generated artwork.
+    mask = pygame.Surface((side * 4, side * 4), pygame.SRCALPHA, 32)
+    pygame.draw.circle(mask, (255, 255, 255, 255), (side * 2, side * 2), SPRITE_RADIUS * 4)
+    mask = pygame.transform.smoothscale(mask, (side, side))
+    required = pygame.mask.from_surface(mask, 0)
+    for diameter in range(SPRITE_RADIUS * 2, round(SPRITE_RADIUS * 2 * 1.1) + 1, 2):
+        fitted = pygame.transform.smoothscale(cropped, (diameter, diameter))
+        sprite = pygame.Surface((side, side), pygame.SRCALPHA, 32)
+        sprite.blit(fitted, fitted.get_rect(center=(side // 2, side // 2)))
+        visible = pygame.mask.from_surface(sprite, 240)
+        if visible.overlap_area(required, (0, 0)) == required.count():
+            # Resampling may lower even interior alpha slightly. Coverage is
+            # verified above, so make the body opaque before applying its edge.
+            sprite.fill((0, 0, 0, 255), special_flags=pygame.BLEND_RGBA_MAX)
+            sprite.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+            return sprite
+    raise ValueError("fruit source does not fill the circular envelope; regenerate it")
+
+
+def process_round_fruits(source_dir: Path, sprite_dir: Path) -> None:
+    """Validate the entire set before replacing any of the packaged sprites."""
+    sprites = {
+        fruit_id: pack_round_sprite(pygame.image.load(source_dir / f"{fruit_id}.png"))
+        for fruit_id in FRUIT_CELLS
+    }
+    sprite_dir.mkdir(parents=True, exist_ok=True)
+    for fruit_id, sprite in sprites.items():
+        pygame.image.save(sprite, sprite_dir / f"{fruit_id}.png")
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--fruit-source", type=Path, help="directory of 11 generated round PNGs")
+    args = parser.parse_args()
     pygame.init()
     try:
-        sheet = pygame.image.load(FRUIT_SHEET)
-        sprite_dir = OUTPUT / "sprites"
-        process_fruit_sprites(sheet, sprite_dir)
+        if args.fruit_source is not None:
+            process_round_fruits(args.fruit_source, OUTPUT / "sprites")
+            return
 
         background_dir = OUTPUT / "backgrounds"
         background_dir.mkdir(parents=True, exist_ok=True)

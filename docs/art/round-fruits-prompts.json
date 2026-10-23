@@ -1,0 +1,125 @@
+{
+  "date": "2026-10-23",
+  "tool": "image_gen (built-in)",
+  "canvas": [
+    512,
+    512
+  ],
+  "body_center": [
+    256,
+    256
+  ],
+  "body_radius": 248,
+  "assets": [
+    {
+      "id": "cherry",
+      "path": "assets/sprites/cherry.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "f37377d44a298511708bf5c22668ec47308300df8c976bda16faf4afd20c4c4d",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: CHERRY: a single rich cherry-red sphere, ruby glossy skin, tiny short brown stem and two small green leaves painted at the top INSIDE the circular silhouette. One cherry only, no pair."
+    },
+    {
+      "id": "strawberry",
+      "path": "assets/sprites/strawberry.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "7a11a5345f5944732db0da58ac1fa98b31b051ba626c9286a4d3bc5f2db74b23",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: STRAWBERRY: a PERFECTLY CIRCULAR bright red sphere, golden tiny seeds neatly distributed over its skin. A small green star-shaped leafy cap is entirely inscribed inside the top of the sphere. Never triangular, never heart shaped."
+    },
+    {
+      "id": "grape",
+      "path": "assets/sprites/grape.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "55ab1e499e2acbd094e1c549faf7f83acfad7b0412214240e45b7da6cda6c1fd",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: GRAPE: ONE perfectly circular purple sphere representing one grape berry, rich violet skin and subtle lavender bloom, tiny brown stem and tiny green leaf painted INSIDE the top of the circle. Not a bunch of grapes, not many berries."
+    },
+    {
+      "id": "lemon",
+      "path": "assets/sprites/lemon.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "0751dbe41f6e55ef07d2012577aeab4efc8ff81c97c3760a70ae8052ff641eed",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: LEMON: a PERFECTLY CIRCULAR sunny yellow sphere with fine dimpled citrus peel texture, tiny small green leaf and short stem inside its top. Never oval, no pointed ends."
+    },
+    {
+      "id": "apple",
+      "path": "assets/sprites/apple.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "d2b140784ebf1933cd409a0b7460d3cba9b6aca7d4e41b6c08e58336d3cc9918",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: APPLE: one PERFECTLY CIRCULAR scarlet-red apple sphere with subtle warm red and yellow skin sheen. Tiny brown apple stem and one green leaf completely within the top of the sphere, no top notch, no bottom notch. Make its shiny red apple identity clear while preserving a perfect circular outer contour."
+    },
+    {
+      "id": "orange",
+      "path": "assets/sprites/orange.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "1a78ce1b61a753bf62b4dddf200e85dc93ea7c875c268305774a43de500cda74",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: ORANGE: one PERFECTLY CIRCULAR juicy bright ORANGE-colored sphere, unmistakable orange citrus peel with tiny pores, tiny brown stem and small green leaf painted at the top WITHIN the circular outline."
+    },
+    {
+      "id": "pear",
+      "path": "assets/sprites/pear.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "9b8b51a488a82d15dfdfe780d37215d08f31c58638e026a91a39bd5da3d39471",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: PEAR: one PERFECTLY CIRCULAR yellow-green pear sphere, pear's recognizable pale chartreuse skin with small brown freckles and faint warm blush, tiny brown stem and one small green leaf entirely inside the top of the circle. It is a spherical pear character, NOT traditional pear-shaped, no neck, no taper, no elongated body."
+    },
+    {
+      "id": "peach",
+      "path": "assets/sprites/peach.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "29d4da901d65c0a34561ba4d72562f97964e1e3d35755f718f1945a7e5fb4d16",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: PEACH: one PERFECTLY CIRCULAR peach-pink sphere, soft warm peach skin with coral-pink blush and subtle velvety texture. A delicate peach seam curves gently over its surface WITHOUT indenting the circular outline. Tiny brown stem and one small green leaf entirely within the top of the circle. Never heart-shaped, no cleft in outer silhouette."
+    },
+    {
+      "id": "pineapple",
+      "path": "assets/sprites/pineapple.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "10ab46758eabc0395123706d0b2503ca06c8480644a87a62393568170576b603",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: PINEAPPLE: one PERFECTLY CIRCULAR golden-yellow pineapple sphere. Its golden skin has neat crossed diagonal lines forming diamond scales with little amber centers, visible around the face. A SMALL GREEN PINEAPPLE CROWN with pointed leaf tips is placed on the forehead, ENTIRELY WITHIN the top quadrant of the circle like an inset emblem; every crown tip remains safely inside the circular perimeter. Never an oval, no crown protruding above the circle."
+    },
+    {
+      "id": "melon",
+      "path": "assets/sprites/melon.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "1d8e0ba63bbeaf5cd3606111fff6e88eb45f2350d043587b2d1f1ceb119b7ee9",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: MELON: one PERFECTLY CIRCULAR PALE LIGHT GREEN melon sphere, with clearly visible fine cream-colored raised netted rind pattern across the surface around its face. Delicate soft sage-green and honeydew colors. Tiny short tan stem at top fully inside the circle, no protrusions. This is a whole netted melon, not cut open and not a watermelon."
+    },
+    {
+      "id": "watermelon",
+      "path": "assets/sprites/watermelon.png",
+      "source_dimensions": [
+        1254,
+        1254
+      ],
+      "sha256": "6619d1f03ac69f081ea54cb2be11d82c76cd27d00d202d38d628359a0efb7a03",
+      "prompt": "Use case: stylized-concept. Asset type: single transparent PNG fruit sprite for a physics puzzle game. Create ONE fruit character, 512x512 square canvas. Match the supplied reference images only in glossy colorful 3D cartoon illustration style, large expressive brown eyes with white highlights, little happy open smiling mouth, gentle rosy cheeks, warm upper-left lighting and dark subtly colored edge outline.\nCRITICAL GEOMETRY: the entire outer silhouette must be ONE MATHEMATICALLY PERFECT CIRCLE centered exactly at canvas center, diameter 96% of canvas width and height, equal x/y diameter. Not an oval. No protrusions. All leaf/stem/crown details must be painted WITHIN the circular body, entirely below its outer circumference. The circular outline never indents and never changes radius. Give depth by spherical shading while preserving the exact circular contour.\nTransparent background with genuine alpha outside the circle, no background color, no checkerboard drawn, no cast shadow, no halo, no extra objects, no limbs, no text, no watermark. Front orthographic view, eyes near mid-height, mouth lower center, facial proportions consistent across the fruit set.\nSubject identity: WATERMELON: one PERFECTLY CIRCULAR whole green watermelon sphere with unmistakable alternating dark green wavy vertical stripes and lighter bright green bands that follow the round surface. Tiny small curved green stem at top entirely inside the circle. Whole watermelon, no red flesh, no slice, no seeds on outside, no oval shape."
+    }
+  ]
+}

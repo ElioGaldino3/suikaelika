@@ -229,3 +229,13 @@ partida em um aparelho Android TV real.
 O relógio de domínio usa duração ativa não arredondada; só apresentação formata tempo. O adaptador deve preservar a ordem de gravação para empate exato. O ranking clássico limita-se aos cinco resultados ordenados por pontuação decrescente e duração ascendente; BATALHA permanece isolada. A migração do schema preserva `RecordData`, sem sintetizar partidas individuais.
 
 `InputAction.NAV_LEFT` e `NAV_RIGHT` complementam navegação vertical para grades e teclados de nome, sem introduzir comportamento de cena. Nomes usam NFC, espaços aparados/colapsados, até 20 code points e unicidade por casefold; identidade Desconhecido é reservada.
+
+## 14. Sprites circulares (23/10/2026)
+
+ADR-014: as onze frutas usam PNG RGBA 512×512, centro (256,256), corpo circular
+de raio 248 e margem transparente de 8 pixels. Folhas, cabos e coroas ficam
+dentro desse corpo. O empacotamento valida preenchimento e aplica alpha circular
+com antialias; o carregamento existente continua ajustando ao raio do catálogo.
+As dimensões reduzidas são pares para preservar o alinhamento do centro da sprite.
+Não muda regras, física ou recordes. A extração da folha antiga fica separada
+dos assets atuais e o comando padrão de processamento preserva as sprites.

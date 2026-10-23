@@ -73,9 +73,11 @@ class GameArt:
                     result[entry.fruit_id] = self._fallback.fruit_surface(entry)
                     continue
                 scale = collision_radius / silhouette_radius
+                # Even dimensions keep the source center on the integer center
+                # of the destination, avoiding a half-pixel collision offset.
                 size = (
-                    max(1, round(width * scale)),
-                    max(1, round(height * scale)),
+                    max(2, 2 * round(width * scale / 2)),
+                    max(2, 2 * round(height * scale / 2)),
                 )
                 fitted = self._pygame.transform.smoothscale(source, size)
                 surface = self._pygame.Surface(

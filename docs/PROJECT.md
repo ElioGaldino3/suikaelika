@@ -573,6 +573,15 @@ As frutas e a identidade serão próprias de Suika Elika. O mascote Elika pode s
 
 ### 12.2 Primeira versão visual, inteiramente por código
 
+**Padronização autorizada em 23/10/2026:** as 11 sprites passam a PNGs transparentes
+512×512 com corpo perfeitamente circular. Folhas, cabos, coroas, sementes e texturas
+identificam a fruta dentro do círculo, sem alterar sua silhueta. O corpo tem centro
+(256,256), raio de 248 pixels e margem transparente de 8 pixels para filtragem.
+No jogo, o carregamento ajusta esse corpo ao raio físico padrão já definido pelo
+catálogo. Consulte `docs/art/asset-mapping.md` para geração e empacotamento.
+
+O protótipo original usava os seguintes desenhos procedurais:
+
 - Corpo circular ou silhueta desenhada dentro do envelope do colisor.
 - Contorno de 2–4 unidades lógicas, conforme o tamanho.
 - Mancha de luz em elipse e meia sombra para sugerir volume.
